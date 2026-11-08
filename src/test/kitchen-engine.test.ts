@@ -1,10 +1,51 @@
 import { describe, expect, it } from "vitest";
-import { analyze, conflictReasons } from "@/lib/kitchen/engine";
+import { analyze, analyzeMenuDay, conflictReasons } from "@/lib/kitchen/engine";
 import { initialState, dishById } from "@/lib/kitchen/data";
 import { reducer } from "@/lib/kitchen/store";
-import { dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
+import { canApproveMeal, approvalDueDate, dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
 
 describe("kitchen agents", () => {
+  it("requires approval by November 7 for November 8 service and blocks same-day approval", () => {
+    expect(approvalDueDate("2026-11-08")).toBe("2026-11-07");
+    expect(canApproveMeal("2026-11-08", new Date("2026-11-07T23:59:00"))).toBe(true);
+    expect(canApproveMeal("2026-11-08", new Date("2026-11-08T00:00:00"))).toBe(false);
+    const s = initialState();
+    expect(reducer(s, { type: "approveMeal", date: "2026-11-08", meal: "lunch" }, new Date("2026-11-08T09:00:00"))).toBe(s);
+  });
+
+  it("applies advance alternatives only to their date and refuses late alternatives", () => {
+    const reference = new Date("2026-11-07T12:00:00");
+    const s = initialState();
+    const p = analyzeMenuDay(s, 1, reference).proposals.find((p) => p.kind === "substitution");
+    if (!p || p.kind !== "substitution") throw new Error("Missing swap");
+    const action = { type: "approveSub" as const, proposalId: p.id, serviceDate: "2026-11-08", meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary: "Advance swap" };
+    const next = reducer(s, action, reference);
+    expect(next.overrides).toEqual(s.overrides);
+    expect(scheduledState(next, 1, reference).overrides[p.meal][p.residentIds[0] ?? ""]).toBe(p.dishId);
+    expect(scheduledState(next, 2, reference).overrides).toEqual({ breakfast: {}, lunch: {}, dinner: {} });
+    expect(reducer(s, action, new Date("2026-11-08T08:00:00"))).toBe(s);
+  });
+
+  it("only signs off a fully resolved meal and invalidates it when edited", () => {
+    const reference = new Date("2026-11-07T12:00:00");
+    let s = initialState();
+    expect(reducer(s, { type: "approveMeal", date: "2026-11-08", meal: "breakfast" }, reference)).toBe(s);
+    for (const p of analyzeMenuDay(s, 1, reference).proposals) {
+      if (p.kind === "substitution") s = reducer(s, { type: "approveSub", proposalId: p.id, serviceDate: p.serviceDate, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary: "Swap" }, reference);
+    }
+    s = reducer(s, { type: "approveMeal", date: "2026-11-08", meal: "breakfast" }, reference);
+    expect(analyze(s, reference).mealReviews?.find((r) => r.serviceDate === "2026-11-08" && r.meal === "breakfast")?.approved).toBe(true);
+    const arrived = new Date("2026-11-08T12:00:00");
+    expect(analyze(s, arrived).mealReviews?.find((r) => r.serviceDate === "2026-11-08" && r.meal === "breakfast")?.approved).toBe(true);
+    const edited = reducer(s, { type: "setScheduledMain", date: "2026-11-08", meal: "breakfast", dishId: "b-oatmeal" }, reference);
+    expect(edited.mealApprovals?.["2026-11-08"]?.breakfast).toBeUndefined();
+    expect(edited.scheduledOverrides?.["2026-11-08"]?.breakfast).toEqual({});
+    const resident = s.residents[0];
+    if (!resident) throw new Error("Missing resident");
+    const changed = reducer(s, { type: "updateResident", resident: { ...resident, allergens: ["nuts"] } }, reference);
+    expect(analyze(changed, reference).mealReviews?.find((r) => r.serviceDate === "2026-11-08" && r.meal === "breakfast")?.approved).toBe(false);
+  });
+
   it("saves upcoming meal edits for their date without changing today or other days", () => {
     const s = initialState();
     const date = dateKey(dayAt(1));
@@ -48,12 +89,12 @@ describe("kitchen agents", () => {
 
   it("approving a swap resolves the conflict and approving an order clears the shortage", () => {
     let s = initialState();
-    for (const p of analyze(s).proposals.filter((p) => p.kind === "substitution"))
-      if (p.kind === "substitution") s = reducer(s, { type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary: "" });
-    expect(analyze(s).conflicts.length).toBe(0);
+    for (const p of analyzeMenuDay(s, 1).proposals)
+      if (p.kind === "substitution") s = reducer(s, { type: "approveSub", proposalId: p.id, serviceDate: p.serviceDate, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary: "" });
+    expect(analyzeMenuDay(s, 1).conflicts.length).toBe(0);
     for (const p of analyze(s).proposals)
       if (p.kind === "purchase") s = reducer(s, { type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary: "" });
-    expect(analyze(s).proposals.length).toBe(0);
+    expect(analyze(s).proposals.filter((p) => p.kind === "purchase").length).toBe(0);
   });
 
   it("forecasts exactly 7 or 14 days of scheduled consumption including today", () => {

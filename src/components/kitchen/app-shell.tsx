@@ -15,10 +15,11 @@ const NAV = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { analysis, dispatch } = useKitchen();
-  const pending = analysis.proposals.length;
+  const mealPending = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
+  const pending = analysis.proposals.length + mealPending;
   const busy: Record<AgentId, number> = {
     dietary: analysis.conflicts.length,
-    menu: analysis.proposals.filter((p) => p.kind === "substitution").length,
+    menu: analysis.proposals.filter((p) => p.kind === "substitution").length + mealPending,
     inventory: analysis.proposals.filter((p) => p.kind === "purchase").length,
   };
   return (

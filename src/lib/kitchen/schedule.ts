@@ -19,8 +19,8 @@ export function rotatedDish(meal: Meal, offset: number, todayId: string) {
 }
 
 export function scheduledState(state: KitchenState, offset: number, reference = new Date()): KitchenState {
-  if (offset === 0) return state;
-  const saved = offset > 0 ? state.scheduledPlans?.[dateKey(dayAt(offset, reference))] : undefined;
+  const date = dateKey(dayAt(offset, reference));
+  const saved = offset >= 0 ? state.scheduledPlans?.[date] : undefined;
   return {
     ...state,
     plan: {
@@ -28,7 +28,14 @@ export function scheduledState(state: KitchenState, offset: number, reference = 
       lunch: saved?.lunch ?? rotatedDish("lunch", offset, state.plan.lunch).id,
       dinner: saved?.dinner ?? rotatedDish("dinner", offset, state.plan.dinner).id,
     },
-    overrides: { breakfast: {}, lunch: {}, dinner: {} },
-    history: [],
+    overrides: Object.fromEntries((["breakfast", "lunch", "dinner"] as Meal[]).map((meal) => [meal, state.scheduledOverrides?.[date]?.[meal] ?? (offset === 0 && !saved?.[meal] ? state.overrides[meal] : {})])) as KitchenState["overrides"],
+    history: offset < 0 ? [] : state.history,
   };
+}
+export function approvalDueDate(serviceDate: string) {
+  return dateKey(dayAt(-1, new Date(`${serviceDate}T12:00:00`)));
+}
+
+export function canApproveMeal(serviceDate: string, reference = new Date()) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(serviceDate) && dateKey(reference) <= approvalDueDate(serviceDate);
 }

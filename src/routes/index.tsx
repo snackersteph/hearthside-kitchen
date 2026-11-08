@@ -6,6 +6,8 @@ import { MEALS } from "@/lib/kitchen/types";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AGENTS, AgentAvatar, AgentChip, MEAL_LABEL, MEAL_TIME } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
+import { scheduledState } from "@/lib/kitchen/schedule";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,27 +27,30 @@ function CommandCenter() {
   const { state, analysis } = useKitchen();
   const needsStaff = analysis.conflicts.filter((c) => c.status === "needs-staff");
   const purchases = analysis.proposals.filter((p) => p.kind === "purchase");
+  const pendingMeals = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
+  const awaiting = analysis.proposals.length + pendingMeals;
+  const dayState = scheduledState(state, 0);
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   const stats = [
     { label: "Residents served", value: state.residents.length, icon: Users, sub: "3 meals planned" },
     { label: "Dietary conflicts", value: analysis.conflicts.length, icon: AlertTriangle, sub: needsStaff.length ? `${needsStaff.length} need staff` : "all have proposals" },
-    { label: "Awaiting approval", value: analysis.proposals.length, icon: ClipboardCheck, sub: "agent proposals" },
-    { label: "Ingredient shortfalls", value: purchases.reduce((n, p) => n + p.lines.length, 0), icon: PackageX, sub: `${purchases.length} purchase request${purchases.length === 1 ? "" : "s"}` },
+    { label: "Awaiting approval", value: awaiting, icon: ClipboardCheck, sub: "Review meals & orders", action: "approvals" },
+    { label: "Ingredient shortfalls", value: purchases.reduce((n, p) => n + p.lines.length, 0), icon: PackageX, sub: `${purchases.length} orders to review`, action: "inventory" },
   ];
 
   return (
     <>
       <PageHeader eyebrow={today} title="Good evening, Chef.">
-        <Button asChild size="lg"><Link to="/approvals">Review {analysis.proposals.length} proposals <ArrowRight /></Link></Button>
+        <Button asChild size="lg"><Link to="/approvals">Review {awaiting} approvals <ArrowRight /></Link></Button>
       </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border bg-card p-5 shadow-soft">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">{s.label}<s.icon className="h-4 w-4" /></div>
+          <div key={s.label} className={cn("rounded-xl border p-5 shadow-soft", s.action === "approvals" ? "border-warning/50 bg-warning-soft" : s.action === "inventory" ? "border-destructive/30 bg-danger-soft" : "bg-card")}>
+            <div className="flex items-center justify-between gap-2 text-sm font-medium">{s.label}<span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", s.action === "approvals" ? "bg-warning/20 text-foreground" : s.action === "inventory" ? "bg-destructive/10 text-destructive" : "text-muted-foreground")}><s.icon className="h-5 w-5" /></span></div>
             <div className="mt-2 font-display text-4xl font-semibold">{s.value}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{s.sub}</div>
+            {s.action ? <Button asChild variant="link" size="sm" className="mt-1 h-auto p-0"><Link to={s.action === "approvals" ? "/approvals" : "/inventory"}>{s.sub}<ArrowRight className="h-4 w-4" /></Link></Button> : <div className="mt-1 text-xs text-muted-foreground">{s.sub}</div>}
           </div>
         ))}
       </div>
@@ -55,9 +60,9 @@ function CommandCenter() {
           <h2 className="mb-3 text-xl font-semibold">Today's service</h2>
           <div className="space-y-3">
             {MEALS.map((meal) => {
-              const main = dishById(state.plan[meal]);
+              const main = dishById(dayState.plan[meal]);
               const served = analysis.served[meal];
-              const alt = Object.entries(state.overrides[meal]).length;
+              const alt = Object.entries(dayState.overrides[meal]).length;
               const pend = analysis.conflicts.filter((c) => c.meal === meal && c.status === "proposal-pending").length;
               const bad = analysis.conflicts.filter((c) => c.meal === meal && c.status === "needs-staff").length;
               const mainCount = Object.values(served).filter((d) => d === main.id).length;

@@ -6,3 +6,6 @@
 - Date-specific future main dishes are staff decisions stored in KitchenState.scheduledPlans; the shared schedule resolves them before the sample rotation so editing one day changes only that day's forecast.
 - Approved purchases remain incoming until explicitly received; dated order lines support delivery-aware forecasts without treating unreceived stock as available today.
 - Preserve Kitchen context identity through Vite hot updates so mounted providers and refreshed consumers cannot split into different contexts.
+
+- Meal views, resident alternatives and forecasts use analyzeMenuDay with date-scoped decisions; whole-meal sign-off checks a plan/profile signature and the day-before deadline so future approvals cannot affect another service or survive changes.
+- KitchenProvider renders operational pages only after the browser calendar is available and refreshes its clock each minute to avoid server/browser timezone mismatches in deadlines.
