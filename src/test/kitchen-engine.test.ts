@@ -1,10 +1,48 @@
 import { describe, expect, it } from "vitest";
-import { analyze, analyzeMenuDay, conflictReasons } from "@/lib/kitchen/engine";
+import { analyze, analyzeMenuDay, compareMealUrgency, conflictReasons } from "@/lib/kitchen/engine";
 import { initialState, dishById } from "@/lib/kitchen/data";
 import { reducer } from "@/lib/kitchen/store";
 import { canApproveMeal, approvalDueDate, dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
 
 describe("kitchen agents", () => {
+  it("orders meal reviews by earliest deadline and service meal time", () => {
+    const reviews = analyze(initialState(), new Date("2026-11-07T12:00:00")).mealReviews ?? [];
+    const sorted = [...reviews].reverse().sort(compareMealUrgency);
+    expect(sorted.slice(0, 4).map((r) => [r.serviceDate, r.meal])).toEqual([
+      ["2026-11-07", "breakfast"], ["2026-11-07", "lunch"], ["2026-11-07", "dinner"], ["2026-11-08", "breakfast"],
+    ]);
+  });
+
+  it("keeps rejected meals needing replacement and blocks sign-off until revised", () => {
+    const reference = new Date("2026-11-07T12:00:00");
+    let s = initialState();
+    s.residents = s.residents.map((r) => ({ ...r, allergens: [], diets: [] }));
+    const rejected = reducer(s, { type: "rejectMeal", date: "2026-11-08", meal: "breakfast" }, reference);
+    expect(analyze(rejected, reference).mealReviews?.find((r) => r.serviceDate === "2026-11-08" && r.meal === "breakfast")?.rejected).toBe(true);
+    expect(reducer(rejected, { type: "approveMeal", date: "2026-11-08", meal: "breakfast" }, reference)).toBe(rejected);
+    expect(rejected.history[0]?.status).toBe("rejected");
+    const changed = reducer(rejected, { type: "setMealPlan", date: "2026-11-08", meal: "breakfast", dishId: "b-oatmeal", overrides: {} }, reference);
+    expect(analyze(changed, reference).mealReviews?.find((r) => r.serviceDate === "2026-11-08" && r.meal === "breakfast")?.rejected).toBe(false);
+  });
+
+  it("allows editing approved future meals but locks approved meals on service day", () => {
+    const reference = new Date("2026-11-07T12:00:00");
+    let s = initialState();
+    s.residents = s.residents.map((r) => ({ ...r, allergens: [], diets: [] }));
+    s = reducer(s, { type: "approveMeal", date: "2026-11-08", meal: "breakfast" }, reference);
+    const action = { type: "setMealPlan" as const, date: "2026-11-08", meal: "breakfast" as const, dishId: "b-oatmeal", overrides: {} };
+    const edited = reducer(s, action, reference);
+    expect(edited.scheduledPlans?.["2026-11-08"]?.breakfast).toBe("b-oatmeal");
+    expect(edited.mealApprovals?.["2026-11-08"]?.breakfast).toBeUndefined();
+    expect(reducer(s, action, new Date("2026-11-08T09:00:00"))).toBe(s);
+  });
+
+  it("blocks unsafe resident alternatives when saving a meal review", () => {
+    const s = initialState();
+    const reference = new Date("2026-11-07T12:00:00");
+    expect(reducer(s, { type: "setMealPlan", date: "2026-11-08", meal: "lunch", dishId: "l-alfredo", overrides: { r1: "l-alfredo" } }, reference)).toBe(s);
+  });
+
   it("requires approval by November 7 for November 8 service and blocks same-day approval", () => {
     expect(approvalDueDate("2026-11-08")).toBe("2026-11-07");
     expect(canApproveMeal("2026-11-08", new Date("2026-11-07T23:59:00"))).toBe(true);

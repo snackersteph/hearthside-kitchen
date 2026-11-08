@@ -50,7 +50,8 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
     case "updateResident": return { ...s, residents: s.residents.map((r) => (r.id === a.resident.id ? a.resident : r)) };
     case "setStock": return { ...s, ingredients: s.ingredients.map((i) => (i.id === a.id ? { ...i, stock: Math.max(0, a.stock) } : i)) };
     case "setMealPlan": {
-      if (!canApproveMeal(a.date, reference) || dishById(a.dishId).meal !== a.meal) return s;
+      if (a.date < dateKey(reference) || dishById(a.dishId).meal !== a.meal) return s;
+      if (a.date === dateKey(reference) && analyze(s, reference).mealReviews?.some((r) => r.serviceDate === a.date && r.meal === a.meal && r.approved)) return s;
       if (Object.entries(a.overrides).some(([id, dishId]) => {
         const resident = s.residents.find((r) => r.id === id);
         const dish = dishById(dishId);
@@ -80,6 +81,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       const dayState = scheduledState(s, offset, reference);
       if (analyzeMenuDay(s, offset, reference).conflicts.some((c) => c.meal === a.meal)) return s;
       const signature = mealSignature(dayState, a.meal);
+      if (s.mealRejections?.[a.date]?.[a.meal]?.signature === signature) return s;
       return { ...s,
         scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: dayState.plan[a.meal] } },
         mealApprovals: { ...s.mealApprovals, [a.date]: { ...s.mealApprovals?.[a.date], [a.meal]: { signature, approvedAt: reference.getTime() } } },
