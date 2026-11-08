@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type Context, type ReactNode } from "react";
 import { initialState, dishById } from "./data";
-import { analyze, type Analysis } from "./engine";
+import { analyze, analyzeMenuDay, conflictReasons, mealSignature, type Analysis } from "./engine";
 import type { KitchenState, Meal, PurchaseLine, Resident } from "./types";
-import { dateKey, dayAt } from "./schedule";
+import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 
 type Action =
+  | { type: "approveMeal"; date: string; meal: Meal }
   | { type: "setHorizon"; days: 7 | 14 }
   | { type: "setLeadTime"; days: number }
   | { type: "receiveOrder"; id: string }
@@ -14,11 +15,11 @@ type Action =
   | { type: "setScheduledMain"; date: string; meal: Meal; dishId: string }
   | { type: "updateResident"; resident: Resident }
   | { type: "setStock"; id: string; stock: number }
-  | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; modified: boolean; summary: string }
+  | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string; modified: boolean; summary: string }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
-  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; note?: string };
+  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string; note?: string };
 
-export function reducer(s: KitchenState, a: Action): KitchenState {
+export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
   switch (a.type) {
     case "setHorizon": return { ...s, purchaseHorizonDays: a.days };
     case "setLeadTime": return { ...s, leadTimeDays: Math.max(1, Math.min(14, Math.round(a.days) || 2)) };
@@ -33,13 +34,46 @@ export function reducer(s: KitchenState, a: Action): KitchenState {
     case "load": return a.state;
     case "reset": return initialState();
     case "setScheduledMain": {
-      if (a.date <= dateKey(dayAt(0)) || dishById(a.dishId).meal !== a.meal) return s;
-      return { ...s, scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: a.dishId } } };
+      if (a.date <= dateKey(dayAt(0, reference)) || dishById(a.dishId).meal !== a.meal) return s;
+      return { ...s,
+        scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: a.dishId } },
+        scheduledOverrides: { ...s.scheduledOverrides, [a.date]: { ...s.scheduledOverrides?.[a.date], [a.meal]: {} } },
+        mealApprovals: { ...s.mealApprovals, [a.date]: { ...s.mealApprovals?.[a.date], [a.meal]: undefined } },
+        history: s.history.filter((h) => !(h.kind === "substitution" && h.serviceDate === a.date && h.proposalId.includes(`-${a.meal}-`))) };
     }
-    case "setMain": return { ...s, plan: { ...s.plan, [a.meal]: a.dishId }, overrides: { ...s.overrides, [a.meal]: {} } };
+    case "setMain": {
+      const date = dateKey(reference);
+      return { ...s, plan: { ...s.plan, [a.meal]: a.dishId }, scheduledPlans: { ...s.scheduledPlans, [date]: { ...s.scheduledPlans?.[date], [a.meal]: a.dishId } }, overrides: { ...s.overrides, [a.meal]: {} }, scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: {} } }, mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } } };
+    }
     case "updateResident": return { ...s, residents: s.residents.map((r) => (r.id === a.resident.id ? a.resident : r)) };
     case "setStock": return { ...s, ingredients: s.ingredients.map((i) => (i.id === a.id ? { ...i, stock: Math.max(0, a.stock) } : i)) };
+    case "approveMeal": {
+      if (!canApproveMeal(a.date, reference)) return s;
+      const offset = Math.round((new Date(`${a.date}T12:00:00`).getTime() - new Date(`${dateKey(reference)}T12:00:00`).getTime()) / 86400000);
+      const dayState = scheduledState(s, offset, reference);
+      if (analyzeMenuDay(s, offset, reference).conflicts.some((c) => c.meal === a.meal)) return s;
+      const signature = mealSignature(dayState, a.meal);
+      return { ...s,
+        scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: dayState.plan[a.meal] } },
+        mealApprovals: { ...s.mealApprovals, [a.date]: { ...s.mealApprovals?.[a.date], [a.meal]: { signature, approvedAt: reference.getTime() } } },
+        history: [{ proposalId: `meal-${a.date}-${a.meal}-${reference.getTime()}`, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: a.date, summary: `Approved ${a.meal} menu for ${a.date}`, modified: false }, ...s.history] };
+    }
     case "approveSub": {
+      if (a.serviceDate && !canApproveMeal(a.serviceDate, reference)) return s;
+      if (!a.residentIds.length || dishById(a.dishId).meal !== a.meal || a.residentIds.some((id) => {
+        const resident = s.residents.find((r) => r.id === id);
+        return !resident || conflictReasons(resident, dishById(a.dishId)).length > 0;
+      })) return s;
+      if (a.serviceDate) {
+        const date = a.serviceDate;
+        const o = { ...s.scheduledOverrides?.[date]?.[a.meal] };
+        for (const id of a.residentIds) o[id] = a.dishId;
+        const offset = Math.round((new Date(`${date}T12:00:00`).getTime() - new Date(`${dateKey(reference)}T12:00:00`).getTime()) / 86400000);
+        return { ...s, scheduledPlans: { ...s.scheduledPlans, [date]: { ...s.scheduledPlans?.[date], [a.meal]: scheduledState(s, offset, reference).plan[a.meal] } },
+          scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: o } },
+          mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } },
+          history: [{ proposalId: a.proposalId, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: a.modified }, ...s.history] };
+      }
       const o = { ...s.overrides[a.meal] };
       for (const id of a.residentIds) o[id] = a.dishId;
       return { ...s, overrides: { ...s.overrides, [a.meal]: o }, history: [{ proposalId: a.proposalId, kind: "substitution", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified }, ...s.history] };
@@ -52,7 +86,7 @@ export function reducer(s: KitchenState, a: Action): KitchenState {
         history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified }, ...s.history],
       };
     case "reject":
-      return { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.note ? { note: a.note } : {}) }, ...s.history] };
+      return { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}) }, ...s.history] };
   }
 }
 
