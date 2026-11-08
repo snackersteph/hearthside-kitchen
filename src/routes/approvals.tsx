@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
@@ -103,6 +103,19 @@ function ApprovalsPage() {
 }
 
 const Empty = ({ text }: { text: string }) => <div className="rounded-xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">{text}</div>;
+
+/** One consistent approve button everywhere: solid green when clickable, muted with a reason when blocked. */
+function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boolean; reason?: string; onClick: () => void; children?: ReactNode }) {
+  return (
+    <span className="inline-flex flex-col items-end gap-1">
+      <Button size="sm" disabled={disabled} title={reason} onClick={onClick}
+        className="bg-success text-success-foreground hover:bg-success/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100">
+        <Check />{children ?? "Approve"}
+      </Button>
+      {disabled && reason && <span className="max-w-44 text-right text-xs text-muted-foreground">{reason}</span>}
+    </span>
+  );
+}
 
 function MealReviewCard({ review: r, proposals }: { review: MealReview; proposals: SubstitutionProposal[] }) {
   const { dispatch } = useKitchen();
