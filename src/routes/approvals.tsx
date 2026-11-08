@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowRight, Check, Pencil, X } from "lucide-react";
+import { Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { DISHES, dishById } from "@/lib/kitchen/data";
 import { compareMealUrgency, conflictReasons, lineCost, type MealReview } from "@/lib/kitchen/engine";
 import { MEALS, type Meal, type Proposal, type PurchaseProposal, type SubstitutionProposal } from "@/lib/kitchen/types";
 import { PageHeader } from "@/components/kitchen/app-shell";
-import { AGENTS, AgentAvatar, AgentChip, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
+import { AGENTS, AgentAvatar, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -129,7 +129,7 @@ function MealReviewCard({ review: r, proposals }: { review: MealReview; proposal
     <div className="flex flex-wrap items-center justify-between gap-3">
     <div className="min-w-0">
       <div className="text-xs font-semibold text-muted-foreground">{r.serviceDate} · {MEAL_LABEL[r.meal]}</div>
-      <h3 className="mt-1 font-semibold">{dishById(r.mainDishId).name}</h3>
+      <h3 className="mt-1 font-display text-2xl font-semibold">{dishById(r.mainDishId).name}</h3>
       <div className="mt-2 flex flex-wrap gap-2"><Tag tone={r.approved ? "ok" : "warn"}>{r.approved ? "Approved" : r.rejected ? "Rejected · replacement needed" : "Awaiting sign-off"}</Tag>{!r.approved && <Tag tone={timely ? "warn" : "danger"}>{timely ? `Due ${r.approvalDueDate}` : `Overdue · due ${r.approvalDueDate}`}</Tag>}
       <Tag tone={ready ? "ok" : "warn"}>{r.unresolved ? `${r.unresolved} unresolved residents` : r.pending ? `${r.pending} residents awaiting alternatives` : "Dietary checks clear"}</Tag></div>
     </div>
@@ -201,13 +201,7 @@ function SubBody({ p }: { p: SubstitutionProposal }) {
   return (
     <>
       <div className="mt-2 flex flex-wrap gap-2"><Tag>Service {p.serviceDate}</Tag><Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag></div>
-      <h3 className="mt-1 text-xl font-semibold">Serve {dishById(p.dishId).name} to {p.residentIds.length} resident{p.residentIds.length > 1 ? "s" : ""}</h3>
-      <div className="mt-1 text-sm text-muted-foreground">Instead of {dishById(p.fromDishId).name}</div>
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-        <AgentChip agent="dietary" /><span className="text-muted-foreground">flagged conflicts</span><ArrowRight className="h-3 w-3" />
-        <AgentChip agent="menu" /><span className="text-muted-foreground">found a safe swap</span><ArrowRight className="h-3 w-3" />
-        <AgentChip agent="inventory" /><span className="text-muted-foreground">included it in stock demand</span>
-      </div>
+      <h3 className="mt-1 text-sm font-medium">Serve {dishById(p.dishId).name} to {p.residentIds.length} resident{p.residentIds.length > 1 ? "s" : ""}</h3>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {p.residentIds.map((id) => (
           <li key={id} className="rounded-lg bg-muted/60 px-3 py-2 text-sm">
