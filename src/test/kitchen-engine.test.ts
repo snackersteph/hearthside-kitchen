@@ -113,7 +113,8 @@ describe("kitchen agents", () => {
     expect(perServingQty("each", 1)).toBe(1);
     const s = initialState();
     const day = analyzeMenuDay({ ...s, plan: { ...s.plan, lunch: "l-puree" } });
-    expect(day.demand["sweet-potato"]).toBeCloseTo(s.residents.length * 0.2, 2);
+    // 13 of 14 residents: the vegetarian gets the lentil-soup alternative instead.
+    expect(day.demand["sweet-potato"]).toBeCloseTo((s.residents.length - 1) * 0.2, 2);
     const forecast = analyze(s).forecast;
     expect(forecast?.todayShortage["sweet-potato"]).toBeUndefined();
     expect(forecast?.todayShortage["carrots"]).toBeUndefined();
