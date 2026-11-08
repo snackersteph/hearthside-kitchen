@@ -16,12 +16,15 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/approvals")({
+  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution" } => ({ kind: search.kind === "purchase" || search.kind === "substitution" ? search.kind : undefined }),
   head: () => ({
     meta: [
       { title: "Approval Center · Hearth Kitchen Command" },
       { name: "description", content: "Review, modify and approve menu swaps and purchase requests from your kitchen agents." },
       { property: "og:title", content: "Approval Center · Hearth Kitchen Command" },
       { property: "og:description", content: "Review, modify and approve agent proposals." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ApprovalsPage,
@@ -29,22 +32,31 @@ export const Route = createFileRoute("/approvals")({
 
 function ApprovalsPage() {
   const { state, analysis } = useKitchen();
+  const { kind } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const proposals = analysis.proposals.filter((p) => !kind || p.kind === kind);
+  const history = state.history.filter((h) => !kind || h.kind === kind);
   return (
     <>
-      <PageHeader eyebrow="Human in the loop" title="Approval Center" />
+      <PageHeader eyebrow="Human in the loop" title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
+      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Proposal type">
+        <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: {} })}>All proposals</Button>
+        <Button variant={kind === "purchase" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "purchase" } })}>Orders only</Button>
+        <Button variant={kind === "substitution" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "substitution" } })}>Meals only</Button>
+      </div>
       <Tabs defaultValue="pending">
         <TabsList>
-          <TabsTrigger value="pending">Pending ({analysis.proposals.length})</TabsTrigger>
-          <TabsTrigger value="history">History ({state.history.length})</TabsTrigger>
+          <TabsTrigger value="pending">Pending ({proposals.length})</TabsTrigger>
+          <TabsTrigger value="history">History ({history.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-6 space-y-4">
-          {analysis.proposals.length === 0 && <Empty text="Nothing waiting. Agents will raise new proposals as menus, profiles or stock change." />}
-          {analysis.proposals.map((p) => <ProposalCard key={p.id} p={p} />)}
+          {proposals.length === 0 && <Empty text={kind === "purchase" ? "No purchase requests awaiting approval." : "Nothing awaiting approval."} />}
+          {proposals.map((p) => <ProposalCard key={p.id} p={p} />)}
         </TabsContent>
         <TabsContent value="history" className="mt-6">
-          {state.history.length === 0 ? <Empty text="No decisions yet today." /> : (
+          {history.length === 0 ? <Empty text="No decisions yet." /> : (
             <ul className="divide-y rounded-xl border bg-card shadow-soft">
-              {state.history.map((h) => (
+              {history.map((h) => (
                 <li key={h.proposalId + h.at} className="flex items-center gap-3 px-5 py-4 text-sm">
                   <Tag tone={h.status === "approved" ? "ok" : "danger"}>{h.status}</Tag>
                   {h.modified && <Tag tone="warn">modified</Tag>}
@@ -108,10 +120,12 @@ function PurchaseBody({ p }: { p: PurchaseProposal }) {
   return (
     <>
       <h3 className="mt-1 text-xl font-semibold">Order from {p.vendor} · ${p.total.toFixed(2)}</h3>
-      <div className="mt-1 text-sm text-muted-foreground">Covers today's shortfall including pending menu swaps.</div>
+      <div className="mt-1 text-sm text-muted-foreground">{p.horizonDays ?? 7}-day consumption · dietary alternatives included</div>
+      <div className="mt-2 flex flex-wrap gap-2 text-xs"><Tag tone="warn">First needed {p.neededDate}</Tag><Tag>Order by {p.orderByDate}</Tag><Tag>Expected delivery {p.deliveryDate}</Tag></div>
+      {p.neededDate && p.deliveryDate && p.neededDate < p.deliveryDate && <div className="mt-3 text-sm font-medium text-destructive">Delivery is too late for the first shortage. Arrange available-stock alternatives or an emergency transfer.</div>}
       <table className="mt-4 w-full max-w-lg text-sm">
         <tbody className="divide-y">
-          {p.lines.map((l) => { const i = state.ingredients.find((x) => x.id === l.ingredientId)!; return (
+          {p.lines.map((l) => { const i = state.ingredients.find((x) => x.id === l.ingredientId); if (!i) return null; return (
             <tr key={l.ingredientId}><td className="py-2">{i.name}</td><td className="py-2 text-muted-foreground">short {l.shortage} {i.unit}</td><td className="py-2 text-right font-semibold">{l.qty} {i.unit}</td><td className="py-2 text-right text-muted-foreground">${lineCost(state, l.ingredientId, l.qty).toFixed(2)}</td></tr>
           ); })}
         </tbody>
@@ -131,7 +145,7 @@ function Actions({ p, onModify }: { p: Proposal; onModify: () => void }) {
   const approve = () => {
     const summary = summarize(state, p, "Approved");
     if (p.kind === "substitution") dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary });
-    else dispatch({ type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary });
+    else dispatch({ type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary, vendor: p.vendor, deliveryDate: p.deliveryDate });
     toast.success(summary);
   };
   const reject = () => {
@@ -196,19 +210,21 @@ function SubEditor({ p, onClose }: { p: SubstitutionProposal; onClose: () => voi
 function PurchaseEditor({ p, onClose }: { p: PurchaseProposal; onClose: () => void }) {
   const { state, dispatch } = useKitchen();
   const [lines, setLines] = useState(p.lines);
+  const [deliveryDate, setDeliveryDate] = useState(p.deliveryDate ?? "");
   const total = lines.reduce((s, l) => s + lineCost(state, l.ingredientId, l.qty), 0);
   const save = () => {
     const kept = lines.filter((l) => l.qty > 0);
     const summary = `Approved (modified) ${p.vendor} order ($${total.toFixed(2)})`;
-    dispatch({ type: "approvePurchase", proposalId: p.id, lines: kept, modified: true, summary });
+    dispatch({ type: "approvePurchase", proposalId: p.id, lines: kept, modified: true, summary, vendor: p.vendor, deliveryDate });
     toast.success(summary); onClose();
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle className="font-display text-2xl">Modify {p.vendor} order</DialogTitle></DialogHeader>
+        <label className="text-sm font-medium">Expected delivery<Input aria-label="Expected delivery" className="mt-2" type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} /></label>
         <div className="space-y-3">
-          {lines.map((l, idx) => { const i = state.ingredients.find((x) => x.id === l.ingredientId)!; return (
+          {lines.map((l, idx) => { const i = state.ingredients.find((x) => x.id === l.ingredientId); if (!i) return null; return (
             <div key={l.ingredientId} className="flex items-center gap-3 text-sm">
               <span className="flex-1">{i.name}<span className="block text-xs text-muted-foreground">short {l.shortage} {i.unit}</span></span>
               <Input type="number" min={0} step="any" value={l.qty} className="w-24" onChange={(e) => setLines(lines.map((x, j) => (j === idx ? { ...x, qty: Math.max(0, Number(e.target.value)) } : x)))} />
@@ -219,7 +235,7 @@ function PurchaseEditor({ p, onClose }: { p: PurchaseProposal; onClose: () => vo
         <div className="text-right font-semibold">Total ${total.toFixed(2)}</div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save}>Approve order</Button>
+          <Button disabled={!deliveryDate || !lines.some((line) => line.qty > 0)} onClick={save}>Approve order</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
