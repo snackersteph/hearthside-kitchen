@@ -32,6 +32,13 @@ const list = (names: string[]) =>
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const round = (n: number) => Math.round(n * 100) / 100;
 
+/** Recipe quantities are per serving in g/ml; stock is tracked in kg/L. Convert before comparing. */
+export function perServingQty(stockUnit: string, qty: number, recipeUnit?: "g" | "ml"): number {
+  if (recipeUnit === "g" && stockUnit === "kg") return qty / 1000;
+  if (recipeUnit === "ml" && stockUnit === "L") return qty / 1000;
+  return qty;
+}
+
 export interface Analysis {
   mealReviews?: MealReview[];
   forecast?: {
@@ -84,6 +91,8 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
     const i = state.ingredients.find((x) => x.id === id);
     return i ? i.stock : 0;
   };
+  const servingQty = (ing: { id: string; qty: number; unit?: "g" | "ml" }) =>
+    perServingQty(state.ingredients.find((x) => x.id === ing.id)?.unit ?? "", ing.qty, ing.unit);
 
   for (const meal of MEALS) {
     const main = dishById(state.plan[meal]);
@@ -121,7 +130,7 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
         const covered = remaining.filter((c) => conflictReasons(c.r, d).length === 0 && (!d.tags.includes("pureed") || c.r.diets.includes("pureed")));
         if (!covered.length) continue;
         const likes = covered.filter((c) => c.r.likes.some((l) => d.name.toLowerCase().includes(l.toLowerCase()))).length;
-        const stockOk = d.ingredients.every((ing) => stockOf(ing.id) >= ing.qty * covered.length) ? 0.5 : 0;
+        const stockOk = d.ingredients.every((ing) => stockOf(ing.id) >= servingQty(ing) * covered.length) ? 0.5 : 0;
         const score = covered.length * 10 + likes + stockOk;
         if (score > bestScore) { best = d; bestCovered = covered; bestScore = score; }
       }
@@ -151,7 +160,7 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
   const demand: Record<string, number> = {};
   for (const meal of MEALS)
     for (const dishId of Object.values(served[meal]))
-      for (const ing of dishById(dishId).ingredients) demand[ing.id] = round((demand[ing.id] ?? 0) + ing.qty);
+      for (const ing of dishById(dishId).ingredients) demand[ing.id] = round((demand[ing.id] ?? 0) + servingQty(ing));
 
   const byVendor = new Map<string, PurchaseProposal["lines"]>();
   for (const ing of state.ingredients) {
