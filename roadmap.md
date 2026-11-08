@@ -10,7 +10,7 @@
 - [x] Verify saved changes, forecast consistency, and past-menu restrictions.
 
 # Advance meal approvals
-- [ ] Share full meal and resident-alternative views across today and upcoming dates.
-- [ ] Add date-specific alternative decisions and meal sign-off due one day before service; invalidate approvals after changes.
-- [ ] Highlight actionable approval and shortfall cards on Command Center.
-- [ ] Test advance approval rules and verify menu-to-approval flows.
+- [x] Share full meal and resident-alternative views across today and upcoming dates.
+- [x] Add date-specific alternative decisions and meal sign-off due one day before service; invalidate approvals after changes.
+- [x] Highlight actionable approval and shortfall cards on Command Center.
+- [x] Test advance approval rules and verify menu-to-approval flows.
