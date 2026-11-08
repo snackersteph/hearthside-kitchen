@@ -14,3 +14,9 @@
 - [x] Add date-specific alternative decisions and meal sign-off due one day before service; invalidate approvals after changes.
 - [x] Highlight actionable approval and shortfall cards on Command Center.
 - [x] Test advance approval rules and verify menu-to-approval flows.
+
+# Meal review workflow
+- [ ] Put meal reviews first in deadline/service order, with rejection and alternative choices.
+- [ ] Allow future approved meals to be edited and require fresh approval after changes.
+- [ ] Link each menu meal to its exact review and remove the Command Center header approval button.
+- [ ] Test decision rules and verify the full workflow.
