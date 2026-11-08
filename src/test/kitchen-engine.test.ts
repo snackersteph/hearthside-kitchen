@@ -89,9 +89,9 @@ describe("kitchen agents", () => {
 
   it("approving a swap resolves the conflict and approving an order clears the shortage", () => {
     let s = initialState();
-    for (const p of analyze(s).proposals.filter((p) => p.kind === "substitution"))
-      if (p.kind === "substitution") s = reducer(s, { type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary: "" });
-    expect(analyze(s).conflicts.length).toBe(0);
+    for (const p of analyzeMenuDay(s, 1).proposals)
+      if (p.kind === "substitution") s = reducer(s, { type: "approveSub", proposalId: p.id, serviceDate: p.serviceDate, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary: "" });
+    expect(analyzeMenuDay(s, 1).conflicts.length).toBe(0);
     for (const p of analyze(s).proposals)
       if (p.kind === "purchase") s = reducer(s, { type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary: "" });
     expect(analyze(s).proposals.filter((p) => p.kind === "purchase").length).toBe(0);

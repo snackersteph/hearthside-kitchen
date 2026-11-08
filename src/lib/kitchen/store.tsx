@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type Context, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Context, type ReactNode } from "react";
 import { initialState, dishById } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, mealSignature, type Analysis } from "./engine";
 import type { KitchenState, Meal, PurchaseLine, Resident } from "./types";
@@ -39,7 +39,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: a.dishId } },
         scheduledOverrides: { ...s.scheduledOverrides, [a.date]: { ...s.scheduledOverrides?.[a.date], [a.meal]: {} } },
         mealApprovals: { ...s.mealApprovals, [a.date]: { ...s.mealApprovals?.[a.date], [a.meal]: undefined } },
-        history: s.history.filter((h) => !(h.kind === "substitution" && h.serviceDate === a.date && h.proposalId.includes(`-${a.meal}-`))) };
+        history: s.history };
     }
     case "setMain": {
       const date = dateKey(reference);
@@ -59,7 +59,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         history: [{ proposalId: `meal-${a.date}-${a.meal}-${reference.getTime()}`, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: a.date, summary: `Approved ${a.meal} menu for ${a.date}`, modified: false }, ...s.history] };
     }
     case "approveSub": {
-      if (a.serviceDate && !canApproveMeal(a.serviceDate, reference)) return s;
+      if (!a.serviceDate || !canApproveMeal(a.serviceDate, reference)) return s;
       if (!a.residentIds.length || dishById(a.dishId).meal !== a.meal || a.residentIds.some((id) => {
         const resident = s.residents.find((r) => r.id === id);
         return !resident || conflictReasons(resident, dishById(a.dishId)).length > 0;
@@ -100,12 +100,19 @@ if (import.meta.hot?.data) import.meta.hot.data["kitchenContext"] = Ctx;
 export function KitchenProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer((s: KitchenState, a: Action) => reducer(s, a), undefined, initialState);
   const loaded = useRef(false);
+  const [reference, setReference] = useState<Date | null>(null);
+  useEffect(() => {
+    setReference(new Date());
+    const timer = window.setInterval(() => setReference(new Date()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     try { const raw = localStorage.getItem(KEY); if (raw) dispatch({ type: "load", state: JSON.parse(raw) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
-  const analysis = useMemo(() => analyze(state), [state]);
+  const analysis = useMemo(() => analyze(state, reference ?? new Date("2026-01-01T12:00:00Z")), [state, reference]);
+  if (!reference) return <div className="min-h-screen bg-background" aria-busy="true" />;
   return <Ctx.Provider value={{ state, analysis, dispatch }}>{children}</Ctx.Provider>;
 }
 
