@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type Context, type ReactNode } from "react";
 import { initialState, dishById } from "./data";
 import { analyze, type Analysis } from "./engine";
 import type { KitchenState, Meal, PurchaseLine, Resident } from "./types";
@@ -52,7 +52,11 @@ export function reducer(s: KitchenState, a: Action): KitchenState {
 }
 
 const KEY = "kitchen-command-v1";
-const Ctx = createContext<{ state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void } | null>(null);
+type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
+// Mixed component/function exports can refresh consumers before the mounted provider.
+// Preserve the context identity across hot updates so both generations share it.
+const Ctx: Context<KitchenContextValue | null> = import.meta.hot?.data["kitchenContext"] ?? createContext<KitchenContextValue | null>(null);
+if (import.meta.hot) import.meta.hot.data["kitchenContext"] = Ctx;
 
 export function KitchenProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
