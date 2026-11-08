@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowRight, Check, Pencil, X } from "lucide-react";
+import { Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { DISHES, dishById } from "@/lib/kitchen/data";
 import { compareMealUrgency, conflictReasons, lineCost, type MealReview } from "@/lib/kitchen/engine";
 import { MEALS, type Meal, type Proposal, type PurchaseProposal, type SubstitutionProposal } from "@/lib/kitchen/types";
 import { PageHeader } from "@/components/kitchen/app-shell";
-import { AGENTS, AgentAvatar, AgentChip, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
+import { AGENTS, AgentAvatar, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
