@@ -74,11 +74,17 @@ function MealSection({ meal, offset, reference }: { meal: Meal; offset: number; 
         </div>
         <div>
           <label className="text-xs font-semibold text-muted-foreground">Main dish</label>
-          <Select value={main.id} onValueChange={(v) => { dispatch({ type: "setMain", meal, dishId: v }); toast(`${MEAL_LABEL[meal]} changed — agents re-checking residents`); }}>
+          <Select value={main.id} onValueChange={(v) => {
+            dispatch(offset === 0 ? { type: "setMain", meal, dishId: v } : { type: "setScheduledMain", date, meal, dishId: v });
+            toast(`${MEAL_LABEL[meal]} changed — approval needs review`);
+          }}>
             <SelectTrigger className="mt-1 bg-background"><SelectValue /></SelectTrigger>
             <SelectContent>{DISHES.filter((d) => d.meal === meal).map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
           </Select>
-          <p className="mt-2 text-xs text-muted-foreground">Changing the main clears this meal's approved swaps.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Tag tone={review?.approved ? "ok" : timely ? "warn" : "danger"}>{review?.approved ? "Approved in advance" : timely ? `Approval due ${review?.approvalDueDate}` : "Approval overdue"}</Tag>
+          </div>
+          <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/approvals" search={{ kind: "substitution", date }}>Review {MEAL_LABEL[meal].toLowerCase()} <ChevronRight /></Link></Button>
         </div>
       </div>
 
