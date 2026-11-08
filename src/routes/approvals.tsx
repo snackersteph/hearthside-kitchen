@@ -201,7 +201,7 @@ function SubBody({ p }: { p: SubstitutionProposal }) {
   return (
     <>
       <div className="mt-2 flex flex-wrap gap-2"><Tag>Service {p.serviceDate}</Tag><Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag></div>
-      <h3 className="mt-1 text-sm font-medium">Serve {dishById(p.dishId).name} to {p.residentIds.length} resident{p.residentIds.length > 1 ? "s" : ""}</h3>
+      <h3 className="mt-1 text-base font-semibold">Serve {dishById(p.dishId).name} to {p.residentIds.length} resident{p.residentIds.length > 1 ? "s" : ""}</h3>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {p.residentIds.map((id) => (
           <li key={id} className="rounded-lg bg-muted/60 px-3 py-2 text-sm">
