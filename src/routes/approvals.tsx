@@ -331,7 +331,7 @@ function RejectSubDialog({ p, onClose }: { p: SubstitutionProposal; onClose: () 
       })}</div>
       <DialogFooter>
         <Button variant="outline" onClick={rejectOnly}>Reject without replacement</Button>
-        <Button disabled={!dishId || late} onClick={choose}>Reject & use selected</Button>
+        <ApproveButton disabled={!dishId || late} reason={late ? "Past the approval deadline" : !dishId ? "Select a dish above" : undefined} onClick={choose}>Reject & use selected</ApproveButton>
       </DialogFooter>
     </DialogContent>
   </Dialog>;
