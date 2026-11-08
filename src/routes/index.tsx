@@ -14,6 +14,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Today's meals, dietary issues and live agent activity at a glance." },
       { property: "og:title", content: "Command Center · Hearth Kitchen Command" },
       { property: "og:description", content: "Today's meals, dietary issues and live agent activity at a glance." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CommandCenter,

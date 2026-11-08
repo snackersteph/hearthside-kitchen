@@ -20,6 +20,8 @@ export const Route = createFileRoute("/menu")({
       { name: "description", content: "Breakfast, lunch and dinner with agent-proposed alternatives for every dietary need." },
       { property: "og:title", content: "Daily Menu · Hearth Kitchen Command" },
       { property: "og:description", content: "Breakfast, lunch and dinner with agent-proposed alternatives." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: MenuPage,
