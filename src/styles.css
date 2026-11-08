@@ -81,6 +81,9 @@
   --color-agent-menu-soft: var(--agent-menu-soft);
   --color-agent-inventory: var(--agent-inventory);
   --color-agent-inventory-soft: var(--agent-inventory-soft);
+  --color-meal-breakfast: var(--meal-breakfast);
+  --color-meal-lunch: var(--meal-lunch);
+  --color-meal-dinner: var(--meal-dinner);
   --font-display: "Fraunces", Georgia, serif;
   --font-sans: "Manrope", system-ui, sans-serif;
   --shadow-soft: var(--shadow-soft);
@@ -118,6 +121,9 @@
   --agent-menu-soft: oklch(0.94 0.04 50);
   --agent-inventory: oklch(0.62 0.12 85);
   --agent-inventory-soft: oklch(0.94 0.05 90);
+  --meal-breakfast: oklch(0.95 0.045 145);
+  --meal-lunch: oklch(0.96 0.06 95);
+  --meal-dinner: oklch(0.95 0.035 235);
   --chart-1: oklch(0.52 0.09 190);
   --chart-2: oklch(0.6 0.14 42);
   --chart-3: oklch(0.62 0.12 85);
