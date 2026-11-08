@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyze, analyzeMenuDay, compareMealUrgency, conflictReasons } from "@/lib/kitchen/engine";
+import { analyze, analyzeMenuDay, compareMealUrgency, conflictReasons, perServingQty } from "@/lib/kitchen/engine";
 import { initialState, dishById } from "@/lib/kitchen/data";
 import { reducer } from "@/lib/kitchen/store";
 import { canApproveMeal, approvalDueDate, dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
@@ -107,6 +107,23 @@ describe("kitchen agents", () => {
     expect(analyze(edited, reference).forecast?.days[1]?.demand).toEqual(expected);
     expect(analyze(edited, reference).forecast?.days[1]?.demand).not.toEqual(analyze(s, reference).forecast?.days[1]?.demand);
   });
+  it("converts g/ml recipe quantities to kg/L stock units", () => {
+    expect(perServingQty("kg", 200, "g")).toBe(0.2);
+    expect(perServingQty("L", 15, "ml")).toBe(0.015);
+    expect(perServingQty("each", 1)).toBe(1);
+    const s = initialState();
+    const day = analyzeMenuDay({ ...s, plan: { ...s.plan, lunch: "l-puree" } });
+    // 13 of 14 residents: the vegetarian gets the lentil-soup alternative instead.
+    expect(day.demand["sweet-potato"]).toBeCloseTo((s.residents.length - 1) * 0.2, 2);
+    const forecast = analyze(s).forecast;
+    expect(forecast?.todayShortage["sweet-potato"]).toBeUndefined();
+    expect(forecast?.todayShortage["carrots"]).toBeUndefined();
+    expect(forecast?.todayShortage["olive-oil"]).toBeUndefined();
+    expect(forecast?.todayShortage["garlic"]).toBeUndefined();
+    expect(forecast?.todayShortage["butter"]).toBeUndefined();
+    expect(forecast?.todayShortage["banana"]).toBeUndefined();
+  });
+
   it("dietary agent flags dairy residents for the alfredo", () => {
     const s = initialState();
     const flagged = analyze(s).conflicts.filter((c) => c.meal === "lunch" && c.reasons.includes("contains dairy")).map((c) => c.residentId).sort();

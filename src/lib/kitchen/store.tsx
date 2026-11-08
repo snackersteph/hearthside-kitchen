@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Context, type ReactNode } from "react";
-import { initialState, dishById } from "./data";
+import { initialState, dishById, INGREDIENTS } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, mealSignature, type Analysis } from "./engine";
 import type { KitchenState, Meal, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
@@ -159,7 +159,9 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     try { const raw = localStorage.getItem(KEY); const saved = raw ? JSON.parse(raw) as KitchenState : null;
-      dispatch({ type: "load", state: saved?.seeded ? saved : seedDemo(saved ?? initialState()) }); } catch { /* ignore */ }
+      // Catalog grows over time: merge ingredients the saved state doesn't know yet.
+      const merged = saved ? { ...saved, ingredients: [...saved.ingredients, ...INGREDIENTS.filter((i) => !saved.ingredients.some((x) => x.id === i.id)).map((i) => ({ ...i }))] } : null;
+      dispatch({ type: "load", state: merged?.seeded ? merged : seedDemo(merged ?? initialState()) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);

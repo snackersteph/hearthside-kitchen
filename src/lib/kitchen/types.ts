@@ -36,7 +36,8 @@ export interface Dish {
   description: string;
   allergens: Allergen[];
   tags: DishTag[];
-  ingredients: { id: string; qty: number }[];
+  /** qty is per serving; unit "g"/"ml" converts to the ingredient's kg/L stock unit. */
+  ingredients: { id: string; qty: number; unit?: "g" | "ml" }[];
 }
 
 export interface Decision {
