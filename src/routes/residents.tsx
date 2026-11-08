@@ -53,7 +53,7 @@ function ResidentsPage() {
             </div>
             <div className="mt-4 space-y-1 border-t pt-3">
               {MEALS.map((m) => {
-                const dish = dishById(analysis.served[m][r.id]);
+                const dish = dishById(analysis.served[m][r.id] ?? state.plan[m]);
                 const unsafe = conflictReasons(r, dish).length > 0;
                 const c = analysis.conflicts.find((x) => x.meal === m && x.residentId === r.id);
                 return (
