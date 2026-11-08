@@ -15,7 +15,7 @@ const dayAt = (o: number) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.s
 function rotatedDish(meal: Meal, offset: number, todayId: string) {
   const opts = DISHES.filter((d) => d.meal === meal);
   const base = Math.max(0, opts.findIndex((d) => d.id === todayId));
-  return opts[(((base + offset) % opts.length) + opts.length) % opts.length];
+  return opts[(((base + offset) % opts.length) + opts.length) % opts.length] ?? dishById(todayId);
 }
 
 export const Route = createFileRoute("/menu")({
