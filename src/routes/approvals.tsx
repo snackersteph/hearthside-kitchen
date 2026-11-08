@@ -124,6 +124,10 @@ function MealReviewCard({ review: r, proposals }: { review: MealReview; proposal
   const timely = canApproveMeal(r.serviceDate);
   const ready = !r.pending && !r.unresolved && !r.rejected;
   const editable = !r.approved || r.serviceDate > dateKey(new Date());
+  const blockReason = !timely ? `Past the ${r.approvalDueDate} deadline`
+    : r.rejected ? "Choose a replacement first"
+    : r.unresolved ? `${r.unresolved} resident${r.unresolved > 1 ? "s" : ""} still need a safe dish`
+    : r.pending ? `${r.pending} alternative${r.pending > 1 ? "s" : ""} awaiting approval` : undefined;
   return <article id={`meal-${r.serviceDate}-${r.meal}`} className="scroll-mt-6 rounded-lg border bg-card p-4 shadow-soft">
     <div className="flex flex-wrap items-center justify-between gap-3">
     <div className="min-w-0">
@@ -133,9 +137,9 @@ function MealReviewCard({ review: r, proposals }: { review: MealReview; proposal
       <Tag tone={ready ? "ok" : "warn"}>{r.unresolved ? `${r.unresolved} unresolved residents` : r.pending ? `${r.pending} residents awaiting alternatives` : "Dietary checks clear"}</Tag></div>
     </div>
     <div className="flex flex-wrap gap-2">
-      {!r.approved && <Button size="sm" variant="outline" onClick={() => setRejecting(true)}><X />{r.rejected ? "Choose replacement" : "Reject"}</Button>}
+      {!r.approved && <Button size="sm" variant="outline" onClick={() => setRejecting(true)}><X />Reject</Button>}
       {r.approved && <Button size="sm" variant="outline" disabled={!editable} onClick={() => setEditing(true)}><Pencil />Edit meal</Button>}
-      {!r.approved && <Button size="sm" disabled={!timely || !ready} title={!ready ? "Resolve resident alternatives first" : undefined} onClick={() => { dispatch({ type: "approveMeal", date: r.serviceDate, meal: r.meal }); toast.success(`${MEAL_LABEL[r.meal]} approved for ${r.serviceDate}`); }}><Check />Approve</Button>}
+      {!r.approved && <ApproveButton disabled={!timely || !ready} reason={blockReason} onClick={() => { dispatch({ type: "approveMeal", date: r.serviceDate, meal: r.meal }); toast.success(`${MEAL_LABEL[r.meal]} approved for ${r.serviceDate}`); }} />}
     </div></div>
     {proposals.length > 0 && <div className="mt-4 space-y-3 border-t pt-4">{proposals.map((p) => <ProposalCard key={p.id} p={p} />)}</div>}
     {editing && <MealEditor review={r} onClose={() => setEditing(false)} />}
