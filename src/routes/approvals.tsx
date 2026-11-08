@@ -268,7 +268,7 @@ function Actions({ p, onModify }: { p: Proposal; onModify: () => void }) {
       {p.kind === "substitution"
         ? <Button variant="outline" size="sm" onClick={onModify}><X /> Reject</Button>
         : <><Button variant="outline" size="sm" onClick={reject}><X /> Reject</Button><Button variant="outline" size="sm" onClick={onModify}><Pencil /> Modify</Button></>}
-      <Button size="sm" disabled={late} onClick={approve}><Check /> Approve</Button>
+      <ApproveButton disabled={late} reason={late ? "Past the approval deadline" : undefined} onClick={approve} />
     </div>
   );
 }
@@ -365,7 +365,7 @@ function PurchaseEditor({ p, onClose }: { p: PurchaseProposal; onClose: () => vo
         <div className="text-right font-semibold">Total ${total.toFixed(2)}</div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={!deliveryDate || !lines.some((line) => line.qty > 0)} onClick={save}>Approve order</Button>
+          <ApproveButton disabled={!deliveryDate || !lines.some((line) => line.qty > 0)} reason={!deliveryDate ? "Set an expected delivery date" : undefined} onClick={save}>Approve order</ApproveButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
