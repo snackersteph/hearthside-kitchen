@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
+import { canApproveMeal, dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
 import { Button } from "@/components/ui/button";
+import { analyzeMenuDay } from "@/lib/kitchen/engine";
 
 const MEAL_BG: Record<Meal, string> = { breakfast: "bg-meal-breakfast", lunch: "bg-meal-lunch", dinner: "bg-meal-dinner" };
 
@@ -35,17 +36,22 @@ function MenuPage() {
   return (
     <>
       <PageHeader eyebrow="Today" title="Daily Menu" />
-      <p className="-mt-5 mb-6 max-w-2xl text-sm text-muted-foreground">Change a main dish and the agents immediately re-check every resident, propose alternatives and update stock needs.</p>
+
       {reference ? <WeekCalendar offset={offset} onChange={setOffset} reference={reference} /> : <div className="mb-6 h-32" />}
-      {offset === 0
-        ? <div className="space-y-6">{MEALS.map((m) => <MealSection key={m} meal={m} />)}</div>
-        : reference && <div className="space-y-6">{MEALS.map((m) => <PlannedMeal key={m} meal={m} offset={offset} reference={reference} />)}</div>}
+      {reference && <div className="space-y-6">{MEALS.map((m) => offset < 0
+        ? <PlannedMeal key={m} meal={m} offset={offset} reference={reference} />
+        : <MealSection key={m} meal={m} offset={offset} reference={reference} />)}</div>}
     </>
   );
 }
 
-function MealSection({ meal }: { meal: Meal }) {
-  const { state, analysis, dispatch } = useKitchen();
+function MealSection({ meal, offset, reference }: { meal: Meal; offset: number; reference: Date }) {
+  const { state: kitchen, analysis: allAnalysis, dispatch } = useKitchen();
+  const state = scheduledState(kitchen, offset, reference);
+  const analysis = analyzeMenuDay(kitchen, offset, reference);
+  const date = dateKey(dayAt(offset, reference));
+  const review = allAnalysis.mealReviews?.find((r) => r.serviceDate === date && r.meal === meal);
+  const timely = canApproveMeal(date, reference);
   const main = dishById(state.plan[meal]);
   const approved = new Map<string, string[]>();
   for (const [rid, did] of Object.entries(state.overrides[meal])) approved.set(did, [...(approved.get(did) ?? []), rid]);
@@ -86,7 +92,7 @@ function MealSection({ meal }: { meal: Meal }) {
             </div>
           ))}
           {pending.map((p) => p.kind === "substitution" && (
-            <Link to="/approvals" key={p.id} className="rounded-xl border border-dashed border-agent-menu bg-card p-4 transition hover:bg-agent-menu-soft">
+            <Link to="/approvals" search={{ kind: "substitution", date }} key={p.id} className="rounded-xl border border-dashed border-agent-menu bg-card p-4 transition hover:bg-agent-menu-soft">
               <div className="flex items-center gap-2"><AgentAvatar agent="menu" size="sm" /><Tag tone="warn">Proposed · awaiting approval</Tag></div>
               <div className="mt-2 font-semibold">{dishById(p.dishId).name}</div>
               <div className="mt-1 text-sm text-muted-foreground">{p.residentIds.map((r) => residentName(state, r)).join(", ")}</div>
