@@ -6,6 +6,8 @@ import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 
 type Action =
   | { type: "approveMeal"; date: string; meal: Meal }
+  | { type: "rejectMeal"; date: string; meal: Meal }
+  | { type: "setMealPlan"; date: string; meal: Meal; dishId: string; overrides: Record<string, string> }
   | { type: "setHorizon"; days: 7 | 14 }
   | { type: "setLeadTime"; days: number }
   | { type: "receiveOrder"; id: string }
@@ -47,6 +49,31 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
     }
     case "updateResident": return { ...s, residents: s.residents.map((r) => (r.id === a.resident.id ? a.resident : r)) };
     case "setStock": return { ...s, ingredients: s.ingredients.map((i) => (i.id === a.id ? { ...i, stock: Math.max(0, a.stock) } : i)) };
+    case "setMealPlan": {
+      if (!canApproveMeal(a.date, reference) || dishById(a.dishId).meal !== a.meal) return s;
+      if (Object.entries(a.overrides).some(([id, dishId]) => {
+        const resident = s.residents.find((r) => r.id === id);
+        const dish = dishById(dishId);
+        return !resident || dish.meal !== a.meal || conflictReasons(resident, dish).length > 0;
+      })) return s;
+      return { ...s,
+        scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: a.dishId } },
+        scheduledOverrides: { ...s.scheduledOverrides, [a.date]: { ...s.scheduledOverrides?.[a.date], [a.meal]: a.overrides } },
+        mealApprovals: { ...s.mealApprovals, [a.date]: { ...s.mealApprovals?.[a.date], [a.meal]: undefined } },
+        mealRejections: { ...s.mealRejections, [a.date]: { ...s.mealRejections?.[a.date], [a.meal]: undefined } },
+      };
+    }
+    case "rejectMeal": {
+      if (a.date < dateKey(reference)) return s;
+      const offset = Math.round((new Date(`${a.date}T12:00:00`).getTime() - new Date(`${dateKey(reference)}T12:00:00`).getTime()) / 86400000);
+      const dayState = scheduledState(s, offset, reference);
+      return { ...s,
+        scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: dayState.plan[a.meal] } },
+        mealApprovals: { ...s.mealApprovals, [a.date]: { ...s.mealApprovals?.[a.date], [a.meal]: undefined } },
+        mealRejections: { ...s.mealRejections, [a.date]: { ...s.mealRejections?.[a.date], [a.meal]: { signature: mealSignature(dayState, a.meal), rejectedAt: reference.getTime() } } },
+        history: [{ proposalId: `meal-reject-${a.date}-${a.meal}-${reference.getTime()}`, kind: "substitution", status: "rejected", at: reference.getTime(), serviceDate: a.date, summary: `Rejected ${a.meal} menu for ${a.date}`, modified: false }, ...s.history],
+      };
+    }
     case "approveMeal": {
       if (!canApproveMeal(a.date, reference)) return s;
       const offset = Math.round((new Date(`${a.date}T12:00:00`).getTime() - new Date(`${dateKey(reference)}T12:00:00`).getTime()) / 86400000);
@@ -56,6 +83,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       return { ...s,
         scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: dayState.plan[a.meal] } },
         mealApprovals: { ...s.mealApprovals, [a.date]: { ...s.mealApprovals?.[a.date], [a.meal]: { signature, approvedAt: reference.getTime() } } },
+        mealRejections: { ...s.mealRejections, [a.date]: { ...s.mealRejections?.[a.date], [a.meal]: undefined } },
         history: [{ proposalId: `meal-${a.date}-${a.meal}-${reference.getTime()}`, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: a.date, summary: `Approved ${a.meal} menu for ${a.date}`, modified: false }, ...s.history] };
     }
     case "approveSub": {

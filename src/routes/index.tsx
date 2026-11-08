@@ -41,9 +41,7 @@ function CommandCenter() {
 
   return (
     <>
-      <PageHeader eyebrow={today} title="Good evening, Chef.">
-        <Button asChild size="lg"><Link to="/approvals">Review {awaiting} approvals <ArrowRight /></Link></Button>
-      </PageHeader>
+      <PageHeader eyebrow={today} title="Good evening, Chef." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (

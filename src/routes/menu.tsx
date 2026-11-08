@@ -64,7 +64,7 @@ function MealSection({ meal, offset, reference }: { meal: Meal; offset: number; 
       <div className="grid gap-6 p-6 md:grid-cols-[1fr_320px]">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{MEAL_LABEL[meal]} · {MEAL_TIME[meal]}</div>
-          <h2 className="mt-1 text-2xl font-semibold">{main.name}</h2>
+          <h2 className="mt-1 text-2xl font-semibold"><Link to="/approvals" search={{ kind: "substitution", date, meal }} className="hover:text-primary">{main.name}</Link></h2>
           <p className="mt-1 text-sm text-muted-foreground">{main.description}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {main.allergens.map((a) => <Tag key={a} tone="danger">{a}</Tag>)}
@@ -84,7 +84,7 @@ function MealSection({ meal, offset, reference }: { meal: Meal; offset: number; 
           <div className="mt-3 flex flex-wrap gap-2">
             <Tag tone={review?.approved ? "ok" : timely ? "warn" : "danger"}>{review?.approved ? "Approved in advance" : timely ? `Approval due ${review?.approvalDueDate}` : "Approval overdue"}</Tag>
           </div>
-          <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/approvals" search={{ kind: "substitution", date }}>Review {MEAL_LABEL[meal].toLowerCase()} <ChevronRight /></Link></Button>
+          <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/approvals" search={{ kind: "substitution", date, meal }}>Review {MEAL_LABEL[meal].toLowerCase()} <ChevronRight /></Link></Button>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ function MealSection({ meal, offset, reference }: { meal: Meal; offset: number; 
             </div>
           ))}
           {pending.map((p) => p.kind === "substitution" && (
-            <Link to="/approvals" search={{ kind: "substitution", date }} key={p.id} className="rounded-xl border border-dashed border-agent-menu bg-card p-4 transition hover:bg-agent-menu-soft">
+            <Link to="/approvals" search={{ kind: "substitution", date, meal }} key={p.id} className="rounded-xl border border-dashed border-agent-menu bg-card p-4 transition hover:bg-agent-menu-soft">
               <div className="flex items-center gap-2"><AgentAvatar agent="menu" size="sm" /><Tag tone="warn">Proposed · awaiting approval</Tag></div>
               <div className="mt-2 font-semibold">{dishById(p.dishId).name}</div>
               <div className="mt-1 text-sm text-muted-foreground">{p.residentIds.map((r) => residentName(state, r)).join(", ")}</div>
