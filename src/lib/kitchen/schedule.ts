@@ -18,14 +18,15 @@ export function rotatedDish(meal: Meal, offset: number, todayId: string) {
   return options[((base + offset) % options.length + options.length) % options.length] ?? dishById(todayId);
 }
 
-export function scheduledState(state: KitchenState, offset: number): KitchenState {
+export function scheduledState(state: KitchenState, offset: number, reference = new Date()): KitchenState {
   if (offset === 0) return state;
+  const saved = offset > 0 ? state.scheduledPlans?.[dateKey(dayAt(offset, reference))] : undefined;
   return {
     ...state,
     plan: {
-      breakfast: rotatedDish("breakfast", offset, state.plan.breakfast).id,
-      lunch: rotatedDish("lunch", offset, state.plan.lunch).id,
-      dinner: rotatedDish("dinner", offset, state.plan.dinner).id,
+      breakfast: saved?.breakfast ?? rotatedDish("breakfast", offset, state.plan.breakfast).id,
+      lunch: saved?.lunch ?? rotatedDish("lunch", offset, state.plan.lunch).id,
+      dinner: saved?.dinner ?? rotatedDish("dinner", offset, state.plan.dinner).id,
     },
     overrides: { breakfast: {}, lunch: {}, dinner: {} },
     history: [],

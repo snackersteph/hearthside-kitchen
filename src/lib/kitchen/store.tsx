@@ -11,6 +11,7 @@ type Action =
   | { type: "load"; state: KitchenState }
   | { type: "reset" }
   | { type: "setMain"; meal: Meal; dishId: string }
+  | { type: "setScheduledMain"; date: string; meal: Meal; dishId: string }
   | { type: "updateResident"; resident: Resident }
   | { type: "setStock"; id: string; stock: number }
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; modified: boolean; summary: string }
@@ -31,6 +32,10 @@ export function reducer(s: KitchenState, a: Action): KitchenState {
     }
     case "load": return a.state;
     case "reset": return initialState();
+    case "setScheduledMain": {
+      if (a.date <= dateKey(dayAt(0)) || dishById(a.dishId).meal !== a.meal) return s;
+      return { ...s, scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: a.dishId } } };
+    }
     case "setMain": return { ...s, plan: { ...s.plan, [a.meal]: a.dishId }, overrides: { ...s.overrides, [a.meal]: {} } };
     case "updateResident": return { ...s, residents: s.residents.map((r) => (r.id === a.resident.id ? a.resident : r)) };
     case "setStock": return { ...s, ingredients: s.ingredients.map((i) => (i.id === a.id ? { ...i, stock: Math.max(0, a.stock) } : i)) };

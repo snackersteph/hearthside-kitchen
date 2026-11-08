@@ -3,5 +3,6 @@
 - Staff decisions are the only persisted actions (history + overrides + onOrder), stored in localStorage via KitchenProvider until a backend is added.
 - Engine rules are covered by src/test/kitchen-engine.test.ts; update it when safety rules change.
 - Menu and inventory use the shared schedule helpers; analyze derives horizon demand and purchasing requests so forecasts cannot diverge from the displayed sample rotation.
+- Date-specific future main dishes are staff decisions stored in KitchenState.scheduledPlans; the shared schedule resolves them before the sample rotation so editing one day changes only that day's forecast.
 - Approved purchases remain incoming until explicitly received; dated order lines support delivery-aware forecasts without treating unreceived stock as available today.
 - Preserve Kitchen context identity through Vite hot updates so mounted providers and refreshed consumers cannot split into different contexts.
