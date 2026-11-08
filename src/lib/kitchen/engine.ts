@@ -25,7 +25,7 @@ export function conflictReasons(r: Resident, dish: Dish): string[] {
   return out;
 }
 
-const firstName = (r: Resident) => r.name.split(" ")[0];
+const firstName = (r: Resident): string => r.name.split(" ")[0] ?? r.name;
 const list = (names: string[]) =>
   names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -82,7 +82,8 @@ export function analyze(state: KitchenState): Analysis {
       let bestCovered: typeof remaining = [];
       let bestScore = -1;
       for (const d of candidates) {
-        const covered = remaining.filter((c) => conflictReasons(c.r, d).length === 0);
+        // Only offer a puréed dish to residents who actually need puréed texture.
+        const covered = remaining.filter((c) => conflictReasons(c.r, d).length === 0 && (!d.tags.includes("pureed") || c.r.diets.includes("pureed")));
         if (!covered.length) continue;
         const likes = covered.filter((c) => c.r.likes.some((l) => d.name.toLowerCase().includes(l.toLowerCase()))).length;
         const stockOk = d.ingredients.every((ing) => stockOf(ing.id) >= ing.qty * covered.length) ? 0.5 : 0;

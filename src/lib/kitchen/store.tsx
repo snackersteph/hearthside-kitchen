@@ -32,7 +32,7 @@ export function reducer(s: KitchenState, a: Action): KitchenState {
         history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified }, ...s.history],
       };
     case "reject":
-      return { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, note: a.note }, ...s.history] };
+      return { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.note ? { note: a.note } : {}) }, ...s.history] };
   }
 }
 
