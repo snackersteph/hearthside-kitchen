@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
@@ -104,6 +104,19 @@ function ApprovalsPage() {
 
 const Empty = ({ text }: { text: string }) => <div className="rounded-xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">{text}</div>;
 
+/** One consistent approve button everywhere: solid green when clickable, muted with a reason when blocked. */
+function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boolean; reason?: string | undefined; onClick: () => void; children?: ReactNode }) {
+  return (
+    <span className="inline-flex flex-col items-end gap-1">
+      <Button size="sm" disabled={disabled} title={reason} onClick={onClick}
+        className="bg-success text-success-foreground hover:bg-success/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100">
+        <Check />{children ?? "Approve"}
+      </Button>
+      {disabled && reason && <span className="max-w-44 text-right text-xs text-muted-foreground">{reason}</span>}
+    </span>
+  );
+}
+
 function MealReviewCard({ review: r, proposals }: { review: MealReview; proposals: SubstitutionProposal[] }) {
   const { dispatch } = useKitchen();
   const [editing, setEditing] = useState(false);
@@ -111,6 +124,10 @@ function MealReviewCard({ review: r, proposals }: { review: MealReview; proposal
   const timely = canApproveMeal(r.serviceDate);
   const ready = !r.pending && !r.unresolved && !r.rejected;
   const editable = !r.approved || r.serviceDate > dateKey(new Date());
+  const blockReason = !timely ? `Past the ${r.approvalDueDate} deadline`
+    : r.rejected ? "Choose a replacement first"
+    : r.unresolved ? `${r.unresolved} resident${r.unresolved > 1 ? "s" : ""} still need a safe dish`
+    : r.pending ? `${r.pending} alternative${r.pending > 1 ? "s" : ""} awaiting approval` : undefined;
   return <article id={`meal-${r.serviceDate}-${r.meal}`} className="scroll-mt-6 rounded-lg border bg-card p-4 shadow-soft">
     <div className="flex flex-wrap items-center justify-between gap-3">
     <div className="min-w-0">
@@ -120,9 +137,9 @@ function MealReviewCard({ review: r, proposals }: { review: MealReview; proposal
       <Tag tone={ready ? "ok" : "warn"}>{r.unresolved ? `${r.unresolved} unresolved residents` : r.pending ? `${r.pending} residents awaiting alternatives` : "Dietary checks clear"}</Tag></div>
     </div>
     <div className="flex flex-wrap gap-2">
-      {!r.approved && <Button size="sm" variant="outline" onClick={() => setRejecting(true)}><X />{r.rejected ? "Choose replacement" : "Reject"}</Button>}
+      {!r.approved && <Button size="sm" variant="outline" onClick={() => setRejecting(true)}><X />Reject</Button>}
       {r.approved && <Button size="sm" variant="outline" disabled={!editable} onClick={() => setEditing(true)}><Pencil />Edit meal</Button>}
-      {!r.approved && <Button size="sm" disabled={!timely || !ready} title={!ready ? "Resolve resident alternatives first" : undefined} onClick={() => { dispatch({ type: "approveMeal", date: r.serviceDate, meal: r.meal }); toast.success(`${MEAL_LABEL[r.meal]} approved for ${r.serviceDate}`); }}><Check />Approve</Button>}
+      {!r.approved && <ApproveButton disabled={!timely || !ready} reason={blockReason} onClick={() => { dispatch({ type: "approveMeal", date: r.serviceDate, meal: r.meal }); toast.success(`${MEAL_LABEL[r.meal]} approved for ${r.serviceDate}`); }} />}
     </div></div>
     {proposals.length > 0 && <div className="mt-4 space-y-3 border-t pt-4">{proposals.map((p) => <ProposalCard key={p.id} p={p} />)}</div>}
     {editing && <MealEditor review={r} onClose={() => setEditing(false)} />}
@@ -251,7 +268,7 @@ function Actions({ p, onModify }: { p: Proposal; onModify: () => void }) {
       {p.kind === "substitution"
         ? <Button variant="outline" size="sm" onClick={onModify}><X /> Reject</Button>
         : <><Button variant="outline" size="sm" onClick={reject}><X /> Reject</Button><Button variant="outline" size="sm" onClick={onModify}><Pencil /> Modify</Button></>}
-      <Button size="sm" disabled={late} onClick={approve}><Check /> Approve</Button>
+      <ApproveButton disabled={late} reason={late ? "Past the approval deadline" : undefined} onClick={approve} />
     </div>
   );
 }
@@ -314,7 +331,7 @@ function RejectSubDialog({ p, onClose }: { p: SubstitutionProposal; onClose: () 
       })}</div>
       <DialogFooter>
         <Button variant="outline" onClick={rejectOnly}>Reject without replacement</Button>
-        <Button disabled={!dishId || late} onClick={choose}>Reject & use selected</Button>
+        <ApproveButton disabled={!dishId || late} reason={late ? "Past the approval deadline" : !dishId ? "Select a dish above" : undefined} onClick={choose}>Reject & use selected</ApproveButton>
       </DialogFooter>
     </DialogContent>
   </Dialog>;
@@ -348,7 +365,7 @@ function PurchaseEditor({ p, onClose }: { p: PurchaseProposal; onClose: () => vo
         <div className="text-right font-semibold">Total ${total.toFixed(2)}</div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={!deliveryDate || !lines.some((line) => line.qty > 0)} onClick={save}>Approve order</Button>
+          <ApproveButton disabled={!deliveryDate || !lines.some((line) => line.qty > 0)} reason={!deliveryDate ? "Set an expected delivery date" : undefined} onClick={save}>Approve order</ApproveButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -71,6 +71,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
@@ -111,6 +112,7 @@
   --input: oklch(0.88 0.02 85);
   --ring: oklch(0.38 0.07 155);
   --success: oklch(0.55 0.12 150);
+  --success-foreground: oklch(0.98 0.01 85);
   --success-soft: oklch(0.93 0.05 150);
   --warning: oklch(0.7 0.14 70);
   --warning-soft: oklch(0.94 0.06 85);
