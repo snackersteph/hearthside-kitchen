@@ -34,7 +34,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       }) };
     }
     case "load": return a.state;
-    case "reset": return initialState();
+    case "reset": return seedDemo(initialState(), reference);
     case "setScheduledMain": {
       if (a.date <= dateKey(dayAt(0, reference)) || dishById(a.dishId).meal !== a.meal) return s;
       return { ...s,
@@ -120,6 +120,27 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
   }
 }
 
+/** Demo seed: signs off a few upcoming services and adds past decisions so every tab has examples. */
+export function seedDemo(base: KitchenState, reference = new Date()): KitchenState {
+  let s: KitchenState = { ...base, seeded: true };
+  const day = 86400000;
+  for (const offset of [2, 3, 4]) {
+    const date = dateKey(dayAt(offset, reference));
+    for (const p of analyze(s, reference).proposals) {
+      if (p.kind === "substitution" && p.serviceDate === date) s = reducer(s, { type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, serviceDate: date, modified: false, summary: `Approved ${date} ${p.meal} swap to ${dishById(p.dishId).name}` }, reference);
+    }
+    for (const meal of ["breakfast", "lunch", "dinner"] as Meal[]) s = reducer(s, { type: "approveMeal", date, meal }, reference);
+  }
+  const past = [1, 2, 4, 6, 9, 12, 18, 25].map((ago, i): KitchenState["history"][number] => {
+    const date = dateKey(dayAt(-ago, reference));
+    const meal = (["breakfast", "lunch", "dinner"] as Meal[])[i % 3]!;
+    return i % 4 === 3
+      ? { proposalId: `seed-${ago}`, kind: "purchase", status: "approved", at: reference.getTime() - ago * day, summary: `Approved Sysco produce order ($${(80 + ago * 7).toFixed(2)})`, modified: false }
+      : { proposalId: `seed-${ago}`, kind: "substitution", status: i % 5 === 4 ? "rejected" : "approved", at: reference.getTime() - (ago + 1) * day, serviceDate: date, summary: `${i % 5 === 4 ? "Rejected" : "Approved"} ${meal} menu for ${date}`, modified: i % 3 === 1 };
+  });
+  return { ...s, history: [...s.history.map((h, i) => ({ ...h, at: reference.getTime() - (i % 3 + 1) * 3600000 })), ...past] };
+}
+
 const KEY = "kitchen-command-v1";
 type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
 // Mixed component/function exports can refresh consumers before the mounted provider.
@@ -137,7 +158,8 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(timer);
   }, []);
   useEffect(() => {
-    try { const raw = localStorage.getItem(KEY); if (raw) dispatch({ type: "load", state: JSON.parse(raw) }); } catch { /* ignore */ }
+    try { const raw = localStorage.getItem(KEY); const saved = raw ? JSON.parse(raw) as KitchenState : null;
+      dispatch({ type: "load", state: saved?.seeded ? saved : seedDemo(saved ?? initialState()) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);

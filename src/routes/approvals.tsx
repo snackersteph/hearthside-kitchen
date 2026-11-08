@@ -11,7 +11,6 @@ import { AGENTS, AgentAvatar, AgentChip, MEAL_LABEL, Tag } from "@/components/ki
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { canApproveMeal, dateKey, scheduledState } from "@/lib/kitchen/schedule";
@@ -46,9 +45,13 @@ function ApprovalsPage() {
   const reviews = allReviews.filter((r) => !r.approved);
   const approved = allReviews.filter((r) => r.approved);
   const purchases = proposals.filter((p) => p.kind === "purchase");
-  const [tab, setTab] = useState(date && meal && approved.length ? "approved" : "pending");
-  useEffect(() => { setTab(date && meal && approved.length ? "approved" : "pending"); }, [date, meal, approved.length]);
-  const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date));
+  const defaultTab = kind === "purchase" ? "orders" : date && meal && approved.length ? "approved" : "pending";
+  const [tab, setTab] = useState(defaultTab);
+  useEffect(() => { setTab(defaultTab); }, [defaultTab]);
+  const [range, setRange] = useState<7 | 14 | 30>(7);
+  const now = Date.now();
+  const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000).sort((x, y) => y.at - x.at);
+  const subsFor = (r: MealReview) => proposals.filter((p): p is SubstitutionProposal => p.kind === "substitution" && p.serviceDate === r.serviceDate && p.meal === r.meal);
   return (
     <>
       <PageHeader eyebrow="Human in the loop" title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
@@ -60,30 +63,35 @@ function ApprovalsPage() {
       {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">Service date: {date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: kind ? { kind } : {} })}>All dates</Button></div>}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="pending">Pending ({purchases.length + reviews.length})</TabsTrigger>
+          {kind !== "purchase" && <TabsTrigger value="pending">Meals to approve ({reviews.length})</TabsTrigger>}
           {kind !== "purchase" && <TabsTrigger value="approved">Approved meals ({approved.length})</TabsTrigger>}
+          {kind !== "substitution" && <TabsTrigger value="orders">Purchase orders ({purchases.length})</TabsTrigger>}
           <TabsTrigger value="history">History ({history.length})</TabsTrigger>
         </TabsList>
-        <TabsContent value="pending" className="mt-6 space-y-4">
-          {purchases.length === 0 && reviews.length === 0 && <Empty text={kind === "purchase" ? "No purchase requests awaiting approval." : "Nothing awaiting approval."} />}
-          {reviews.length > 0 && <section className="space-y-3">
-            <h2 className="text-xl font-semibold">Meals awaiting approval · most urgent first</h2>
-            {reviews.map((r) => <MealReviewCard key={r.serviceDate + r.meal} review={r} proposals={proposals.filter((p): p is SubstitutionProposal => p.kind === "substitution" && p.serviceDate === r.serviceDate && p.meal === r.meal)} />)}
-          </section>}
-          {purchases.length > 0 && <section className="space-y-3"><h2 className="text-xl font-semibold">Purchase requests</h2>{purchases.map((p) => <ProposalCard key={p.id} p={p} />)}</section>}
+        <TabsContent value="pending" className="mt-6 space-y-3">
+          {reviews.length === 0 ? <Empty text="No meals awaiting approval." /> : <>
+            <p className="text-sm text-muted-foreground">Most urgent first — each meal must be signed off by the day before service.</p>
+            {reviews.map((r) => <MealReviewCard key={r.serviceDate + r.meal} review={r} proposals={subsFor(r)} />)}
+          </>}
         </TabsContent>
         <TabsContent value="approved" className="mt-6 space-y-3">
           {approved.length ? approved.map((r) => <MealReviewCard key={r.serviceDate + r.meal} review={r} proposals={[]} />) : <Empty text="No approved meals for this selection." />}
         </TabsContent>
-        <TabsContent value="history" className="mt-6">
-          {history.length === 0 ? <Empty text="No decisions yet." /> : (
+        <TabsContent value="orders" className="mt-6 space-y-3">
+          {purchases.length ? purchases.map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} /></div>) : <Empty text="No purchase requests awaiting approval." />}
+        </TabsContent>
+        <TabsContent value="history" className="mt-6 space-y-3">
+          <div className="flex gap-2" role="group" aria-label="History range">
+            {([7, 14, 30] as const).map((d) => <Button key={d} size="sm" variant={range === d ? "default" : "outline"} onClick={() => setRange(d)}>{d === 7 ? "Past week" : d === 14 ? "Past 2 weeks" : "Past month"}</Button>)}
+          </div>
+          {history.length === 0 ? <Empty text="No decisions in this period." /> : (
             <ul className="divide-y rounded-xl border bg-card shadow-soft">
               {history.map((h) => (
                 <li key={h.proposalId + h.at} className="flex items-center gap-3 px-5 py-4 text-sm">
                   <Tag tone={h.status === "approved" ? "ok" : "danger"}>{h.status}</Tag>
                   {h.modified && <Tag tone="warn">modified</Tag>}
                   <span className="flex-1">{h.summary}</span>
-                  <span className="text-xs text-muted-foreground">{new Date(h.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
+                  <span className="text-xs text-muted-foreground">{new Date(h.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                 </li>
               ))}
             </ul>
@@ -99,6 +107,7 @@ const Empty = ({ text }: { text: string }) => <div className="rounded-xl border 
 function MealReviewCard({ review: r, proposals }: { review: MealReview; proposals: SubstitutionProposal[] }) {
   const { dispatch } = useKitchen();
   const [editing, setEditing] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const timely = canApproveMeal(r.serviceDate);
   const ready = !r.pending && !r.unresolved && !r.rejected;
   const editable = !r.approved || r.serviceDate > dateKey(new Date());
@@ -111,12 +120,13 @@ function MealReviewCard({ review: r, proposals }: { review: MealReview; proposal
       <Tag tone={ready ? "ok" : "warn"}>{r.unresolved ? `${r.unresolved} unresolved residents` : r.pending ? `${r.pending} residents awaiting alternatives` : "Dietary checks clear"}</Tag></div>
     </div>
     <div className="flex flex-wrap gap-2">
-      {!r.approved && <Button size="sm" variant="ghost" disabled={r.rejected} onClick={() => { dispatch({ type: "rejectMeal", date: r.serviceDate, meal: r.meal }); toast(`${MEAL_LABEL[r.meal]} rejected — replacement needed`); }}><X />Reject meal</Button>}
-      <Button size="sm" variant="outline" disabled={!editable} onClick={() => setEditing(true)}><Pencil />{r.approved ? "Edit meal" : "Select alternatives"}</Button>
-      {!r.approved && <Button size="sm" disabled={!timely || !ready} onClick={() => { dispatch({ type: "approveMeal", date: r.serviceDate, meal: r.meal }); toast.success(`${MEAL_LABEL[r.meal]} approved for ${r.serviceDate}`); }}><Check />Approve meal</Button>}
+      {!r.approved && <Button size="sm" variant="outline" onClick={() => setRejecting(true)}><X />{r.rejected ? "Choose replacement" : "Reject"}</Button>}
+      {r.approved && <Button size="sm" variant="outline" disabled={!editable} onClick={() => setEditing(true)}><Pencil />Edit meal</Button>}
+      {!r.approved && <Button size="sm" disabled={!timely || !ready} title={!ready ? "Resolve resident alternatives first" : undefined} onClick={() => { dispatch({ type: "approveMeal", date: r.serviceDate, meal: r.meal }); toast.success(`${MEAL_LABEL[r.meal]} approved for ${r.serviceDate}`); }}><Check />Approve</Button>}
     </div></div>
     {proposals.length > 0 && <div className="mt-4 space-y-3 border-t pt-4">{proposals.map((p) => <ProposalCard key={p.id} p={p} />)}</div>}
     {editing && <MealEditor review={r} onClose={() => setEditing(false)} />}
+    {rejecting && <RejectMealDialog review={r} onClose={() => setRejecting(false)} />}
   </article>;
 }
 
@@ -167,7 +177,7 @@ function ProposalCard({ p }: { p: Proposal }) {
         </div>
         <Actions p={p} onModify={() => setEditing(true)} />
       </div>
-      {editing && (p.kind === "substitution" ? <SubEditor p={p} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}
+      {editing && (p.kind === "substitution" ? <RejectSubDialog p={p} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}
     </article>
   );
 }
@@ -238,56 +248,76 @@ function Actions({ p, onModify }: { p: Proposal; onModify: () => void }) {
   };
   return (
     <div className="flex gap-2">
-      <Button variant="ghost" size="sm" onClick={reject}><X /> Reject</Button>
-      <Button variant="outline" size="sm" disabled={late} onClick={onModify}><Pencil /> Modify</Button>
+      {p.kind === "substitution"
+        ? <Button variant="outline" size="sm" onClick={onModify}><X /> Reject</Button>
+        : <><Button variant="outline" size="sm" onClick={reject}><X /> Reject</Button><Button variant="outline" size="sm" onClick={onModify}><Pencil /> Modify</Button></>}
       <Button size="sm" disabled={late} onClick={approve}><Check /> Approve</Button>
     </div>
   );
 }
 
-function SubEditor({ p, onClose }: { p: SubstitutionProposal; onClose: () => void }) {
+function RejectMealDialog({ review: r, onClose }: { review: MealReview; onClose: () => void }) {
   const { state, dispatch } = useKitchen();
-  const [ids, setIds] = useState(p.residentIds);
-  const [dishId, setDishId] = useState(p.dishId);
-  const chosen = state.residents.filter((r) => ids.includes(r.id));
-  const options = DISHES.filter((d) => d.meal === p.meal && d.id !== p.fromDishId);
-  const unsafe = chosen.filter((r) => conflictReasons(r, dishById(dishId)).length);
-  const save = () => {
-    const summary = `Approved (modified) ${p.serviceDate ?? ""} ${MEAL_LABEL[p.meal]} swap to ${dishById(dishId).name} for ${chosen.map((r) => r.name.split(" ")[0]).join(", ")}`;
-    dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId, residentIds: ids, serviceDate: p.serviceDate, modified: true, summary });
+  const options = DISHES.filter((d) => d.meal === r.meal && d.id !== r.mainDishId);
+  const [dishId, setDishId] = useState<string | null>(null);
+  const replace = () => {
+    if (!dishId) return;
+    if (!r.rejected) dispatch({ type: "rejectMeal", date: r.serviceDate, meal: r.meal });
+    dispatch({ type: "setMealPlan", date: r.serviceDate, meal: r.meal, dishId, overrides: {} });
+    toast(`${MEAL_LABEL[r.meal]} replaced with ${dishById(dishId).name} — review again`); onClose();
+  };
+  return <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <DialogContent className="max-w-lg">
+      <DialogHeader><DialogTitle className="font-display text-2xl">Reject {dishById(r.mainDishId).name}?</DialogTitle></DialogHeader>
+      <p className="text-sm text-muted-foreground">{r.serviceDate} · {MEAL_LABEL[r.meal]}. Pick a replacement main dish:</p>
+      <div className="space-y-2">{options.map((d) => {
+        const bad = state.residents.filter((p) => conflictReasons(p, d).length).length;
+        return <button key={d.id} type="button" onClick={() => setDishId(d.id)} className={cn("flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm", dishId === d.id ? "border-primary bg-secondary" : "hover:border-primary")}>
+          <span><span className="font-medium">{d.name}</span><span className="block text-xs text-muted-foreground">{d.description}</span></span>
+          {bad ? <Tag tone="warn">{bad} need alternatives</Tag> : <Tag tone="ok">safe for all</Tag>}
+        </button>;
+      })}</div>
+      <DialogFooter>
+        <Button variant="outline" disabled={r.rejected} onClick={() => { dispatch({ type: "rejectMeal", date: r.serviceDate, meal: r.meal }); toast(`${MEAL_LABEL[r.meal]} rejected — replacement needed`); onClose(); }}>Reject without replacement</Button>
+        <Button disabled={!dishId} onClick={replace}>Reject & use selected</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>;
+}
+
+function RejectSubDialog({ p, onClose }: { p: SubstitutionProposal; onClose: () => void }) {
+  const { state, dispatch } = useKitchen();
+  const chosen = state.residents.filter((r) => p.residentIds.includes(r.id));
+  const options = DISHES.filter((d) => d.meal === p.meal && d.id !== p.fromDishId && d.id !== p.dishId);
+  const [dishId, setDishId] = useState<string | null>(null);
+  const late = !p.serviceDate || !canApproveMeal(p.serviceDate);
+  const choose = () => {
+    if (!dishId) return;
+    const summary = `Rejected ${dishById(p.dishId).name}; approved ${dishById(dishId).name} for ${chosen.map((r) => r.name.split(" ")[0]).join(", ")} (${p.serviceDate} ${MEAL_LABEL[p.meal]})`;
+    dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId, residentIds: p.residentIds, serviceDate: p.serviceDate, modified: true, summary });
     toast.success(summary); onClose();
   };
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle className="font-display text-2xl">Modify substitution</DialogTitle></DialogHeader>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Alternative dish</div>
-        <div className="space-y-2">
-          {options.map((d) => {
-            const bad = chosen.filter((r) => conflictReasons(r, d).length).length;
-            return (
-              <Button variant="outline" key={d.id} onClick={() => setDishId(d.id)} className={cn("flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm", dishId === d.id ? "border-primary bg-secondary" : "hover:border-primary")}>
-                <span>{d.name}</span>{bad ? <Tag tone="danger">unsafe for {bad}</Tag> : <Tag tone="ok">safe</Tag>}
-              </Button>
-            );
-          })}
-        </div>
-        <div className="mt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Residents</div>
-        <div className="grid grid-cols-2 gap-2">
-          {p.residentIds.map((id) => (
-            <label key={id} className="flex items-center gap-2 text-sm">
-              <Checkbox checked={ids.includes(id)} onCheckedChange={(c) => setIds(c ? [...ids, id] : ids.filter((x) => x !== id))} />{residentName(state, id)}
-            </label>
-          ))}
-        </div>
-        {unsafe.length > 0 && <div className="rounded-lg bg-danger-soft p-3 text-sm text-destructive">Dietary Agent blocks this: unsafe for {unsafe.map((r) => r.name).join(", ")}.</div>}
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={!ids.length || unsafe.length > 0 || !p.serviceDate || !canApproveMeal(p.serviceDate)} onClick={save}>Approve with changes</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  const rejectOnly = () => {
+    const summary = summarize(state, p, "Rejected");
+    dispatch({ type: "reject", proposalId: p.id, kind: "substitution", summary, serviceDate: p.serviceDate });
+    toast(summary); onClose();
+  };
+  return <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <DialogContent className="max-w-lg">
+      <DialogHeader><DialogTitle className="font-display text-2xl">Reject {dishById(p.dishId).name}?</DialogTitle></DialogHeader>
+      <p className="text-sm text-muted-foreground">Choose another alternative for {chosen.map((r) => r.name).join(", ")}:</p>
+      <div className="space-y-2">{options.map((d) => {
+        const bad = chosen.filter((r) => conflictReasons(r, d).length).length;
+        return <button key={d.id} type="button" disabled={bad > 0} onClick={() => setDishId(d.id)} className={cn("flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm disabled:opacity-50", dishId === d.id ? "border-primary bg-secondary" : "hover:border-primary")}>
+          <span className="font-medium">{d.name}</span>{bad ? <Tag tone="danger">unsafe for {bad}</Tag> : <Tag tone="ok">safe</Tag>}
+        </button>;
+      })}</div>
+      <DialogFooter>
+        <Button variant="outline" onClick={rejectOnly}>Reject without replacement</Button>
+        <Button disabled={!dishId || late} onClick={choose}>Reject & use selected</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>;
 }
 
 function PurchaseEditor({ p, onClose }: { p: PurchaseProposal; onClose: () => void }) {

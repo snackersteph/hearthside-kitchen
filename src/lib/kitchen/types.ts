@@ -51,6 +51,7 @@ export interface Decision {
 }
 
 export interface KitchenState {
+  seeded?: boolean;
   purchaseHorizonDays?: 7 | 14;
   leadTimeDays?: number;
   orders?: PurchaseOrder[];
