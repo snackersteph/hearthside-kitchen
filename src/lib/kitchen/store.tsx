@@ -1,20 +1,34 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type Context, type ReactNode } from "react";
 import { initialState, dishById } from "./data";
 import { analyze, type Analysis } from "./engine";
 import type { KitchenState, Meal, PurchaseLine, Resident } from "./types";
+import { dateKey, dayAt } from "./schedule";
 
 type Action =
+  | { type: "setHorizon"; days: 7 | 14 }
+  | { type: "setLeadTime"; days: number }
+  | { type: "receiveOrder"; id: string }
   | { type: "load"; state: KitchenState }
   | { type: "reset" }
   | { type: "setMain"; meal: Meal; dishId: string }
   | { type: "updateResident"; resident: Resident }
   | { type: "setStock"; id: string; stock: number }
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; modified: boolean; summary: string }
-  | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string }
+  | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
   | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; note?: string };
 
 export function reducer(s: KitchenState, a: Action): KitchenState {
   switch (a.type) {
+    case "setHorizon": return { ...s, purchaseHorizonDays: a.days };
+    case "setLeadTime": return { ...s, leadTimeDays: Math.max(1, Math.min(14, Math.round(a.days) || 2)) };
+    case "receiveOrder": {
+      const order = s.orders?.find((o) => o.id === a.id && o.status === "incoming");
+      if (!order) return s;
+      return { ...s, orders: (s.orders ?? []).map((o) => o.id === a.id ? { ...o, status: "received" } : o), ingredients: s.ingredients.map((i) => {
+        const qty = order.lines.filter((line) => line.ingredientId === i.id).reduce((sum, line) => sum + line.qty, 0);
+        return { ...i, stock: i.stock + qty, onOrder: Math.max(0, i.onOrder - qty) };
+      }) };
+    }
     case "load": return a.state;
     case "reset": return initialState();
     case "setMain": return { ...s, plan: { ...s.plan, [a.meal]: a.dishId }, overrides: { ...s.overrides, [a.meal]: {} } };
@@ -28,6 +42,7 @@ export function reducer(s: KitchenState, a: Action): KitchenState {
     case "approvePurchase":
       return {
         ...s,
+        orders: [...(s.orders ?? []), { id: `${a.proposalId}-${s.history.length}`, vendor: a.vendor ?? s.ingredients.find((i) => i.id === a.lines[0]?.ingredientId)?.vendor ?? "Supplier", lines: a.lines, deliveryDate: a.deliveryDate ?? dateKey(dayAt(Math.max(1, s.leadTimeDays ?? 2))), status: "incoming" }],
         ingredients: s.ingredients.map((i) => { const l = a.lines.find((x) => x.ingredientId === i.id); return l ? { ...i, onOrder: i.onOrder + l.qty } : i; }),
         history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified }, ...s.history],
       };
@@ -37,7 +52,11 @@ export function reducer(s: KitchenState, a: Action): KitchenState {
 }
 
 const KEY = "kitchen-command-v1";
-const Ctx = createContext<{ state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void } | null>(null);
+type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
+// Mixed component/function exports can refresh consumers before the mounted provider.
+// Preserve the context identity across hot updates so both generations share it.
+const Ctx: Context<KitchenContextValue | null> = import.meta.hot?.data?.["kitchenContext"] ?? createContext<KitchenContextValue | null>(null);
+if (import.meta.hot?.data) import.meta.hot.data["kitchenContext"] = Ctx;
 
 export function KitchenProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);

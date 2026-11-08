@@ -1,4 +1,5 @@
 import { DISHES, dishById } from "./data";
+import { dateKey, dayAt, scheduledState } from "./schedule";
 import {
   MEALS,
   type AgentMessage,
@@ -32,6 +33,14 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const round = (n: number) => Math.round(n * 100) / 100;
 
 export interface Analysis {
+  forecast?: {
+    days: { date: string; demand: Record<string, number> }[];
+    demand: Record<string, number>;
+    firstShortDate: Record<string, string>;
+    todayShortage: Record<string, number>;
+    unresolved: number;
+    horizonDays: 7 | 14;
+  };
   conflicts: Conflict[];
   proposals: Proposal[];
   messages: AgentMessage[];
@@ -39,7 +48,7 @@ export interface Analysis {
   served: Record<Meal, Record<string, string>>; // projected dish per resident
 }
 
-export function analyze(state: KitchenState): Analysis {
+function analyzeDay(state: KitchenState): Analysis {
   const decided = new Set(state.history.map((h) => h.proposalId));
   const conflicts: Conflict[] = [];
   const proposals: Proposal[] = [];
@@ -47,7 +56,7 @@ export function analyze(state: KitchenState): Analysis {
   const served = { breakfast: {}, lunch: {}, dinner: {} } as Analysis["served"];
   const stockOf = (id: string) => {
     const i = state.ingredients.find((x) => x.id === id);
-    return i ? i.stock + i.onOrder : 0;
+    return i ? i.stock : 0;
   };
 
   for (const meal of MEALS) {
@@ -135,6 +144,63 @@ export function analyze(state: KitchenState): Analysis {
   if (!byVendor.size) messages.push({ id: "inv-ok", agent: "inventory", tone: "ok", text: "Stock covers every planned and proposed meal today." });
 
   return { conflicts, proposals, messages, demand, served };
+}
+
+/** Shared purchasing forecast: today plus upcoming scheduled meals, with safe swaps. */
+export function analyze(state: KitchenState, reference = new Date()): Analysis {
+  const today = analyzeDay(state);
+  const horizonDays = state.purchaseHorizonDays ?? 7;
+  const leadTime = Math.max(1, state.leadTimeDays ?? 2);
+  const days = Array.from({ length: horizonDays }, (_, offset) => {
+    const result = offset === 0 ? today : analyzeDay(scheduledState(state, offset));
+    return { date: dateKey(dayAt(offset, reference)), demand: result.demand, unresolved: result.conflicts.filter((c) => c.status === "needs-staff").length };
+  });
+  const demand: Record<string, number> = {};
+  const firstShortDate: Record<string, string> = {};
+  const todayShortage: Record<string, number> = {};
+  const byVendor = new Map<string, PurchaseProposal["lines"]>();
+  for (const ingredient of state.ingredients) {
+    let balance = ingredient.stock;
+    const incoming = (state.orders ?? []).filter((order) => order.status === "incoming").flatMap((order) => order.lines.filter((line) => line.ingredientId === ingredient.id).map((line) => ({ date: order.deliveryDate, qty: line.qty })));
+    const tracked = incoming.reduce((sum, line) => sum + line.qty, 0);
+    const legacyIncoming = Math.max(0, ingredient.onOrder - tracked);
+    if (legacyIncoming) incoming.push({ date: dateKey(dayAt(leadTime, reference)), qty: legacyIncoming });
+    let used = 0;
+    for (let offset = 0; offset < days.length; offset++) {
+      const day = days[offset];
+      if (!day) continue;
+      // Unreceived/overdue deliveries never become available for today's service.
+      if (offset > 0) balance += incoming.filter((line) => line.date === day.date || (offset === 1 && line.date < day.date)).reduce((sum, line) => sum + line.qty, 0);
+      const need = day.demand[ingredient.id] ?? 0;
+      used = round(used + need);
+      balance = round(balance - need);
+      if (balance < 0 && !firstShortDate[ingredient.id]) firstShortDate[ingredient.id] = day.date;
+      if (offset === 0 && balance < 0) todayShortage[ingredient.id] = round(-balance);
+    }
+    demand[ingredient.id] = used;
+    const arrivingWithinWindow = incoming.filter((line) => line.date <= (days.at(-1)?.date ?? "")).reduce((sum, line) => sum + line.qty, 0);
+    const shortage = round(used - ingredient.stock - arrivingWithinWindow);
+    if (shortage <= 0) continue;
+    const qty = Math.ceil(shortage / ingredient.packSize) * ingredient.packSize;
+    byVendor.set(ingredient.vendor, [...(byVendor.get(ingredient.vendor) ?? []), { ingredientId: ingredient.id, shortage, qty }]);
+  }
+  const proposals = today.proposals.filter((p) => p.kind === "substitution");
+  const purchases: PurchaseProposal[] = [];
+  const messages = today.messages.filter((message) => message.agent !== "inventory");
+  for (const [vendor, lines] of byVendor) {
+    const prefix = `po-${slug(vendor)}-`;
+    const signature = `${horizonDays}-${lines.map((line) => `${line.ingredientId}.${line.qty}`).join("-")}`;
+    const id = `${prefix}${signature}`;
+    if (state.history.some((decision) => decision.proposalId === id && decision.status === "rejected")) continue;
+    const neededDate = lines.map((line) => firstShortDate[line.ingredientId]).filter((date): date is string => Boolean(date)).sort()[0] ?? dateKey(dayAt(leadTime, reference));
+    const needed = new Date(`${neededDate}T12:00:00`);
+    const orderByDate = dateKey(dayAt(-leadTime, needed));
+    purchases.push({ id, kind: "purchase", agent: "inventory", vendor, lines, total: round(lines.reduce((sum, line) => sum + lineCost(state, line.ingredientId, line.qty), 0)), horizonDays, deliveryDate: dateKey(dayAt(leadTime, reference)), neededDate, orderByDate });
+    messages.push({ id: `inv-${id}`, agent: "inventory", to: "staff", tone: "alert", text: `${vendor}: purchase request for ${horizonDays}-day consumption. First shortage ${neededDate}; allow ${leadTime} days for delivery.` });
+  }
+  if (Object.keys(todayShortage).length) messages.push({ id: "inv-service-risk", agent: "inventory", to: "staff", tone: "alert", text: "Today's stock is short. Incoming purchases cannot cover same-day service; arrange an available-stock alternative." });
+  if (!purchases.length) messages.push({ id: "inv-ok", agent: "inventory", tone: "ok", text: `No new purchase requests for the ${horizonDays}-day plan. Check service risks separately from incoming stock.` });
+  return { ...today, proposals: [...proposals, ...purchases], messages, forecast: { days, demand, firstShortDate, todayShortage, horizonDays, unresolved: days.reduce((sum, day) => sum + day.unresolved, 0) } };
 }
 
 export function lineCost(state: KitchenState, ingredientId: string, qty: number) {

@@ -50,6 +50,9 @@ export interface Decision {
 }
 
 export interface KitchenState {
+  purchaseHorizonDays?: 7 | 14;
+  leadTimeDays?: number;
+  orders?: PurchaseOrder[];
   plan: Record<Meal, string>;
   overrides: Record<Meal, Record<string, string>>;
   residents: Resident[];
@@ -75,6 +78,10 @@ export interface PurchaseLine {
 }
 
 export interface PurchaseProposal {
+  horizonDays?: 7 | 14;
+  deliveryDate?: string;
+  neededDate?: string;
+  orderByDate?: string;
   id: string;
   kind: "purchase";
   agent: "inventory";
@@ -84,6 +91,14 @@ export interface PurchaseProposal {
 }
 
 export type Proposal = SubstitutionProposal | PurchaseProposal;
+
+export interface PurchaseOrder {
+  id: string;
+  vendor: string;
+  lines: PurchaseLine[];
+  deliveryDate: string;
+  status: "incoming" | "received";
+}
 
 export interface Conflict {
   meal: Meal;

@@ -20,6 +20,8 @@ export const Route = createFileRoute("/residents")({
       { name: "description", content: "Dietary profiles, allergies and texture needs for every resident." },
       { property: "og:title", content: "Residents · Hearth Kitchen Command" },
       { property: "og:description", content: "Dietary profiles, allergies and texture needs for every resident." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ResidentsPage,

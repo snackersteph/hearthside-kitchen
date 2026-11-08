@@ -9,14 +9,9 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { dayAt, rotatedDish } from "@/lib/kitchen/schedule";
 
 const MEAL_BG: Record<Meal, string> = { breakfast: "bg-meal-breakfast", lunch: "bg-meal-lunch", dinner: "bg-meal-dinner" };
-const dayAt = (o: number) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + o); return d; };
-function rotatedDish(meal: Meal, offset: number, todayId: string) {
-  const opts = DISHES.filter((d) => d.meal === meal);
-  const base = Math.max(0, opts.findIndex((d) => d.id === todayId));
-  return opts[(((base + offset) % opts.length) + opts.length) % opts.length] ?? dishById(todayId);
-}
 
 export const Route = createFileRoute("/menu")({
   head: () => ({
@@ -25,6 +20,8 @@ export const Route = createFileRoute("/menu")({
       { name: "description", content: "Breakfast, lunch and dinner with agent-proposed alternatives for every dietary need." },
       { property: "og:title", content: "Daily Menu · Hearth Kitchen Command" },
       { property: "og:description", content: "Breakfast, lunch and dinner with agent-proposed alternatives." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: MenuPage,
@@ -139,7 +136,7 @@ function PlannedMeal({ meal, offset }: { meal: Meal; offset: number }) {
         {dish.allergens.map((a) => <Tag key={a} tone="danger">{a}</Tag>)}
         {dish.tags.map((t) => <Tag key={t}>{t}</Tag>)}
       </div>
-      <p className="mt-4 text-xs text-muted-foreground">{offset < 0 ? "Past menu (view only)." : "Agents check residents and stock for this day once it becomes today."}</p>
+      <p className="mt-4 text-xs text-muted-foreground">{offset < 0 ? "Sample past menu (view only)." : "Sample rotating plan · dietary alternatives included in the inventory forecast."}</p>
     </section>
   );
 }
