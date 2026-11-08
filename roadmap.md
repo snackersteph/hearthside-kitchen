@@ -5,6 +5,6 @@
 - [x] Test purchasing rules and verify approval-to-inventory flow.
 
 # Daily menu updates
-- [ ] Allow date-specific upcoming meal changes while keeping past menus view-only.
-- [ ] Make meal backgrounds very faint green, yellow, and blue.
-- [ ] Verify saved changes, forecast consistency, and past-menu restrictions.
+- [x] Allow date-specific upcoming meal changes while keeping past menus view-only.
+- [x] Make meal backgrounds very faint green, yellow, and blue.
+- [x] Verify saved changes, forecast consistency, and past-menu restrictions.
