@@ -37,10 +37,12 @@ describe("kitchen agents", () => {
     expect(analyze(s, reference).mealReviews?.find((r) => r.serviceDate === "2026-11-08" && r.meal === "breakfast")?.approved).toBe(true);
     const arrived = new Date("2026-11-08T12:00:00");
     expect(analyze(s, arrived).mealReviews?.find((r) => r.serviceDate === "2026-11-08" && r.meal === "breakfast")?.approved).toBe(true);
-    const edited = reducer(s, { type: "setScheduledMain", date: "2026-11-08", meal: "breakfast", dishId: "b-oats" }, reference);
+    const edited = reducer(s, { type: "setScheduledMain", date: "2026-11-08", meal: "breakfast", dishId: "b-oatmeal" }, reference);
     expect(edited.mealApprovals?.["2026-11-08"]?.breakfast).toBeUndefined();
     expect(edited.scheduledOverrides?.["2026-11-08"]?.breakfast).toEqual({});
-    const changed = reducer(s, { type: "updateResident", resident: { ...s.residents[0], id: "r1", allergens: ["nuts"] } } as Parameters<typeof reducer>[1], reference);
+    const resident = s.residents[0];
+    if (!resident) throw new Error("Missing resident");
+    const changed = reducer(s, { type: "updateResident", resident: { ...resident, allergens: ["nuts"] } }, reference);
     expect(analyze(changed, reference).mealReviews?.find((r) => r.serviceDate === "2026-11-08" && r.meal === "breakfast")?.approved).toBe(false);
   });
 

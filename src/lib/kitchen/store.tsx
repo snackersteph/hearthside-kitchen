@@ -15,9 +15,9 @@ type Action =
   | { type: "setScheduledMain"; date: string; meal: Meal; dishId: string }
   | { type: "updateResident"; resident: Resident }
   | { type: "setStock"; id: string; stock: number }
-  | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string; modified: boolean; summary: string }
+  | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
-  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string; note?: string };
+  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string };
 
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
   switch (a.type) {
@@ -98,7 +98,7 @@ const Ctx: Context<KitchenContextValue | null> = import.meta.hot?.data?.["kitche
 if (import.meta.hot?.data) import.meta.hot.data["kitchenContext"] = Ctx;
 
 export function KitchenProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, initialState);
+  const [state, dispatch] = useReducer((s: KitchenState, a: Action) => reducer(s, a), undefined, initialState);
   const loaded = useRef(false);
   useEffect(() => {
     try { const raw = localStorage.getItem(KEY); if (raw) dispatch({ type: "load", state: JSON.parse(raw) }); } catch { /* ignore */ }

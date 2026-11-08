@@ -50,7 +50,7 @@ function ApprovalsPage() {
         <Button variant={kind === "purchase" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "purchase" } })}>Orders only</Button>
         <Button variant={kind === "substitution" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "substitution" } })}>Meals only</Button>
       </div>
-      {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">Service date: {date}<Button size="sm" variant="ghost" onClick={() => navigate({ search: { kind } })}>All dates</Button></div>}
+      {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">Service date: {date}<Button size="sm" variant="ghost" onClick={() => navigate({ search: kind ? { kind } : {} })}>All dates</Button></div>}
       <Tabs defaultValue="pending">
         <TabsList>
           <TabsTrigger value="pending">Pending ({proposals.length + reviews.length})</TabsTrigger>
