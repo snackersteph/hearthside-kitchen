@@ -185,3 +185,13 @@ describe("kitchen agents", () => {
     expect(order?.kind === "purchase" ? order.deliveryDate : undefined).toBe("2026-11-09");
   });
 });
+
+import { seedDemo } from "@/lib/kitchen/store";
+describe("demo seed", () => {
+  it("starts with approved upcoming meals and past-month history", () => {
+    const reference = new Date("2026-11-07T12:00:00");
+    const s = seedDemo(initialState(), reference);
+    expect((analyze(s, reference).mealReviews ?? []).filter((r) => r.approved).length).toBeGreaterThan(0);
+    expect(s.history.some((h) => h.at < reference.getTime() - 14 * 86400000)).toBe(true);
+  });
+});
