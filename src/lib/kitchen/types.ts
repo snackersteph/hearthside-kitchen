@@ -58,6 +58,7 @@ export interface KitchenState {
   scheduledPlans?: Record<string, Partial<Record<Meal, string>>>;
   scheduledOverrides?: Record<string, Partial<Record<Meal, Record<string, string>>>>;
   mealApprovals?: Record<string, Partial<Record<Meal, { signature: string; approvedAt: number }>>>;
+  mealRejections?: Record<string, Partial<Record<Meal, { signature: string; rejectedAt: number }>>>;
   overrides: Record<Meal, Record<string, string>>;
   residents: Resident[];
   ingredients: Ingredient[];

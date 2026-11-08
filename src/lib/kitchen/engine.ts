@@ -56,12 +56,18 @@ export interface MealReview {
   mainDishId: string;
   signature: string;
   approved: boolean;
+  rejected: boolean;
   pending: number;
   unresolved: number;
 }
 
 export function mealSignature(state: KitchenState, meal: Meal) {
   return JSON.stringify([state.plan[meal], state.overrides[meal], state.residents.map((r) => [r.id, r.allergens, r.diets])]);
+}
+
+/** Earlier deadlines first, then breakfast/lunch/dinner for the same service. */
+export function compareMealUrgency(a: MealReview, b: MealReview) {
+  return a.approvalDueDate.localeCompare(b.approvalDueDate) || a.serviceDate.localeCompare(b.serviceDate) || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal);
 }
 
 export function analyzeMenuDay(state: KitchenState, offset = 0, reference = new Date()): Analysis {
@@ -178,6 +184,7 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
       const signature = mealSignature(dayState, meal);
       return { serviceDate, approvalDueDate: approvalDueDate(serviceDate), meal, mainDishId: dayState.plan[meal], signature,
         approved: state.mealApprovals?.[serviceDate]?.[meal]?.signature === signature,
+        rejected: state.mealRejections?.[serviceDate]?.[meal]?.signature === signature,
         pending: result.conflicts.filter((c) => c.meal === meal && c.status === "proposal-pending").length,
         unresolved: result.conflicts.filter((c) => c.meal === meal && c.status === "needs-staff").length };
     });
