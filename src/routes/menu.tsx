@@ -6,10 +6,11 @@ import { PageHeader } from "@/components/kitchen/app-shell";
 import { AgentAvatar, MEAL_LABEL, MEAL_TIME, Tag } from "@/components/kitchen/agents";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { dayAt, rotatedDish } from "@/lib/kitchen/schedule";
+import { dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
+import { Button } from "@/components/ui/button";
 
 const MEAL_BG: Record<Meal, string> = { breakfast: "bg-meal-breakfast", lunch: "bg-meal-lunch", dinner: "bg-meal-dinner" };
 
@@ -29,14 +30,16 @@ export const Route = createFileRoute("/menu")({
 
 function MenuPage() {
   const [offset, setOffset] = useState(0);
+  const [reference, setReference] = useState<Date | null>(null);
+  useEffect(() => { setReference(new Date()); }, []);
   return (
     <>
       <PageHeader eyebrow="Today" title="Daily Menu" />
       <p className="-mt-5 mb-6 max-w-2xl text-sm text-muted-foreground">Change a main dish and the agents immediately re-check every resident, propose alternatives and update stock needs.</p>
-      <WeekCalendar offset={offset} onChange={setOffset} />
+      {reference ? <WeekCalendar offset={offset} onChange={setOffset} reference={reference} /> : <div className="mb-6 h-32" />}
       {offset === 0
         ? <div className="space-y-6">{MEALS.map((m) => <MealSection key={m} meal={m} />)}</div>
-        : <div className="space-y-6">{MEALS.map((m) => <PlannedMeal key={m} meal={m} offset={offset} />)}</div>}
+        : reference && <div className="space-y-6">{MEALS.map((m) => <PlannedMeal key={m} meal={m} offset={offset} reference={reference} />)}</div>}
     </>
   );
 }
@@ -101,37 +104,52 @@ function MealSection({ meal }: { meal: Meal }) {
   );
 }
 
-function WeekCalendar({ offset, onChange }: { offset: number; onChange: (o: number) => void }) {
+function WeekCalendar({ offset, onChange, reference }: { offset: number; onChange: (o: number) => void; reference: Date }) {
   const days = Array.from({ length: 15 }, (_, i) => i - 7);
   return (
     <div className="mb-6 rounded-2xl border bg-card p-4 shadow-soft">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-semibold"><CalendarDays className="h-4 w-4" />{dayAt(offset).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{offset === 0 && <Tag tone="ok">Today</Tag>}</div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold"><CalendarDays className="h-4 w-4" />{dayAt(offset, reference).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{offset === 0 && <Tag tone="ok">Today</Tag>}</div>
         <div className="flex gap-1">
-          <button aria-label="Previous day" disabled={offset <= -7} onClick={() => onChange(offset - 1)} className="rounded-md border p-1.5 disabled:opacity-40"><ChevronLeft className="h-4 w-4" /></button>
-          <button onClick={() => onChange(0)} className="rounded-md border px-2 text-xs font-semibold">Today</button>
-          <button aria-label="Next day" disabled={offset >= 7} onClick={() => onChange(offset + 1)} className="rounded-md border p-1.5 disabled:opacity-40"><ChevronRight className="h-4 w-4" /></button>
+          <Button variant="outline" size="icon" aria-label="Previous day" disabled={offset <= -7} onClick={() => onChange(offset - 1)}><ChevronLeft /></Button>
+          <Button variant="outline" size="sm" onClick={() => onChange(0)}>Today</Button>
+          <Button variant="outline" size="icon" aria-label="Next day" disabled={offset >= 7} onClick={() => onChange(offset + 1)}><ChevronRight /></Button>
         </div>
       </div>
-      <div className="grid grid-cols-[repeat(15,minmax(0,1fr))] gap-1">
-        {days.map((o) => { const d = dayAt(o); return (
-          <button key={o} onClick={() => onChange(o)} className={cn("rounded-lg py-2 text-center transition", o === offset ? "bg-primary text-primary-foreground" : "hover:bg-muted", o === 0 && o !== offset && "ring-1 ring-primary")}>
+      <div className="overflow-x-auto">
+      <div className="grid min-w-[540px] grid-cols-[repeat(15,minmax(0,1fr))] gap-1">
+        {days.map((o) => { const d = dayAt(o, reference); return (
+          <Button variant={o === offset ? "default" : "ghost"} aria-label={d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} aria-pressed={o === offset} key={o} onClick={() => onChange(o)} className={cn("h-14 flex-col gap-0 px-0 py-2 text-center", o === 0 && o !== offset && "ring-1 ring-primary")}>
             <div className="text-[10px] uppercase opacity-70">{d.toLocaleDateString(undefined, { weekday: "short" })}</div>
             <div className="text-sm font-semibold">{d.getDate()}</div>
-          </button>); })}
+          </Button>); })}
+      </div>
       </div>
     </div>
   );
 }
 
-function PlannedMeal({ meal, offset }: { meal: Meal; offset: number }) {
-  const { state } = useKitchen();
-  const dish = rotatedDish(meal, offset, state.plan[meal]);
+function PlannedMeal({ meal, offset, reference }: { meal: Meal; offset: number; reference: Date }) {
+  const { state, dispatch } = useKitchen();
+  const dish = dishById(scheduledState(state, offset, reference).plan[meal]);
+  const date = dateKey(dayAt(offset, reference));
   return (
     <section className={cn("rounded-2xl border p-6 shadow-soft", MEAL_BG[meal])}>
       <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{MEAL_LABEL[meal]} · {MEAL_TIME[meal]} · {offset < 0 ? "Served" : "Planned"}</div>
       <h2 className="mt-1 text-2xl font-semibold">{dish.name}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{dish.description}</p>
+      {offset > 0 && (
+        <div className="mt-4 max-w-sm">
+          <label htmlFor={`planned-${meal}`} className="text-xs font-semibold text-muted-foreground">Main dish</label>
+          <Select value={dish.id} onValueChange={(dishId) => {
+            dispatch({ type: "setScheduledMain", date, meal, dishId });
+            toast(`${MEAL_LABEL[meal]} updated for ${dayAt(offset, reference).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`);
+          }}>
+            <SelectTrigger id={`planned-${meal}`} aria-label={`${MEAL_LABEL[meal]} main dish`} className="mt-1 bg-background"><SelectValue /></SelectTrigger>
+            <SelectContent>{DISHES.filter((d) => d.meal === meal).map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="mt-3 flex flex-wrap gap-1.5">
         {dish.allergens.map((a) => <Tag key={a} tone="danger">{a}</Tag>)}
         {dish.tags.map((t) => <Tag key={t}>{t}</Tag>)}

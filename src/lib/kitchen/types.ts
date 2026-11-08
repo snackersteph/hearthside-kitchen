@@ -54,6 +54,7 @@ export interface KitchenState {
   leadTimeDays?: number;
   orders?: PurchaseOrder[];
   plan: Record<Meal, string>;
+  scheduledPlans?: Record<string, Partial<Record<Meal, string>>>;
   overrides: Record<Meal, Record<string, string>>;
   residents: Resident[];
   ingredients: Ingredient[];

@@ -121,9 +121,9 @@
   --agent-menu-soft: oklch(0.94 0.04 50);
   --agent-inventory: oklch(0.62 0.12 85);
   --agent-inventory-soft: oklch(0.94 0.05 90);
-  --meal-breakfast: oklch(0.95 0.045 145);
-  --meal-lunch: oklch(0.96 0.06 95);
-  --meal-dinner: oklch(0.95 0.035 235);
+  --meal-breakfast: oklch(0.987 0.009 145);
+  --meal-lunch: oklch(0.991 0.012 95);
+  --meal-dinner: oklch(0.987 0.008 235);
   --chart-1: oklch(0.52 0.09 190);
   --chart-2: oklch(0.6 0.14 42);
   --chart-3: oklch(0.62 0.12 85);

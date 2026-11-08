@@ -5,6 +5,29 @@ import { reducer } from "@/lib/kitchen/store";
 import { dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
 
 describe("kitchen agents", () => {
+  it("saves upcoming meal edits for their date without changing today or other days", () => {
+    const s = initialState();
+    const date = dateKey(dayAt(1));
+    const edited = reducer(s, { type: "setScheduledMain", date, meal: "lunch", dishId: "l-alfredo" });
+    expect(edited.scheduledPlans?.[date]?.lunch).toBe("l-alfredo");
+    expect(scheduledState(edited, 1).plan.lunch).toBe("l-alfredo");
+    expect(edited.plan).toEqual(s.plan);
+    expect(scheduledState(edited, 2).plan).toEqual(scheduledState(s, 2).plan);
+  });
+
+  it("does not allow editing past meals", () => {
+    const s = initialState();
+    expect(reducer(s, { type: "setScheduledMain", date: dateKey(dayAt(-1)), meal: "lunch", dishId: "l-alfredo" })).toBe(s);
+  });
+
+  it("includes edited upcoming meals in the purchasing forecast", () => {
+    const reference = new Date("2026-11-08T12:00:00");
+    const s = initialState();
+    const edited = { ...s, scheduledPlans: { "2026-11-09": { lunch: "l-alfredo" } } };
+    const expected = analyze(scheduledState(edited, 1, reference), reference).demand;
+    expect(analyze(edited, reference).forecast?.days[1]?.demand).toEqual(expected);
+    expect(analyze(edited, reference).forecast?.days[1]?.demand).not.toEqual(analyze(s, reference).forecast?.days[1]?.demand);
+  });
   it("dietary agent flags dairy residents for the alfredo", () => {
     const s = initialState();
     const flagged = analyze(s).conflicts.filter((c) => c.meal === "lunch" && c.reasons.includes("contains dairy")).map((c) => c.residentId).sort();

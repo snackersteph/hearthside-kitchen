@@ -152,7 +152,7 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
   const horizonDays = state.purchaseHorizonDays ?? 7;
   const leadTime = Math.max(1, state.leadTimeDays ?? 2);
   const days = Array.from({ length: horizonDays }, (_, offset) => {
-    const result = offset === 0 ? today : analyzeDay(scheduledState(state, offset));
+    const result = offset === 0 ? today : analyzeDay(scheduledState(state, offset, reference));
     return { date: dateKey(dayAt(offset, reference)), demand: result.demand, unresolved: result.conflicts.filter((c) => c.status === "needs-staff").length };
   });
   const demand: Record<string, number> = {};
