@@ -16,7 +16,10 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/approvals")({
-  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution" } => ({ kind: search.kind === "purchase" || search.kind === "substitution" ? search.kind : undefined }),
+  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution" } => {
+    const kind = search["kind"];
+    return kind === "purchase" || kind === "substitution" ? { kind } : {};
+  },
   head: () => ({
     meta: [
       { title: "Approval Center · Hearth Kitchen Command" },
@@ -145,7 +148,7 @@ function Actions({ p, onModify }: { p: Proposal; onModify: () => void }) {
   const approve = () => {
     const summary = summarize(state, p, "Approved");
     if (p.kind === "substitution") dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary });
-    else dispatch({ type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary, vendor: p.vendor, deliveryDate: p.deliveryDate });
+    else dispatch({ type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary, vendor: p.vendor, ...(p.deliveryDate ? { deliveryDate: p.deliveryDate } : {}) });
     toast.success(summary);
   };
   const reject = () => {

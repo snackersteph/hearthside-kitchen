@@ -24,7 +24,7 @@ export function reducer(s: KitchenState, a: Action): KitchenState {
     case "receiveOrder": {
       const order = s.orders?.find((o) => o.id === a.id && o.status === "incoming");
       if (!order) return s;
-      return { ...s, orders: s.orders?.map((o) => o.id === a.id ? { ...o, status: "received" } : o), ingredients: s.ingredients.map((i) => {
+      return { ...s, orders: (s.orders ?? []).map((o) => o.id === a.id ? { ...o, status: "received" } : o), ingredients: s.ingredients.map((i) => {
         const qty = order.lines.filter((line) => line.ingredientId === i.id).reduce((sum, line) => sum + line.qty, 0);
         return { ...i, stock: i.stock + qty, onOrder: Math.max(0, i.onOrder - qty) };
       }) };

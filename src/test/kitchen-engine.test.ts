@@ -39,15 +39,15 @@ describe("kitchen agents", () => {
     const fourteen = analyze({ ...s, purchaseHorizonDays: 14 }).forecast;
     expect(seven?.days.length).toBe(7);
     expect(fourteen?.days.length).toBe(14);
-    const expected = Array.from({ length: 7 }, (_, offset) => analyze(scheduledState(s, offset)).demand.chicken ?? 0).reduce((sum, qty) => sum + qty, 0);
-    expect(seven?.demand.chicken).toBeCloseTo(expected, 2);
-    expect(fourteen?.demand.chicken).toBeGreaterThan(seven?.demand.chicken ?? 0);
+    const expected = Array.from({ length: 7 }, (_, offset) => analyze(scheduledState(s, offset)).demand["chicken"] ?? 0).reduce((sum, qty) => sum + qty, 0);
+    expect(seven?.demand["chicken"]).toBeCloseTo(expected, 2);
+    expect(fourteen?.demand["chicken"]).toBeGreaterThan(seven?.demand["chicken"] ?? 0);
   });
 
   it("incoming ingredients cannot cover same-day cooking", () => {
     const s = initialState();
     s.ingredients = s.ingredients.map((i) => i.id === "chicken" ? { ...i, stock: 0, onOrder: 100 } : i);
-    expect(analyze(s).forecast?.todayShortage.chicken).toBe(analyze(s).demand.chicken);
+    expect(analyze(s).forecast?.todayShortage["chicken"]).toBe(analyze(s).demand["chicken"]);
   });
 
   it("approving a purchase adds incoming quantities without changing stock", () => {
