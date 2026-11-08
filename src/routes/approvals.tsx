@@ -105,7 +105,7 @@ function ApprovalsPage() {
 const Empty = ({ text }: { text: string }) => <div className="rounded-xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">{text}</div>;
 
 /** One consistent approve button everywhere: solid green when clickable, muted with a reason when blocked. */
-function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boolean; reason?: string; onClick: () => void; children?: ReactNode }) {
+function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boolean; reason?: string | undefined; onClick: () => void; children?: ReactNode }) {
   return (
     <span className="inline-flex flex-col items-end gap-1">
       <Button size="sm" disabled={disabled} title={reason} onClick={onClick}
