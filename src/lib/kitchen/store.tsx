@@ -55,8 +55,8 @@ const KEY = "kitchen-command-v1";
 type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
 // Mixed component/function exports can refresh consumers before the mounted provider.
 // Preserve the context identity across hot updates so both generations share it.
-const Ctx: Context<KitchenContextValue | null> = import.meta.hot?.data["kitchenContext"] ?? createContext<KitchenContextValue | null>(null);
-if (import.meta.hot) import.meta.hot.data["kitchenContext"] = Ctx;
+const Ctx: Context<KitchenContextValue | null> = import.meta.hot?.data?.["kitchenContext"] ?? createContext<KitchenContextValue | null>(null);
+if (import.meta.hot?.data) import.meta.hot.data["kitchenContext"] = Ctx;
 
 export function KitchenProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
