@@ -1,5 +1,5 @@
 import { DISHES, dishById } from "./data";
-import { dateKey, dayAt, scheduledState } from "./schedule";
+import { approvalDueDate, dateKey, dayAt, scheduledState } from "./schedule";
 import {
   MEALS,
   type AgentMessage,
@@ -33,6 +33,7 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const round = (n: number) => Math.round(n * 100) / 100;
 
 export interface Analysis {
+  mealReviews?: MealReview[];
   forecast?: {
     days: { date: string; demand: Record<string, number> }[];
     demand: Record<string, number>;
@@ -48,7 +49,26 @@ export interface Analysis {
   served: Record<Meal, Record<string, string>>; // projected dish per resident
 }
 
-function analyzeDay(state: KitchenState): Analysis {
+export interface MealReview {
+  serviceDate: string;
+  approvalDueDate: string;
+  meal: Meal;
+  mainDishId: string;
+  signature: string;
+  approved: boolean;
+  pending: number;
+  unresolved: number;
+}
+
+export function mealSignature(state: KitchenState, meal: Meal) {
+  return JSON.stringify([state.plan[meal], state.overrides[meal], state.residents.map((r) => [r.id, r.allergens, r.diets])]);
+}
+
+export function analyzeMenuDay(state: KitchenState, offset = 0, reference = new Date()): Analysis {
+  return analyzeDay(scheduledState(state, offset, reference), dateKey(dayAt(offset, reference)));
+}
+
+function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
   const decided = new Set(state.history.map((h) => h.proposalId));
   const conflicts: Conflict[] = [];
   const proposals: Proposal[] = [];
@@ -101,7 +121,7 @@ function analyzeDay(state: KitchenState): Analysis {
       }
       if (!best) break;
       const ids = bestCovered.map((c) => c.r.id).sort();
-      const id = `sub-${meal}-${best.id}-${ids.join(".")}`;
+      const id = serviceDate ? `sub-${serviceDate}-${meal}-${main.id}-${best.id}-${ids.join(".")}` : `sub-${meal}-${best.id}-${ids.join(".")}`;
       remaining = remaining.filter((c) => !ids.includes(c.r.id));
       if (decided.has(id)) {
         for (const c of bestCovered) conflicts.push({ meal, residentId: c.r.id, dishId: c.dishId, reasons: c.reasons, status: "needs-staff" });
@@ -110,6 +130,7 @@ function analyzeDay(state: KitchenState): Analysis {
       const p: SubstitutionProposal = {
         id, kind: "substitution", agent: "menu", meal, fromDishId: main.id, dishId: best.id, residentIds: ids,
         reasons: Object.fromEntries(bestCovered.map((c) => [c.r.id, c.reasons])),
+        ...(serviceDate ? { serviceDate, approvalDueDate: approvalDueDate(serviceDate) } : {}),
       };
       proposals.push(p);
       for (const c of bestCovered) { conflicts.push({ meal, residentId: c.r.id, dishId: c.dishId, reasons: c.reasons, status: "proposal-pending" }); served[meal][c.r.id] = best.id; }
@@ -148,11 +169,23 @@ function analyzeDay(state: KitchenState): Analysis {
 
 /** Shared purchasing forecast: today plus upcoming scheduled meals, with safe swaps. */
 export function analyze(state: KitchenState, reference = new Date()): Analysis {
-  const today = analyzeDay(state);
+  const today = analyzeMenuDay(state, 0, reference);
+  const menuDays = Array.from({ length: 8 }, (_, offset) => ({ offset, result: offset === 0 ? today : analyzeMenuDay(state, offset, reference) }));
+  const mealReviews = menuDays.flatMap(({ offset, result }) => {
+    const serviceDate = dateKey(dayAt(offset, reference));
+    const dayState = scheduledState(state, offset, reference);
+    return MEALS.map((meal): MealReview => {
+      const signature = mealSignature(dayState, meal);
+      return { serviceDate, approvalDueDate: approvalDueDate(serviceDate), meal, mainDishId: dayState.plan[meal], signature,
+        approved: state.mealApprovals?.[serviceDate]?.[meal]?.signature === signature,
+        pending: result.conflicts.filter((c) => c.meal === meal && c.status === "proposal-pending").length,
+        unresolved: result.conflicts.filter((c) => c.meal === meal && c.status === "needs-staff").length };
+    });
+  });
   const horizonDays = state.purchaseHorizonDays ?? 7;
   const leadTime = Math.max(1, state.leadTimeDays ?? 2);
   const days = Array.from({ length: horizonDays }, (_, offset) => {
-    const result = offset === 0 ? today : analyzeDay(scheduledState(state, offset, reference));
+    const result = menuDays[offset]?.result ?? analyzeMenuDay(state, offset, reference);
     return { date: dateKey(dayAt(offset, reference)), demand: result.demand, unresolved: result.conflicts.filter((c) => c.status === "needs-staff").length };
   });
   const demand: Record<string, number> = {};
@@ -184,7 +217,7 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
     const qty = Math.ceil(shortage / ingredient.packSize) * ingredient.packSize;
     byVendor.set(ingredient.vendor, [...(byVendor.get(ingredient.vendor) ?? []), { ingredientId: ingredient.id, shortage, qty }]);
   }
-  const proposals = today.proposals.filter((p) => p.kind === "substitution");
+  const proposals = menuDays.flatMap(({ result }) => result.proposals.filter((p) => p.kind === "substitution"));
   const purchases: PurchaseProposal[] = [];
   const messages = today.messages.filter((message) => message.agent !== "inventory");
   for (const [vendor, lines] of byVendor) {
@@ -200,7 +233,7 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
   }
   if (Object.keys(todayShortage).length) messages.push({ id: "inv-service-risk", agent: "inventory", to: "staff", tone: "alert", text: "Today's stock is short. Incoming purchases cannot cover same-day service; arrange an available-stock alternative." });
   if (!purchases.length) messages.push({ id: "inv-ok", agent: "inventory", tone: "ok", text: `No new purchase requests for the ${horizonDays}-day plan. Check service risks separately from incoming stock.` });
-  return { ...today, proposals: [...proposals, ...purchases], messages, forecast: { days, demand, firstShortDate, todayShortage, horizonDays, unresolved: days.reduce((sum, day) => sum + day.unresolved, 0) } };
+  return { ...today, mealReviews, proposals: [...proposals, ...purchases], messages, forecast: { days, demand, firstShortDate, todayShortage, horizonDays, unresolved: days.reduce((sum, day) => sum + day.unresolved, 0) } };
 }
 
 export function lineCost(state: KitchenState, ingredientId: string, qty: number) {

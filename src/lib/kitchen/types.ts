@@ -46,6 +46,7 @@ export interface Decision {
   at: number;
   summary: string;
   modified: boolean;
+  serviceDate?: string;
   note?: string;
 }
 
@@ -55,6 +56,8 @@ export interface KitchenState {
   orders?: PurchaseOrder[];
   plan: Record<Meal, string>;
   scheduledPlans?: Record<string, Partial<Record<Meal, string>>>;
+  scheduledOverrides?: Record<string, Partial<Record<Meal, Record<string, string>>>>;
+  mealApprovals?: Record<string, Partial<Record<Meal, { signature: string; approvedAt: number }>>>;
   overrides: Record<Meal, Record<string, string>>;
   residents: Resident[];
   ingredients: Ingredient[];
@@ -67,6 +70,8 @@ export interface SubstitutionProposal {
   agent: "menu";
   meal: Meal;
   fromDishId: string;
+  serviceDate?: string;
+  approvalDueDate?: string;
   dishId: string;
   residentIds: string[];
   reasons: Record<string, string[]>;
