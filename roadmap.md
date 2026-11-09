@@ -51,6 +51,6 @@
 - [x] Verify row navigation, full details, and mobile layout.
 
 # Resident portraits and table typography
-- [ ] Add individual fictional portraits to rows and profile pages.
-- [ ] Enlarge and bold table headers and slightly strengthen resident names.
-- [ ] Verify portrait loading, navigation, and desktop/mobile layouts.
+- [x] Add individual fictional portraits to rows and profile pages.
+- [x] Enlarge and bold table headers and slightly strengthen resident names.
+- [x] Verify portrait loading, navigation, and desktop/mobile layouts.
