@@ -142,6 +142,7 @@ export interface PurchaseOrder {
   lines: PurchaseLine[];
   deliveryDate: string;
   status: "incoming" | "received";
+  receivedAt?: number;
 }
 
 export interface Conflict {

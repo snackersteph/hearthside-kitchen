@@ -18,6 +18,7 @@ type Action =
   | { type: "setHorizon"; days: 7 | 14 }
   | { type: "setLeadTime"; days: number }
   | { type: "receiveOrder"; id: string }
+  | { type: "updateOrder"; id: string; vendor: string; deliveryDate: string; lines: PurchaseLine[] }
   | { type: "load"; state: KitchenState }
   | { type: "reset" }
   | { type: "setMain"; meal: Meal; dishId: string }
@@ -83,10 +84,24 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
     }
     case "setHorizon": return { ...s, purchaseHorizonDays: a.days };
     case "setLeadTime": return { ...s, leadTimeDays: Math.max(1, Math.min(14, Math.round(a.days) || 2)) };
+    case "updateOrder": {
+      const order = s.orders?.find((o) => o.id === a.id && o.status === "incoming");
+      const parsedDate = new Date(`${a.deliveryDate}T12:00:00`);
+      if (!order || !a.vendor.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(a.deliveryDate) || !Number.isFinite(parsedDate.getTime()) || dateKey(parsedDate) !== a.deliveryDate || !a.lines.length || new Set(a.lines.map((l) => l.ingredientId)).size !== a.lines.length || a.lines.some((l) => !s.ingredients.some((i) => i.id === l.ingredientId) || !Number.isFinite(l.qty) || l.qty <= 0)) return s;
+      return { ...s,
+        orders: (s.orders ?? []).map((o) => o.id === a.id ? { ...o, vendor: a.vendor.trim(), deliveryDate: a.deliveryDate, lines: a.lines.map((l) => ({ ...l, shortage: Math.max(0, Number.isFinite(l.shortage) ? l.shortage : 0) })) } : o),
+        ingredients: s.ingredients.map((i) => {
+          const before = order.lines.filter((l) => l.ingredientId === i.id).reduce((n, l) => n + l.qty, 0);
+          const after = a.lines.find((l) => l.ingredientId === i.id)?.qty ?? 0;
+          return { ...i, onOrder: Math.max(0, i.onOrder - before + after) };
+        }),
+        history: [{ proposalId: order.id, kind: "purchase", status: "approved", at: reference.getTime(), summary: `Updated ${a.vendor.trim()} order · expected ${a.deliveryDate}`, modified: true }, ...s.history],
+      };
+    }
     case "receiveOrder": {
       const order = s.orders?.find((o) => o.id === a.id && o.status === "incoming");
       if (!order) return s;
-      return { ...s, orders: (s.orders ?? []).map((o) => o.id === a.id ? { ...o, status: "received" } : o), ingredients: s.ingredients.map((i) => {
+      return { ...s, orders: (s.orders ?? []).map((o) => o.id === a.id ? { ...o, status: "received", receivedAt: reference.getTime() } : o), ingredients: s.ingredients.map((i) => {
         const qty = order.lines.filter((line) => line.ingredientId === i.id).reduce((sum, line) => sum + line.qty, 0);
         return { ...i, stock: i.stock + qty, onOrder: Math.max(0, i.onOrder - qty) };
       }) };
