@@ -12,3 +12,4 @@
 - Whole-meal rejections are signature-scoped staff decisions; replacing the plan reopens review, while service-day approved meals are locked in the review editor.
 - Menu review links carry service date and meal search filters so pending and approved reviews resolve to the exact service.
 - Daily Menu uses a date overview and an un-nested dated detail route with shared meal sections, so date navigation and meal tabs reuse existing review and editing behavior.
+- Pre-bundle newly used hook-based UI dependencies in Vite to prevent mid-session dependency optimization from loading a second React instance.

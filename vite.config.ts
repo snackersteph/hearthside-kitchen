@@ -13,7 +13,7 @@ export default defineConfig({
   // Pre-bundle UI deps up front so Vite never re-optimizes mid-session (which loaded two React copies).
   vite: {
     optimizeDeps: {
-      include: ["sonner", "lucide-react", "@radix-ui/react-select", "@radix-ui/react-dialog", "@radix-ui/react-tabs", "@radix-ui/react-checkbox"],
+      include: ["sonner", "lucide-react", "react-day-picker", "date-fns", "@radix-ui/react-select", "@radix-ui/react-dialog", "@radix-ui/react-tabs", "@radix-ui/react-checkbox"],
     },
   },
   tanstackStart: {
