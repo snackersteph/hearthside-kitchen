@@ -57,6 +57,28 @@ export interface Decision {
   note?: string;
 }
 
+/** A staff-visible record that a resident's care information was changed. */
+export interface ProfileUpdate {
+  id: string;
+  residentId: string;
+  at: number;
+  summary: string;
+  review: "open" | "seen";
+}
+
+/** A reaction observed after a resident ate a specific meal. */
+export interface Observation {
+  id: string;
+  residentId: string;
+  serviceDate: string;
+  meal: Meal;
+  dishId: string;
+  reaction: string;
+  severity: "note" | "concern";
+  status: "open" | "reviewed";
+  notedAt: number;
+}
+
 export interface KitchenState {
   deletedIngredientIds?: string[];
   additionalResidentsVersion?: number;
@@ -66,6 +88,8 @@ export interface KitchenState {
   purchaseHorizonDays?: 7 | 14;
   leadTimeDays?: number;
   orders?: PurchaseOrder[];
+  profileUpdates?: ProfileUpdate[];
+  observations?: Observation[];
   plan: Record<Meal, string>;
   scheduledPlans?: Record<string, Partial<Record<Meal, string>>>;
   scheduledOverrides?: Record<string, Partial<Record<Meal, Record<string, string>>>>;

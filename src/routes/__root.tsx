@@ -84,11 +84,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Hearth Kitchen Command" },
-      { name: "description", content: "AI agents coordinating menus, dietary safety and inventory for senior living kitchens." },
+      { title: "NutriSync — Smart Nutrition, Connected Care" },
+      { name: "description", content: "NutriSync keeps senior living kitchens in step: dietary profiles, meal approvals and ingredient purchasing in one command center." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Hearth Kitchen Command" },
-      { property: "og:description", content: "AI agents coordinating menus, dietary safety and inventory for senior living kitchens." },
+      { property: "og:title", content: "NutriSync — Smart Nutrition, Connected Care" },
+      { property: "og:description", content: "NutriSync keeps senior living kitchens in step: dietary profiles, meal approvals and ingredient purchasing in one command center." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       
