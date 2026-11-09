@@ -69,12 +69,12 @@ export function EditDialog({ resident, isNew = false, section, onClose }: { resi
           {show("Health & dietary requirements") && <><div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Allergies & intolerances</div>
             <div className="flex flex-wrap gap-2">{ALLERGENS.map((a) => <Chip key={a} on={r.allergens.includes(a)} onClick={() => toggle("allergens", a)}>{a}</Chip>)}</div>
-          </div></>}
-          {show("Food preferences") && <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diet & texture</div>
-            <div className="flex flex-wrap gap-2">{DIETS.map((d) => <Chip key={d} on={r.diets.includes(d)} onClick={() => toggle("diets", d)}>{d}</Chip>)}</div>
           </div>
           <div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diet & texture</div>
+            <div className="flex flex-wrap gap-2">{DIETS.map((d) => <Chip key={d} on={r.diets.includes(d)} onClick={() => toggle("diets", d)}>{d}</Chip>)}</div>
+          </div></>}
+          {show("Food preferences") && <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Likes</div>
             <Input aria-label="Favorite foods" value={r.likes.join(", ")} onChange={(e) => setR({ ...r, likes: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />
           </div>}
