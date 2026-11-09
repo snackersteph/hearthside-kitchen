@@ -19,7 +19,7 @@ import roast from "@/assets/dishes/roast.jpg";
 const RULES: [RegExp, string][] = [
   [/pur[ée]e/i, puree], [/pudding|custard|oat bake/i, pudding], [/soup|chowder/i, soup], [/congee|porridge/i, congee],
   [/pancake|french toast/i, pancakes], [/oatmeal|oat/i, oatmeal], [/pasta|alfredo|primavera|penne|scampi|linguine/i, pasta],
-  [/sandwich|toast|club/i, sandwich], [/hash|skillet|potato|mash/i, hash], [/omelette|scramble|egg|frittata/i, eggs],
+  [/sandwich|toast|club/i, sandwich], [/fried rice|rice bowl/i, rice], [/hash|skillet|potato|mash/i, hash], [/omelette|scramble|egg|frittata/i, eggs],
   [/lentil|dal|stew|curry|chickpea/i, lentil], [/fried rice|rice/i, rice], [/quinoa|tofu|bowl|vegetable/i, bowl],
   [/salmon|fish/i, salmon], [/chicken/i, chicken], [/turkey|shrimp|roast/i, roast],
 ];
