@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { canApproveMeal } from "@/lib/kitchen/schedule";
+import { canApproveMeal, dateKey } from "@/lib/kitchen/schedule";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { approvedAlternatives } from "@/components/kitchen/approval-rules";
 import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-dialog";
@@ -139,11 +139,12 @@ function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: Substituti
 function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (id: string) => void }) {
   const { state } = useKitchen();
   const residents = state.residents.filter((resident) => p.residentIds.includes(resident.id));
-  const late = !p.serviceDate || !canApproveMeal(p.serviceDate);
+  const locked = p.approved && (!p.serviceDate || p.serviceDate <= dateKey(new Date()));
   return (
     <>
+      <div className="mt-2 text-sm font-medium">Serve date: {p.serviceDate}</div>
       <div className="mt-2 flex flex-wrap gap-2">{p.approved ? <Tag tone="ok">Approved</Tag> : <Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag>}</div>
-      <Select value={p.dishId} onValueChange={onDishChange} disabled={late}>
+      <Select value={p.dishId} onValueChange={onDishChange} disabled={locked}>
         <SelectTrigger aria-label={`Alternative dish for ${p.residentIds.map((id) => residentName(state, id)).join(", ")}`} className="mt-2 h-auto min-h-10 w-full max-w-lg whitespace-normal text-left text-base font-semibold [&>span]:line-clamp-none [&>span]:break-words"><SelectValue /></SelectTrigger>
         <SelectContent>{DISHES.filter((dish) => dish.meal === p.meal).map((dish) => <SelectItem key={dish.id} value={dish.id} disabled={residents.some((resident) => conflictReasons(resident, dish).length > 0)}>{dish.name}</SelectItem>)}</SelectContent>
       </Select>
@@ -189,7 +190,6 @@ function Actions({ p, onModify, onApprove }: { p: Proposal; onModify: () => void
   const { state, dispatch } = useKitchen();
   const late = p.kind === "substitution" && (!p.serviceDate || !canApproveMeal(p.serviceDate));
   const approve = () => {
-    if (late) return;
     const summary = summarize(state, p, "Approved");
     if (p.kind === "substitution") { onApprove(p); return; }
     else dispatch({ type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary, vendor: p.vendor, ...(p.deliveryDate ? { deliveryDate: p.deliveryDate } : {}) });
@@ -205,7 +205,7 @@ function Actions({ p, onModify, onApprove }: { p: Proposal; onModify: () => void
       {p.kind === "substitution"
         ? <Button variant="outline" size="sm" onClick={onModify}><X /> Reject</Button>
         : <><Button variant="outline" size="sm" onClick={reject}><X /> Reject</Button><Button variant="outline" size="sm" onClick={onModify}><Pencil /> Modify</Button></>}
-      <ApproveButton disabled={late} reason={late ? "Past the approval deadline" : undefined} onClick={approve}>{p.kind === "substitution" && p.approved ? "Approve change" : "Approve"}</ApproveButton>
+      <ApproveButton reason={late ? "Past the approval deadline" : undefined} onClick={approve}>{p.kind === "substitution" && p.approved ? "Approve change" : "Approve"}</ApproveButton>
     </div>
   );
 }

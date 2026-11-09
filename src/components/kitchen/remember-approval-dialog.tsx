@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 export function RememberApprovalDialog({ p, onClose }: { p: SubstitutionProposal; onClose: () => void }) {
   const { dispatch } = useKitchen();
+  const late = !p.serviceDate || !canApproveMeal(p.serviceDate);
   function approve(remember: boolean) {
     if (!p.serviceDate || !canApproveMeal(p.serviceDate)) { toast.error("The approval deadline has passed"); onClose(); return; }
     dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, serviceDate: p.serviceDate, modified: true, remember, summary: `Approved ${p.serviceDate} ${p.meal} alternative: ${dishById(p.dishId).name}` });
@@ -20,9 +21,13 @@ export function RememberApprovalDialog({ p, onClose }: { p: SubstitutionProposal
         <DialogTitle>Save this choice for the future?</DialogTitle>
         <DialogDescription>{dishById(p.dishId).name} for these residents whenever the same main dish returns. Future choices will still need approval and dietary checks.</DialogDescription>
       </DialogHeader>
+      <div className="text-sm font-medium">Serve date: {p.serviceDate}</div>
+      {late && <p className="text-sm text-destructive">Approval was due {p.approvalDueDate}. This date can no longer be approved.</p>}
       <DialogFooter>
-        <Button variant="outline" onClick={() => approve(false)}>This date only</Button>
-        <Button className="bg-success text-success-foreground hover:bg-success/90" onClick={() => approve(true)}>Save for future</Button>
+        {late ? <Button variant="outline" onClick={onClose}>Close</Button> : <>
+          <Button variant="outline" onClick={() => approve(false)}>This date only</Button>
+          <Button className="bg-success text-success-foreground hover:bg-success/90" onClick={() => approve(true)}>Save for future</Button>
+        </>}
       </DialogFooter>
     </DialogContent>
   </Dialog>;
