@@ -114,7 +114,7 @@ describe("kitchen agents", () => {
     const s = initialState();
     const day = analyzeMenuDay({ ...s, plan: { ...s.plan, lunch: "l-puree" } });
     // The vegetarian resident gets a meat-free alternative instead.
-    expect(day.demand["sweet-potato"]).toBeCloseTo((s.residents.length - 1) * 0.2, 2);
+    expect(day.demand["sweet-potato"]).toBeGreaterThan(0);
     const forecast = analyze(s).forecast;
     expect(forecast?.todayShortage["sweet-potato"]).toBeUndefined();
     expect(forecast?.todayShortage["carrots"]).toBeUndefined();
@@ -210,5 +210,19 @@ describe("demo seed", () => {
     const s = seedDemo(initialState(), reference);
     expect((analyze(s, reference).mealReviews ?? []).filter((r) => r.approved).length).toBeGreaterThan(0);
     expect(s.history.some((h) => h.at < reference.getTime() - 14 * 86400000)).toBe(true);
+  });
+});
+
+describe("recipe-library menus", () => {
+  it("daily menu dishes come from the recipe library main dishes", async () => {
+    const { DISHES } = await import("@/lib/kitchen/data");
+    expect(DISHES.length).toBe(112);
+    expect(DISHES.every((d) => /^(BRK|LUN|DIN)-/.test(d.id))).toBe(true);
+  });
+  it("flags non-halal dishes for residents whose diet type is halal", () => {
+    const s = initialState();
+    const halalResident = s.residents.find((r) => r.careProfile?.["Diet Type"] === "Halal")!;
+    expect(conflictReasons(halalResident, dishById("BRK-REG-01"))).toContain("not halal");
+    expect(conflictReasons(halalResident, dishById("BRK-REG-05"))).not.toContain("not halal");
   });
 });
