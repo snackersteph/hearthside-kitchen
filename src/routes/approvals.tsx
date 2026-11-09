@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
@@ -151,9 +151,11 @@ function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (
       <div className="mt-1 text-xs text-muted-foreground">{p.residentIds.length} resident{p.residentIds.length > 1 ? "s" : ""}</div>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {p.residentIds.map((id) => (
-          <li key={id} className="rounded-lg bg-muted/60 px-3 py-2 text-sm">
-            <span className="font-medium">{residentName(state, id)}</span>
-            <span className="text-muted-foreground"> — {p.reasons[id]?.join(", ")}</span>
+          <li key={id}>
+            <Link to="/residents/$residentId" params={{ residentId: id }} className="block rounded-lg bg-muted/60 px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <span className="font-medium underline-offset-2 hover:underline">{residentName(state, id)}</span>
+              <span className="text-muted-foreground"> — {p.reasons[id]?.join(", ")}</span>
+            </Link>
           </li>
         ))}
       </ul>
