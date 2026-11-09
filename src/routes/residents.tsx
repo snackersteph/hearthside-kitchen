@@ -51,9 +51,16 @@ function ResidentsPage() {
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary font-display text-sm font-semibold text-secondary-foreground">{r.name.split(" ").map((n) => n[0]).join("")}</span>
             </div>
             <div className="mt-3 flex min-h-6 flex-wrap gap-1.5">
-              {r.allergens.map((a) => <Tag key={a} tone="danger">No {a}</Tag>)}
-              {r.diets.map((d) => <Tag key={d} tone="warn">{d}</Tag>)}
-              {!r.allergens.length && !r.diets.length && <Tag tone="ok">No restrictions</Tag>}
+              {r.careProfile ? <>
+                {r.careProfile["Food Allergies"] !== "None known" && <Tag tone="danger">No {r.careProfile["Food Allergies"]}</Tag>}
+                {r.careProfile["Diet Type"] !== "Regular" && <Tag tone="warn">{r.careProfile["Diet Type"]}</Tag>}
+                {r.careProfile["Texture Requirement"] !== "Regular" && <Tag tone="warn">{r.careProfile["Texture Requirement"]}</Tag>}
+                {r.careProfile["Diet Type"] === "Regular" && r.careProfile["Food Allergies"] === "None known" && <Tag tone="ok">Regular diet</Tag>}
+              </> : <>
+                {r.allergens.map((a) => <Tag key={a} tone="danger">No {a}</Tag>)}
+                {r.diets.map((d) => <Tag key={d} tone="warn">{d}</Tag>)}
+                {!r.allergens.length && !r.diets.length && <Tag tone="ok">No restrictions</Tag>}
+              </>}
             </div>
             <div className="mt-4 space-y-1 border-t pt-3">
               {MEALS.map((m) => {
