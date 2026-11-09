@@ -26,6 +26,28 @@ export function conflictReasons(r: Resident, dish: Dish): string[] {
   return out;
 }
 
+export function dietarySignature(r: Resident): string {
+  return JSON.stringify([[...r.allergens].sort(), [...r.diets].sort(), r.dietaryRevision ?? 0]);
+}
+
+/** Resolve standing staff authorizations without persisting generated daily decisions. */
+export function resolveMenuState(state: KitchenState, offset = 0, reference = new Date()): KitchenState {
+  const day = scheduledState(state, offset, reference);
+  const overrides = { breakfast: { ...day.overrides.breakfast }, lunch: { ...day.overrides.lunch }, dinner: { ...day.overrides.dinner } };
+  for (const meal of MEALS) {
+    const main = dishById(day.plan[meal]);
+    for (const resident of day.residents) {
+      const explicit = overrides[meal][resident.id];
+      if (explicit && conflictReasons(resident, dishById(explicit)).length) delete overrides[meal][resident.id];
+      if (offset < 0 || overrides[meal][resident.id] || !conflictReasons(resident, main).length) continue;
+      const saved = day.alternativePreferences?.find((p) => p.residentId === resident.id && p.meal === meal && p.fromDishId === main.id && p.dietarySignature === dietarySignature(resident));
+      const dish = saved ? DISHES.find((d) => d.id === saved.dishId && d.meal === meal) : undefined;
+      if (dish && !conflictReasons(resident, dish).length) overrides[meal][resident.id] = dish.id;
+    }
+  }
+  return { ...day, overrides };
+}
+
 const firstName = (r: Resident): string => r.name.split(" ")[0] ?? r.name;
 const list = (names: string[]) =>
   names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
@@ -78,11 +100,11 @@ export function compareMealUrgency(a: MealReview, b: MealReview) {
 }
 
 export function analyzeMenuDay(state: KitchenState, offset = 0, reference = new Date()): Analysis {
-  return analyzeDay(scheduledState(state, offset, reference), dateKey(dayAt(offset, reference)));
+  return analyzeDay(resolveMenuState(state, offset, reference), dateKey(dayAt(offset, reference)));
 }
 
 function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
-  const decided = new Set(state.history.map((h) => h.proposalId));
+  const decided = new Set(state.history.filter((h) => h.status === "rejected").map((h) => h.proposalId));
   const conflicts: Conflict[] = [];
   const proposals: Proposal[] = [];
   const messages: AgentMessage[] = [];
@@ -97,6 +119,7 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
   for (const meal of MEALS) {
     const main = dishById(state.plan[meal]);
     const overrides = state.overrides[meal];
+    const revisionSuffix = (ids: string[]) => ids.some((id) => (state.residents.find((r) => r.id === id)?.dietaryRevision ?? 0) > 0) ? `-requirements-${ids.map((id) => state.residents.find((r) => r.id === id)?.dietaryRevision ?? 0).join(".")}` : "";
     const conflicted: { r: Resident; dishId: string; reasons: string[] }[] = [];
     for (const r of state.residents) {
       const dishId = overrides[r.id] ?? main.id;
@@ -128,7 +151,7 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
     }
     for (const [dishId, covered] of remembered) {
       const ids = covered.map((c) => c.r.id).sort();
-      const id = `sub-${serviceDate}-${meal}-${main.id}-${dishId}-${ids.join(".")}`;
+      const id = `sub-${serviceDate}-${meal}-${main.id}-${dishId}-${ids.join(".")}${revisionSuffix(ids)}`;
       remaining = remaining.filter((c) => !ids.includes(c.r.id));
       if (decided.has(id)) {
         for (const c of covered) conflicts.push({ meal, residentId: c.r.id, dishId: c.dishId, reasons: c.reasons, status: "needs-staff" });
@@ -153,7 +176,7 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
       }
       if (!best) break;
       const ids = bestCovered.map((c) => c.r.id).sort();
-      const id = serviceDate ? `sub-${serviceDate}-${meal}-${main.id}-${best.id}-${ids.join(".")}` : `sub-${meal}-${best.id}-${ids.join(".")}`;
+      const id = (serviceDate ? `sub-${serviceDate}-${meal}-${main.id}-${best.id}-${ids.join(".")}` : `sub-${meal}-${best.id}-${ids.join(".")}`) + revisionSuffix(ids);
       remaining = remaining.filter((c) => !ids.includes(c.r.id));
       if (decided.has(id)) {
         for (const c of bestCovered) conflicts.push({ meal, residentId: c.r.id, dishId: c.dishId, reasons: c.reasons, status: "needs-staff" });
@@ -205,7 +228,7 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
   const menuDays = Array.from({ length: 8 }, (_, offset) => ({ offset, result: offset === 0 ? today : analyzeMenuDay(state, offset, reference) }));
   const mealReviews = menuDays.flatMap(({ offset, result }) => {
     const serviceDate = dateKey(dayAt(offset, reference));
-    const dayState = scheduledState(state, offset, reference);
+    const dayState = resolveMenuState(state, offset, reference);
     return MEALS.map((meal): MealReview => {
       const signature = mealSignature(dayState, meal);
       return { serviceDate, approvalDueDate: approvalDueDate(serviceDate), meal, mainDishId: dayState.plan[meal], signature,

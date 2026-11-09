@@ -14,4 +14,5 @@
 - Daily Menu uses a date overview and an un-nested dated detail route with shared meal sections, so date navigation and meal tabs reuse existing review and editing behavior.
 - Pre-bundle newly used hook-based UI dependencies in Vite to prevent mid-session dependency optimization from loading a second React instance.
 - Approval Center derives approved alternatives from dated overrides and pending alternatives from analysis; main meal sign-off cards are not rendered there.
-- Remembered alternatives are resident/main-dish/meal-scoped staff preferences; analyze rechecks safety and proposes them for each future date without auto-approval.
+- Saved alternative authorizations are resident/main-dish/meal-scoped and signed against food requirements; resolveMenuState derives safe approved servings for every view and forecast without persisting generated daily decisions, while requirement changes revoke authorization and affected current/future overrides.
+- Resident and ingredient creation use validated reducer actions and the existing KitchenProvider persistence so new entries immediately participate in dietary analysis and inventory forecasts.

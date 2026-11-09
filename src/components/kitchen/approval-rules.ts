@@ -1,8 +1,7 @@
 import { dishById } from "@/lib/kitchen/data";
-import { conflictReasons, type MealReview } from "@/lib/kitchen/engine";
+import { conflictReasons, resolveMenuState, type MealReview } from "@/lib/kitchen/engine";
 import type { KitchenState, SubstitutionProposal } from "@/lib/kitchen/types";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { scheduledState } from "@/lib/kitchen/schedule";
 
 /** Keep accommodation reviews visible even after their alternatives are approved. */
 export function needsDietaryReview(state: KitchenState, review: MealReview) {
@@ -12,7 +11,7 @@ export function needsDietaryReview(state: KitchenState, review: MealReview) {
 
 export function approvedAlternatives(state: KitchenState, reviews: MealReview[], reference = new Date()): SubstitutionProposal[] {
   return reviews.flatMap((review) => {
-    const day = scheduledState(state, differenceInCalendarDays(parseISO(review.serviceDate), reference), reference);
+    const day = resolveMenuState(state, differenceInCalendarDays(parseISO(review.serviceDate), reference), reference);
     const groups = new Map<string, string[]>();
     for (const [residentId, dishId] of Object.entries(day.overrides[review.meal])) {
       const resident = state.residents.find((r) => r.id === residentId);
