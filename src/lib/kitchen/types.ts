@@ -17,6 +17,8 @@ export interface Resident {
   diets: Diet[];
   likes: string[];
   notes: string;
+  careProfile?: Record<string, string>;
+  mealInstructions?: string[];
 }
 
 export interface Ingredient {
@@ -55,6 +57,7 @@ export interface Decision {
 export interface KitchenState {
   alternativePreferences?: { residentId: string; meal: Meal; fromDishId: string; dishId: string; dietarySignature?: string }[];
   seeded?: boolean;
+  residentProfileVersion?: number;
   purchaseHorizonDays?: 7 | 14;
   leadTimeDays?: number;
   orders?: PurchaseOrder[];

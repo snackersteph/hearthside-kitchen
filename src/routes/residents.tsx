@@ -33,7 +33,7 @@ function ResidentsPage() {
   const [editing, setEditing] = useState<Resident | null>(null);
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
-  const list = state.residents.filter((r) => r.name.toLowerCase().includes(q.toLowerCase()) || r.room.includes(q));
+  const list = state.residents.filter((r) => r.name.toLowerCase().includes(q.toLowerCase()) || r.room.includes(q)).sort(compareByFirstName);
 
   return (
     <>
@@ -51,9 +51,16 @@ function ResidentsPage() {
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary font-display text-sm font-semibold text-secondary-foreground">{r.name.split(" ").map((n) => n[0]).join("")}</span>
             </div>
             <div className="mt-3 flex min-h-6 flex-wrap gap-1.5">
-              {r.allergens.map((a) => <Tag key={a} tone="danger">No {a}</Tag>)}
-              {r.diets.map((d) => <Tag key={d} tone="warn">{d}</Tag>)}
-              {!r.allergens.length && !r.diets.length && <Tag tone="ok">No restrictions</Tag>}
+              {r.careProfile ? <>
+                {r.careProfile["Food Allergies"] !== "None known" && <Tag tone="danger">No {r.careProfile["Food Allergies"]}</Tag>}
+                {r.careProfile["Diet Type"] !== "Regular" && <Tag tone="warn">{r.careProfile["Diet Type"]}</Tag>}
+                {r.careProfile["Texture Requirement"] !== "Regular" && <Tag tone="warn">{r.careProfile["Texture Requirement"]}</Tag>}
+                {r.careProfile["Diet Type"] === "Regular" && r.careProfile["Food Allergies"] === "None known" && <Tag tone="ok">Regular diet</Tag>}
+              </> : <>
+                {r.allergens.map((a) => <Tag key={a} tone="danger">No {a}</Tag>)}
+                {r.diets.map((d) => <Tag key={d} tone="warn">{d}</Tag>)}
+                {!r.allergens.length && !r.diets.length && <Tag tone="ok">No restrictions</Tag>}
+              </>}
             </div>
             <div className="mt-4 space-y-1 border-t pt-3">
               {MEALS.map((m) => {
@@ -79,6 +86,11 @@ function ResidentsPage() {
   );
 }
 
+export function compareByFirstName(a: Resident, b: Resident) {
+  const first = (r: Resident) => r.name.trim().split(/\s+/)[0] ?? "";
+  return first(a).localeCompare(first(b), undefined, { sensitivity: "base" }) || a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+}
+
 function EditDialog({ resident, isNew = false, onClose }: { resident: Resident; isNew?: boolean; onClose: () => void }) {
   const { dispatch } = useKitchen();
   const [r, setR] = useState(resident);
@@ -86,13 +98,17 @@ function EditDialog({ resident, isNew = false, onClose }: { resident: Resident; 
     setR((p) => ({ ...p, [k]: (p[k] as string[]).includes(v) ? (p[k] as string[]).filter((x) => x !== v) : [...p[k], v] }));
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="font-display text-2xl">{isNew ? "Add resident" : r.name}</DialogTitle></DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); dispatch(isNew ? { type: "addResident", resident: { ...r, id: crypto.randomUUID() } } : { type: "updateResident", resident: r }); toast.success(isNew ? "Resident added" : "Profile saved — meals rechecked"); onClose(); }} className="space-y-4">
           {isNew && <div className="grid grid-cols-2 gap-3">
             <label className="col-span-2 text-sm font-medium">Name<Input required aria-label="Resident name" value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} /></label>
             <label className="text-sm font-medium">Room<Input required aria-label="Room" value={r.room} onChange={(e) => setR({ ...r, room: e.target.value })} /></label>
             <label className="text-sm font-medium">Age<Input required aria-label="Age" type="number" min={1} max={120} value={r.age} onChange={(e) => setR({ ...r, age: Number(e.target.value) })} /></label>
+          </div>}
+          {!isNew && r.careProfile && <div className="grid gap-x-4 gap-y-2 rounded-lg bg-muted/50 p-3 text-sm sm:grid-cols-2">
+            <div><span className="text-muted-foreground">Room</span> {r.room} · <span className="text-muted-foreground">Age</span> {r.age}</div>
+            {Object.entries(r.careProfile).map(([label, value]) => <div key={label}><span className="text-muted-foreground">{label}:</span> {value}</div>)}
           </div>}
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Allergies & intolerances</div>
