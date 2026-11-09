@@ -23,3 +23,4 @@
 - Resident deletion uses the shared reducer to remove the profile and resident-scoped meal choices while preserving decision history and purchasing records.
 - Additional resident batches use one-time additive migrations so saved edits, deletions, and staff decisions remain intact.
 - Inventory edits use validated reducer actions; deletion tombstones prevent catalog restoration, and missing recipe ingredients remain visible as forecast shortages.
+- Command Center card totals and observation board filters come from src/lib/kitchen/overview.ts so a card's actionable and peaceful states always match stored state.

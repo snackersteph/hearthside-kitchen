@@ -25,21 +25,22 @@ export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { ca
           {card.clearLabel}
         </div>
       ) : (
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <Link to={card.to} className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/12 px-2 py-0.5">
-              <TriangleAlert className="h-3 w-3" />
-              Action needed
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-dot" />
-            </span>
-            {card.actionLabel}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-          {onReview && (
-            <Button type="button" variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onReview}>
-              {reviewLabel ?? "Mark reviewed"}
-            </Button>
-          )}
+        <div className="mt-2 space-y-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/12 px-2 py-0.5 text-xs font-semibold text-primary">
+            <TriangleAlert className="h-3 w-3" />
+            Action needed
+          </span>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <Link to={card.to} className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+              {card.actionLabel}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+            {onReview && (
+              <Button type="button" variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onReview}>
+                {reviewLabel ?? "Mark reviewed"}
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>

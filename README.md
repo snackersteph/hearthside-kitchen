@@ -1,4 +1,6 @@
-# Hearthside Kitchen
+# NutriSync
+
+**SMART NUTRITION, CONNECTED CARE**
 
 An AI-powered kitchen operations command center for senior living facilities, where specialized agents coordinate menus, dietary requirements, and inventory while staff supervise important decisions. Your three agents 
 
