@@ -15,6 +15,7 @@ type Action =
   | { type: "deleteIngredient"; id: string }
   | { type: "addRecipe"; recipe: Recipe }
   | { type: "deleteRecipe"; id: string }
+  | { type: "editRecipe"; recipe: Recipe }
   | { type: "approveMeal"; date: string; meal: Meal }
   | { type: "rejectMeal"; date: string; meal: Meal }
   | { type: "setMealPlan"; date: string; meal: Meal; dishId: string; overrides: Record<string, string> }
@@ -76,6 +77,14 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       const r = a.recipe;
       if (!isValidRecipe(r, s.ingredients) || recipeLibrary(s).some((x) => x.id === r.id || x.name.trim().toLowerCase() === r.name.trim().toLowerCase())) return s;
       return { ...s, recipes: [...(s.recipes ?? []), { ...r, name: r.name.trim() }] };
+    }
+    case "editRecipe": {
+      const r = a.recipe;
+      const lib = recipeLibrary(s);
+      if (!lib.some((x) => x.id === r.id) || !isValidRecipe(r, s.ingredients) || lib.some((x) => x.id !== r.id && x.name.trim().toLowerCase() === r.name.trim().toLowerCase())) return s;
+      const saved = s.recipes ?? [];
+      const next = { ...r, name: r.name.trim() };
+      return { ...s, recipes: saved.some((x) => x.id === r.id) ? saved.map((x) => x.id === r.id ? next : x) : [...saved, next] };
     }
     case "deleteRecipe": {
       if (!recipeLibrary(s).some((x) => x.id === a.id)) return s;
