@@ -52,6 +52,7 @@ function ResidentProfilePage() {
         {r.mealInstructions?.length ? <ul className="list-disc space-y-3 pl-5 text-sm leading-relaxed">{r.mealInstructions.map((instruction) => <li key={instruction}>{instruction}</li>)}</ul> : <p className="text-sm text-muted-foreground">Not specified</p>}
       </section>
       <section className="border-t pt-6"><h2 className="mb-5 font-display text-xl font-semibold">Clinical notes</h2><p className="whitespace-pre-line text-sm leading-relaxed">{r.notes || "Not specified"}</p></section>
+      <ResidentMealHistory residentId={r.id} />
     </div>
     <section className="mt-8 border-t pt-6">
       <AlertDialog>
