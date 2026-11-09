@@ -51,7 +51,7 @@ function RecipesPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Kitchen library" title={`${all.length} Recipes`}>
+      <PageHeader eyebrow="Kitchen library" title="Recipes">
         <div className="flex flex-wrap gap-2">
           <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Search recipes" placeholder="Search recipes or ingredients" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 pl-9" /></div>
           <Button onClick={() => setAdding(true)}><Plus />Add recipe</Button>
@@ -66,6 +66,7 @@ function RecipesPage() {
         {(meal !== "all" || category !== "all" || diet !== "all" || texture !== "all" || q) && <Button variant="ghost" className="self-end" onClick={() => { setMeal("all"); setCategory("all"); setDiet("all"); setTexture("all"); setQuery(""); }}><X />Clear</Button>}
       </div>
 
+      <p className="mb-3 text-sm font-medium text-muted-foreground">{rows.length === all.length ? `${all.length} recipes` : `${rows.length} of ${all.length} recipes`}</p>
       {rows.length === 0 ? <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">No recipes match these filters.</div> :
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((r) => (
