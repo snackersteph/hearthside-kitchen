@@ -20,3 +20,4 @@
 - Residents use a table index and un-nested profile detail routes with a shared editing dialog, so navigation preserves complete profiles and existing staff actions.
 - Fictional resident portraits are keyed by resident ID in a shared photo component so table thumbnails and profile portraits remain consistent without changing stored care records.
 - New resident photo uploads are resized in the browser and stored with the resident using existing demo persistence; the shared photo component prefers uploaded portraits so list and detail photos match.
+- Resident deletion uses the shared reducer to remove the profile and resident-scoped meal choices while preserving decision history and purchasing records.

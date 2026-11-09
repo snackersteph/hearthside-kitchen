@@ -6,6 +6,7 @@ import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 
 type Action =
   | { type: "addResident"; resident: Resident }
+  | { type: "deleteResident"; id: string }
   | { type: "addIngredient"; ingredient: Ingredient }
   | { type: "approveMeal"; date: string; meal: Meal }
   | { type: "rejectMeal"; date: string; meal: Meal }
@@ -25,6 +26,16 @@ type Action =
 
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
   switch (a.type) {
+    case "deleteResident": {
+      if (!s.residents.some((r) => r.id === a.id)) return s;
+      const clear = (meals: Partial<Record<Meal, Record<string, string>>>) => Object.fromEntries(Object.entries(meals).map(([meal, entries]) => [meal, Object.fromEntries(Object.entries(entries ?? {}).filter(([id]) => id !== a.id))]));
+      return { ...s,
+        residents: s.residents.filter((r) => r.id !== a.id),
+        alternativePreferences: (s.alternativePreferences ?? []).filter((p) => p.residentId !== a.id),
+        overrides: clear(s.overrides) as KitchenState["overrides"],
+        scheduledOverrides: Object.fromEntries(Object.entries(s.scheduledOverrides ?? {}).map(([date, meals]) => [date, clear(meals)])),
+      };
+    }
     case "addResident": {
       if (!a.resident.name.trim() || !a.resident.room.trim() || !Number.isInteger(a.resident.age) || a.resident.age < 1 || a.resident.age > 120 || s.residents.some((r) => r.id === a.resident.id)) return s;
       return { ...s, residents: [...s.residents, { ...a.resident, name: a.resident.name.trim(), room: a.resident.room.trim() }] };
