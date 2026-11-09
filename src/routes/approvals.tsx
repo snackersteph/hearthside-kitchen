@@ -63,7 +63,7 @@ function ApprovalsPage() {
       </div>
       {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: kind ? { kind } : {} })}>All dates</Button></div>}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           {kind !== "purchase" && <TabsTrigger value="pending">Meals to approve ({reviews.length})</TabsTrigger>}
           {kind !== "purchase" && <TabsTrigger value="approved">Approved meals ({approved.length})</TabsTrigger>}
           {kind !== "substitution" && <TabsTrigger value="orders">Purchase orders ({purchases.length})</TabsTrigger>}
@@ -134,7 +134,7 @@ function MealReviewCard({ review: r, proposals }: { review: MealReview; proposal
         dispatch({ type: "setMealPlan", date: r.serviceDate, meal: r.meal, dishId, overrides: {} });
         toast("Meal updated — fresh approval required");
       }}>
-        <SelectTrigger aria-label={`${r.serviceDate} ${MEAL_LABEL[r.meal]} main dish`} className="mt-2 h-auto min-h-12 w-full max-w-xl gap-3 whitespace-normal text-left font-display text-2xl font-semibold"><SelectValue /></SelectTrigger>
+        <SelectTrigger aria-label={`${r.serviceDate} ${MEAL_LABEL[r.meal]} main dish`} className="mt-2 h-auto min-h-12 w-full max-w-xl gap-3 whitespace-normal text-left font-display text-2xl font-semibold [&>span]:line-clamp-none [&>span]:break-words"><SelectValue /></SelectTrigger>
         <SelectContent>{DISHES.filter((dish) => dish.meal === r.meal).map((dish) => <SelectItem key={dish.id} value={dish.id}>{dish.name}</SelectItem>)}</SelectContent>
       </Select>
       <div className="mt-2 flex flex-wrap gap-2"><Tag tone={r.approved ? "ok" : "warn"}>{r.approved ? "Approved" : r.rejected ? "Rejected · replacement needed" : "Awaiting sign-off"}</Tag>{!r.approved && <Tag tone={timely ? "warn" : "danger"}>{timely ? `Due ${r.approvalDueDate}` : `Overdue · due ${r.approvalDueDate}`}</Tag>}
@@ -194,7 +194,7 @@ function ProposalCard({ p }: { p: Proposal }) {
     <article className={cn("border-l-4 p-4", agent.border)}>
       <div className="flex flex-wrap items-start gap-4">
         <AgentAvatar agent={p.agent} />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-0">
           <div className="text-xs font-semibold text-muted-foreground">{agent.name} · {p.kind === "substitution" ? `${MEAL_LABEL[p.meal]} substitution` : "Purchase request"}</div>
           {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={setSelectedDish} /> : <PurchaseBody p={selected} />}
         </div>
@@ -213,7 +213,7 @@ function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (
     <>
       <div className="mt-2 flex flex-wrap gap-2"><Tag>{p.serviceDate}</Tag><Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag></div>
       <Select value={p.dishId} onValueChange={onDishChange} disabled={late}>
-        <SelectTrigger aria-label={`Alternative dish for ${p.residentIds.map((id) => residentName(state, id)).join(", ")}`} className="mt-2 h-auto min-h-10 w-full max-w-lg whitespace-normal text-left text-base font-semibold"><SelectValue /></SelectTrigger>
+        <SelectTrigger aria-label={`Alternative dish for ${p.residentIds.map((id) => residentName(state, id)).join(", ")}`} className="mt-2 h-auto min-h-10 w-full max-w-lg whitespace-normal text-left text-base font-semibold [&>span]:line-clamp-none [&>span]:break-words"><SelectValue /></SelectTrigger>
         <SelectContent>{DISHES.filter((dish) => dish.meal === p.meal).map((dish) => <SelectItem key={dish.id} value={dish.id} disabled={residents.some((resident) => conflictReasons(resident, dish).length > 0)}>{dish.name}</SelectItem>)}</SelectContent>
       </Select>
       <div className="mt-1 text-xs text-muted-foreground">{p.residentIds.length} resident{p.residentIds.length > 1 ? "s" : ""}</div>
