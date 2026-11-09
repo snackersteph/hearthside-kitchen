@@ -69,7 +69,7 @@ function MenuPage() {
         disabled={[{ before: start }, { after: end }]}
         onSelect={(date) => { if (date) navigate({ to: "/menu/$date", params: { date: dateKey(date) } }); }}
         className="pointer-events-auto w-full bg-transparent p-0"
-        classNames={{ root: "w-full", month: "w-full", month_caption: "flex h-10 items-center justify-center", caption_label: "text-lg font-semibold", weekdays: "flex border-b pb-3", week: "mt-2 flex w-full gap-1", day: "relative flex-1 min-w-0 p-0 text-center" }}
+        classNames={{ root: "w-full", months: "relative w-full min-w-0", month: "flex w-full min-w-0 flex-col gap-4", table: "block w-full", month_caption: "flex h-10 items-center justify-center", caption_label: "text-lg font-semibold", weekdays: "grid w-full grid-cols-7 border-b pb-3", week: "mt-2 grid w-full grid-cols-7 gap-1", day: "relative w-full min-w-0 p-0 text-center" }}
         components={{ DayButton: MenuDay }} />
     </section>
   </>;

@@ -14,4 +14,12 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("opens a selected menu date as a separate detail page", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    const matches = router.matchRoutes("/menu/2026-11-09");
+    expect(matches.at(-1)?.routeId).toBe("/menu_/$date");
+    expect(matches.at(-1)?.params).toEqual({ date: "2026-11-09" });
+    expect(matches.some((match) => match.routeId === "/menu")).toBe(false);
+  });
 });
