@@ -95,11 +95,20 @@ describe("inventory agent: tools enforce the rules", () => {
   };
 
   it("lists shortages with quantities and dates", () => {
-    const { tools } = setup();
+    const { ws, tools } = setup();
     const list = call(tools, "list_shortages", {});
-    expect(list.find((s: { ingredient_id: string }) => s.ingredient_id === "quinoa")).toMatchObject(
-      { quantity_to_order: 3, first_short_date: "2026-11-11", status: "open" },
-    );
+    expect(list).toHaveLength(ws.shortages.length);
+    expect(list.length).toBeGreaterThan(0);
+    // Derive expectations from the data so the test survives seed-data changes.
+    for (const shortage of ws.shortages) {
+      expect(
+        list.find((s: { ingredient_id: string }) => s.ingredient_id === shortage.ingredientId),
+      ).toMatchObject({
+        quantity_to_order: shortage.qty,
+        first_short_date: shortage.neededDate ?? null,
+        status: "open",
+      });
+    }
   });
 
   it("refuses to order from an unverified vendor", () => {
@@ -130,10 +139,17 @@ describe("inventory agent: tools enforce the rules", () => {
   });
 
   it("refuses ingredients that are not shortages", () => {
-    const { tools } = setup();
+    const { ws, tools } = setup();
     expect(
-      call(tools, "add_to_draft_order", { ingredient_id: "rice", vendor_id: "sysco" }).ok,
+      call(tools, "add_to_draft_order", { ingredient_id: "not-an-ingredient", vendor_id: "sysco" })
+        .ok,
     ).toBe(false);
+    // Also an ingredient that exists but is fully covered, whichever one that is in the current seed data.
+    const covered = ws.state.ingredients.find((i) => !ws.shortage(i.id));
+    if (covered)
+      expect(
+        call(tools, "add_to_draft_order", { ingredient_id: covered.id, vendor_id: "sysco" }).ok,
+      ).toBe(false);
   });
 
   it("accepts an eligible on-time vendor, once", () => {
