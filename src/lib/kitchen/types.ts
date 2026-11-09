@@ -64,6 +64,9 @@ export interface ProfileUpdate {
   at: number;
   summary: string;
   review: "open" | "seen";
+  changes?: import("./profile-changes").ProfileContentChange[];
+  residentName?: string;
+  acknowledgedAt?: number;
 }
 
 /** A reaction observed after a resident ate a specific meal. */
@@ -80,6 +83,7 @@ export interface Observation {
 }
 
 export interface KitchenState {
+  orderSnapshotVersion?: number;
   recipes?: import("./recipes").Recipe[];
   deletedRecipeIds?: string[];
   deletedIngredientIds?: string[];

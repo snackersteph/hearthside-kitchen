@@ -6,6 +6,7 @@ import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 import { ADDITIONAL_RESIDENTS } from "./additional-residents";
 import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
 import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
+import { profileContentChanges } from "./profile-changes";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -31,6 +32,7 @@ type Action =
   | { type: "logObservation"; observation: Observation }
   | { type: "reviewObservation"; id: string }
   | { type: "markProfileUpdatesSeen" }
+  | { type: "acknowledgeProfileUpdate"; id: string }
   | { type: "setStock"; id: string; stock: number }
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
@@ -46,6 +48,7 @@ export function profileChangeSummary(previous: Resident, next: Resident): string
   if (JSON.stringify(previous.careProfile ?? null) !== JSON.stringify(next.careProfile ?? null)) parts.push("Care profile");
   if ((previous.mealInstructions ?? []).join("|") !== (next.mealInstructions ?? []).join("|")) parts.push("Meal instructions");
   if (previous.photoUrl !== next.photoUrl) parts.push("Profile photo");
+  if (previous.likes.join("|") !== next.likes.join("|")) parts.push("Food preferences");
   return parts.length ? parts.join(", ") : null;
 }
 
@@ -53,7 +56,7 @@ export function profileChangeSummary(previous: Resident, next: Resident): string
 function profileUpdateRecord(s: KitchenState, previous: Resident, next: Resident, reference: Date): Pick<KitchenState, "profileUpdates"> {
   const summary = profileChangeSummary(previous, next);
   if (!summary) return {};
-  const update: ProfileUpdate = { id: `profile-${next.id}-${reference.getTime()}`, residentId: next.id, at: reference.getTime(), summary, review: "open" };
+  const update: ProfileUpdate = { id: `profile-${next.id}-${reference.getTime()}-${s.profileUpdates?.length ?? 0}`, residentId: next.id, residentName: next.name, at: reference.getTime(), summary, changes: profileContentChanges(previous, next), review: "open" };
   return { profileUpdates: [update, ...(s.profileUpdates ?? [])] };
 }
 
@@ -168,6 +171,10 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
     case "markProfileUpdatesSeen": {
       if (!(s.profileUpdates ?? []).some((u) => u.review === "open")) return s;
       return { ...s, profileUpdates: (s.profileUpdates ?? []).map((u) => ({ ...u, review: "seen" })) };
+    }
+    case "acknowledgeProfileUpdate": {
+      if (!s.profileUpdates?.some((u) => u.id === a.id && u.review === "open")) return s;
+      return { ...s, profileUpdates: s.profileUpdates.map((u) => u.id === a.id ? { ...u, review: "seen", acknowledgedAt: reference.getTime() } : u) };
     }
     case "setStock": return { ...s, ingredients: s.ingredients.map((i) => (i.id === a.id ? { ...i, stock: Math.max(0, a.stock) } : i)) };
     case "setMealPlan": {
@@ -294,6 +301,22 @@ export function migrateResidentProfiles(s: KitchenState): KitchenState {
 }
 
 const KEY = "kitchen-command-v1";
+/** Add illustrative orders once without replacing staff-created orders or available stock. */
+export function migrateOrderSnapshot(s: KitchenState, reference = new Date()): KitchenState {
+  if (s.orderSnapshotVersion === 1) return s;
+  const base = { ...s, orderSnapshotVersion: 1 };
+  if (s.orders?.length) return base;
+  const specs = [
+    { id: "snapshot-delivery-1", ingredientId: "carrots", qty: 5, offset: -1 },
+    { id: "snapshot-delivery-2", ingredientId: "milk", qty: 4, offset: 0 },
+    { id: "snapshot-incoming-3", ingredientId: "rice", qty: 5, offset: 3 },
+  ];
+  const orders = specs.flatMap((spec) => {
+    const ingredient = s.ingredients.find((i) => i.id === spec.ingredientId);
+    return ingredient ? [{ id: spec.id, vendor: ingredient.vendor, lines: [{ ingredientId: ingredient.id, qty: spec.qty, shortage: 0 }], deliveryDate: dateKey(dayAt(spec.offset, reference)), status: "incoming" as const }] : [];
+  });
+  return { ...base, orders, ingredients: s.ingredients.map((i) => ({ ...i, onOrder: i.onOrder + orders.flatMap((o) => o.lines).filter((l) => l.ingredientId === i.id).reduce((n, l) => n + l.qty, 0) })) };
+}
 export function migrateAdditionalResidents(s: KitchenState): KitchenState {
   if (s.additionalResidentsVersion === 1) return s;
   return { ...s, additionalResidentsVersion: 1, residents: [...s.residents, ...ADDITIONAL_RESIDENTS.filter((r) => !s.residents.some((existing) => existing.id === r.id))] };
@@ -321,7 +344,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: merged?.seeded ? merged : seedDemo(merged ?? initialState()) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);

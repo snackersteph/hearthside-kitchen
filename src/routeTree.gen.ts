@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as ProfileUpdatesRouteImport } from './routes/profile-updates'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as ResidentsRouteImport } from './routes/residents'
 import { Route as MenuDateRouteImport } from './routes/menu_.$date'
@@ -36,6 +37,11 @@ const InventoryRoute = InventoryRouteImport.update({
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileUpdatesRoute = ProfileUpdatesRouteImport.update({
+  id: '/profile-updates',
+  path: '/profile-updates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecipesRoute = RecipesRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/approvals': typeof ApprovalsRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
+  '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
   '/menu/$date': typeof MenuDateRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/approvals': typeof ApprovalsRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
+  '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
   '/menu/$date': typeof MenuDateRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/approvals': typeof ApprovalsRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
+  '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
   '/menu_/$date': typeof MenuDateRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/inventory'
     | '/menu'
+    | '/profile-updates'
     | '/recipes'
     | '/residents'
     | '/menu/$date'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/inventory'
     | '/menu'
+    | '/profile-updates'
     | '/recipes'
     | '/residents'
     | '/menu/$date'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/inventory'
     | '/menu'
+    | '/profile-updates'
     | '/recipes'
     | '/residents'
     | '/menu_/$date'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   ApprovalsRoute: typeof ApprovalsRoute
   InventoryRoute: typeof InventoryRoute
   MenuRoute: typeof MenuRoute
+  ProfileUpdatesRoute: typeof ProfileUpdatesRoute
   RecipesRoute: typeof RecipesRoute
   ResidentsRoute: typeof ResidentsRoute
   MenuDateRoute: typeof MenuDateRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/menu'
       fullPath: '/menu'
       preLoaderRoute: typeof MenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile-updates': {
+      id: '/profile-updates'
+      path: '/profile-updates'
+      fullPath: '/profile-updates'
+      preLoaderRoute: typeof ProfileUpdatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recipes': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApprovalsRoute: ApprovalsRoute,
   InventoryRoute: InventoryRoute,
   MenuRoute: MenuRoute,
+  ProfileUpdatesRoute: ProfileUpdatesRoute,
   RecipesRoute: RecipesRoute,
   ResidentsRoute: ResidentsRoute,
   MenuDateRoute: MenuDateRoute,
