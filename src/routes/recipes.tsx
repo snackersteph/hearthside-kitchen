@@ -68,7 +68,7 @@ function RecipesPage() {
               <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[r.meal]}</div>
               <div className="mt-1 text-lg font-semibold leading-snug">{r.name}</div>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                <Tag>{r.dietGroup}</Tag><Tag>{r.texture}</Tag>
+                <Tag>{r.dietGroup}</Tag><Tag>{r.texture} texture</Tag>
                 {r.allergens.map((a) => <Tag key={a} tone="danger">{a}</Tag>)}
               </div>
             </button>
@@ -108,7 +108,7 @@ function RecipeDetail({ recipe, onClose, onDelete }: { recipe: Recipe | null; on
           <DialogHeader>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[recipe.meal]}</div>
             <DialogTitle className="text-2xl">{recipe.name}</DialogTitle>
-            <DialogDescription asChild><div className="flex flex-wrap gap-1.5 pt-1"><Tag>{recipe.dietGroup}</Tag><Tag>{recipe.texture}</Tag></div></DialogDescription>
+            <DialogDescription asChild><div className="flex flex-wrap gap-1.5 pt-1"><Tag>{recipe.dietGroup}</Tag><Tag>{recipe.texture} texture</Tag></div></DialogDescription>
           </DialogHeader>
           <section>
             <h3 className="mb-2 text-sm font-semibold">Ingredients per serving</h3>
