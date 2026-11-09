@@ -68,7 +68,7 @@ export function EditDialog({ resident, isNew = false, section, onClose }: { resi
             <div><span className="text-muted-foreground">Room</span> {r.room} · <span className="text-muted-foreground">Age</span> {r.age}</div>
             {Object.entries(r.careProfile).map(([label, value]) => <div key={label}><span className="text-muted-foreground">{label}:</span> {value}</div>)}
           </div>}
-          {section && <div className="grid gap-4 sm:grid-cols-2">{CARE_FIELDS[section].map((field) => <label key={field} className="block text-base font-medium">{field}<Textarea className="min-h-[88px] text-base md:text-base leading-relaxed" aria-label={field} value={r.careProfile?.[field] ?? ""} onChange={(e) => setR((previous) => ({ ...previous, careProfile: { ...previous.careProfile, [field]: e.target.value } }))} /></label>)}</div>}
+          {section && <div className="grid gap-4 sm:grid-cols-2">{CARE_FIELDS[section].map((field, i, all) => <label key={field} className={`block text-base font-medium${i === all.length - 1 && all.length % 2 === 1 ? " sm:col-span-2" : ""}`}>{field}<Textarea className="min-h-[88px] text-base md:text-base leading-relaxed" aria-label={field} value={r.careProfile?.[field] ?? ""} onChange={(e) => setR((previous) => ({ ...previous, careProfile: { ...previous.careProfile, [field]: e.target.value } }))} /></label>)}</div>}
           {show("Health & dietary requirements") && <><div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Allergies & intolerances</div>
             <div className="flex flex-wrap gap-2">{ALLERGENS.map((a) => <Chip key={a} on={r.allergens.includes(a)} onClick={() => toggle("allergens", a)}>{a}</Chip>)}</div>
