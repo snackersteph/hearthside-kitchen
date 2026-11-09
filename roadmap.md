@@ -40,3 +40,8 @@
 - [x] Automatically approve saved alternatives until resident food requirements change; reopen affected reviews after changes.
 - [x] Add resident and ingredient creation dialogs using the existing fields and inventory columns.
 - [x] Test safety rules and verify creation and renewed approval flows.
+
+# Uploaded resident profiles
+- [ ] Replace sample residents with all 15 uploaded profiles and preserve the full care information.
+- [ ] Update existing saved records safely and list residents alphabetically by first name.
+- [ ] Verify profile details, saved updates, sorting, and dietary regression tests.
