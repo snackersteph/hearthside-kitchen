@@ -19,7 +19,7 @@ export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { ca
         </span>
       </div>
       <div className={cn("mt-2 font-display text-4xl font-semibold", clear && "text-success")}>{card.value}</div>
-      <div className="mt-2 flex flex-1 flex-col justify-end gap-2">
+      <div className="mt-2 flex min-h-16 flex-1 flex-col justify-end gap-2">
         {clear ? (
           <span className="inline-flex w-fit items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success">
             <CircleCheck className="h-3 w-3" />
@@ -37,7 +37,7 @@ export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { ca
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
               {onReview && (
-                <Button type="button" variant="outline" size="sm" className="h-7 shrink-0 px-2.5 text-xs" onClick={onReview}>
+                <Button type="button" variant="ghost" size="sm" className="h-6 shrink-0 px-1.5 text-xs font-medium text-muted-foreground hover:text-foreground" onClick={onReview}>
                   {reviewLabel ?? "Mark reviewed"}
                 </Button>
               )}
