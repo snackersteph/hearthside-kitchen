@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { addMonths } from "date-fns";
-import { CheckCircle2, ClipboardCheck, CalendarDays } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, CalendarDays, History } from "lucide-react";
 import { type DayButton } from "react-day-picker";
 import { useKitchen } from "@/lib/kitchen/store";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
@@ -43,14 +43,15 @@ function MenuPage() {
     const dayReviews = reviews.filter((review) => review.serviceDate === key);
     const pending = dayReviews.filter((review) => !review.approved).length;
     const past = key < today;
+    const isToday = key === today;
     const inRange = props.day.date >= start && props.day.date <= end;
     return <CalendarDayButton {...props}
-      aria-label={`${props.day.date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}, ${past ? "past menu" : `${pending} meals need approval`}`}
-      className={cn("h-24 gap-2 rounded-lg border border-transparent text-base md:h-28", key === today && "border-primary", !inRange && "opacity-35")}>
-      <span className="font-semibold">{props.day.date.getDate()}</span>
-      {inRange && <span className={cn("flex items-center gap-1 text-[10px] font-medium md:text-xs", past ? "text-muted-foreground" : pending ? "text-accent-foreground" : "text-success")}>
-        {past ? "Past" : pending ? <><ClipboardCheck className="size-3 shrink-0" /><span>{pending}<span className="hidden sm:inline"> to approve</span></span></> : <><CheckCircle2 className="size-3 shrink-0" /><span className="hidden sm:inline">Approved</span></>}
-      </span>}
+      aria-label={`${props.day.date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}, ${isToday ? "today, " : ""}${past ? "past menu" : `${pending} meals need approval`}`}
+      className={cn("[&>span]:opacity-100 h-24 gap-2 rounded-lg border border-transparent text-base md:h-28", isToday && "border-primary bg-primary/10 font-semibold ring-2 ring-primary", !inRange && "opacity-35")}>
+      <span className={cn("font-semibold", isToday && "flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground")}>{props.day.date.getDate()}</span>
+      {inRange && <div className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold md:text-xs", past ? "bg-muted text-muted-foreground" : pending ? "bg-accent text-accent-foreground" : "bg-success-soft text-primary")}>
+        {past ? <><History className="size-3 shrink-0" /><span>Past</span></> : pending ? <><ClipboardCheck className="size-3 shrink-0" /><span>{pending}<span className="hidden sm:inline"> to approve</span></span></> : <><CheckCircle2 className="size-3 shrink-0" /><span className="hidden sm:inline">Approved</span></>}
+      </div>}
     </CalendarDayButton>;
   }
 
