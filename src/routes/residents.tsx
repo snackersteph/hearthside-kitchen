@@ -32,7 +32,7 @@ function ResidentsPage() {
   const [q, setQ] = useState("");
   const list = state.residents.filter((r) => r.name.toLowerCase().includes(q.toLowerCase()) || r.room.includes(q)).sort(compareByFirstName);
   return <>
-    <PageHeader eyebrow={`${state.residents.length} residents`} title="Dietary Profiles">
+    <PageHeader eyebrow="" title={`${state.residents.length} Residents`}>
       <div className="flex flex-wrap gap-2"><Input aria-label="Search name or room" placeholder="Search name or room" value={q} onChange={(e) => setQ(e.target.value)} className="w-56 bg-card" /><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div>
     </PageHeader>
     <div className="overflow-hidden rounded-lg border bg-card">
