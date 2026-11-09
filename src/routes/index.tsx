@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Command Center · Hearth Kitchen Command" },
+      { title: "Command Center · NutriSync" },
       { name: "description", content: "Today's meals, dietary issues and live agent activity at a glance." },
-      { property: "og:title", content: "Command Center · Hearth Kitchen Command" },
+      { property: "og:title", content: "Command Center · NutriSync" },
       { property: "og:description", content: "Today's meals, dietary issues and live agent activity at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

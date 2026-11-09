@@ -27,9 +27,9 @@ export const Route = createFileRoute("/approvals")({
   },
   head: () => ({
     meta: [
-      { title: "Approval Center · Hearth Kitchen Command" },
+      { title: "Approval Center · NutriSync" },
       { name: "description", content: "Review, modify and approve menu swaps and purchase requests from your kitchen agents." },
-      { property: "og:title", content: "Approval Center · Hearth Kitchen Command" },
+      { property: "og:title", content: "Approval Center · NutriSync" },
       { property: "og:description", content: "Review, modify and approve agent proposals." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

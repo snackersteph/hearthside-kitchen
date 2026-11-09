@@ -11,9 +11,9 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({ meta: [
-    { title: "Menu Calendar · Hearth Kitchen Command" },
+    { title: "Menu Calendar · NutriSync" },
     { name: "description", content: "Browse daily menus and see which service dates still need staff approval." },
-    { property: "og:title", content: "Menu Calendar · Hearth Kitchen Command" },
+    { property: "og:title", content: "Menu Calendar · NutriSync" },
     { property: "og:description", content: "Browse daily menus and see which service dates still need staff approval." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },

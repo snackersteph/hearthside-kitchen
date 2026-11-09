@@ -11,9 +11,9 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 
 export const Route = createFileRoute("/residents_/$residentId")({
   head: ({ params }) => ({ meta: [
-    { title: `Resident ${params.residentId} · Hearth Kitchen Command` },
+    { title: `Resident ${params.residentId} · NutriSync` },
     { name: "description", content: `Complete dietary and care profile for resident ${params.residentId}.` },
-    { property: "og:title", content: `Resident ${params.residentId} · Hearth Kitchen Command` },
+    { property: "og:title", content: `Resident ${params.residentId} · NutriSync` },
     { property: "og:description", content: `Complete dietary and care profile for resident ${params.residentId}.` },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
