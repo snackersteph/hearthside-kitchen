@@ -52,6 +52,7 @@ export interface Decision {
 }
 
 export interface KitchenState {
+  alternativePreferences?: { residentId: string; meal: Meal; fromDishId: string; dishId: string }[];
   seeded?: boolean;
   purchaseHorizonDays?: 7 | 14;
   leadTimeDays?: number;
@@ -68,6 +69,7 @@ export interface KitchenState {
 }
 
 export interface SubstitutionProposal {
+  approved?: boolean;
   id: string;
   kind: "substitution";
   agent: "menu";

@@ -17,7 +17,7 @@ type Action =
   | { type: "setScheduledMain"; date: string; meal: Meal; dishId: string }
   | { type: "updateResident"; resident: Resident }
   | { type: "setStock"; id: string; stock: number }
-  | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string }
+  | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
   | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string };
 
@@ -99,7 +99,13 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         const o = { ...s.scheduledOverrides?.[date]?.[a.meal] };
         for (const id of a.residentIds) o[id] = a.dishId;
         const offset = Math.round((new Date(`${date}T12:00:00`).getTime() - new Date(`${dateKey(reference)}T12:00:00`).getTime()) / 86400000);
+        const fromDishId = scheduledState(s, offset, reference).plan[a.meal];
+        const preferences = a.remember ? [
+          ...(s.alternativePreferences ?? []).filter((p) => !(p.meal === a.meal && p.fromDishId === fromDishId && a.residentIds.includes(p.residentId))),
+          ...a.residentIds.map((residentId) => ({ residentId, meal: a.meal, fromDishId, dishId: a.dishId })),
+        ] : s.alternativePreferences;
         return { ...s, scheduledPlans: { ...s.scheduledPlans, [date]: { ...s.scheduledPlans?.[date], [a.meal]: scheduledState(s, offset, reference).plan[a.meal] } },
+          ...(preferences ? { alternativePreferences: preferences } : {}),
           scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: o } },
           mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } },
           history: [{ proposalId: a.proposalId, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: a.modified }, ...s.history] };
