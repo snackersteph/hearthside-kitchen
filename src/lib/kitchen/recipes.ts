@@ -63,7 +63,7 @@ export function recipeNutrition(recipe: Recipe, ingredients: Ingredient[]): Nutr
   const total = { calories: 0, protein: 0, carbs: 0, fat: 0 };
   for (const line of recipe.ingredients) {
     const unit = ingredients.find((i) => i.id === line.id)?.unit ?? "kg";
-    const per = PER_UNIT[line.id] ?? FALLBACK[unit] ?? FALLBACK.kg!;
+    const per = PER_UNIT[line.id] ?? FALLBACK[unit] ?? FALLBACK["kg"]!;
     const q = toStockUnit(line);
     total.calories += per.calories * q; total.protein += per.protein * q; total.carbs += per.carbs * q; total.fat += per.fat * q;
   }
