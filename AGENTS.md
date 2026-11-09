@@ -5,6 +5,7 @@
 - Menu and inventory use the shared schedule helpers; analyze derives horizon demand and purchasing requests so forecasts cannot diverge from the displayed sample rotation.
 - Date-specific future main dishes are staff decisions stored in KitchenState.scheduledPlans; the shared schedule resolves them before the sample rotation so editing one day changes only that day's forecast.
 - Approved purchases remain incoming until explicitly received; dated order lines support delivery-aware forecasts without treating unreceived stock as available today.
+- Incoming order edits and delivery confirmation use validated reducer actions to synchronize on-order quantities; receipts are timestamped and idempotent to prevent double-counting stock.
 - Preserve Kitchen context identity through Vite hot updates so mounted providers and refreshed consumers cannot split into different contexts.
 
 - Meal views, resident alternatives and forecasts use analyzeMenuDay with date-scoped decisions; whole-meal sign-off checks a plan/profile signature and the day-before deadline so future approvals cannot affect another service or survive changes.
@@ -24,3 +25,5 @@
 - Additional resident batches use one-time additive migrations so saved edits, deletions, and staff decisions remain intact.
 - Inventory edits use validated reducer actions; deletion tombstones prevent catalog restoration, and missing recipe ingredients remain visible as forecast shortages.
 - Command Center card totals and observation board filters come from src/lib/kitchen/overview.ts so a card's actionable and peaceful states always match stored state.
+- Inventory view search parameters deep-link delivery cards to their order tabs; delivered work counts due unconfirmed receipts rather than archived orders.
+- Resident meal history derives only from dated staff menus, resident overrides and meal observations; never present generated rotation or current dietary decisions as historical consumption.

@@ -5,7 +5,8 @@ import { AgentAvatar, Tag } from "@/components/kitchen/agents";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PackageCheck, Plus, Truck, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { InventoryOrders } from "@/components/kitchen/inventory-orders";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
 import { useState } from "react";
 import { IngredientEditDialog } from "@/components/kitchen/ingredient-edit-dialog";
@@ -16,6 +17,7 @@ import { DISHES } from "@/lib/kitchen/data";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/inventory")({
+  validateSearch: (search: Record<string, unknown>): { view?: "stock" | "delivered" | "incoming" } => ({ ...(search["view"] === "stock" || search["view"] === "delivered" || search["view"] === "incoming" ? { view: search["view"] } : {}) }),
   head: () => ({
     meta: [
       { title: "Inventory · NutriSync" },
@@ -33,6 +35,9 @@ function InventoryPage() {
   const { state, analysis, dispatch } = useKitchen();
   const [adding, setAdding] = useState(false);
   const [tab, setTab] = useState<string>("All");
+  const { view = "stock" } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setView = (view: "stock" | "delivered" | "incoming") => navigate({ search: { view } });
   const [editing, setEditing] = useState<Ingredient | null>(null);
   const [deleting, setDeleting] = useState<Ingredient | null>(null);
   const [query, setQuery] = useState("");
@@ -51,6 +56,10 @@ function InventoryPage() {
     <>
       <PageHeader eyebrow="Pantry & walk-in" title="Inventory"><div className="flex flex-wrap gap-2"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Search ingredients" placeholder="Search ingredients or vendors" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 pl-9" /></div><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div></PageHeader>
 
+      <div role="tablist" aria-label="Inventory views" className="mb-6 flex flex-wrap gap-2 border-b pb-3">
+        {([{ id: "stock", label: "Food stock" }, { id: "delivered", label: "Delivered orders" }, { id: "incoming", label: "Incoming orders" }] as const).map((item) => <Button key={item.id} role="tab" aria-selected={view === item.id} variant={view === item.id ? "default" : "ghost"} onClick={() => setView(item.id)}>{item.label}</Button>)}
+      </div>
+      {view !== "stock" ? <InventoryOrders key={view} mode={view} /> : <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b pb-5">
         <div>
           <div className="mb-2 text-sm font-semibold">Consumption forecast</div>
@@ -85,7 +94,7 @@ function InventoryPage() {
       )}
 
       <div role="tablist" aria-label="Ingredient sections" className="sticky top-0 z-10 -mx-1 mb-6 flex flex-wrap gap-2 bg-background/95 px-1 py-3 backdrop-blur">
-        {["All", ...FOOD_CATEGORIES].map((c) => { const n = c === "All" ? rows.length : rows.filter((i) => ingredientCategory(i) === c).length; if (c !== "All" && !n) return null; return <button key={c} role="tab" aria-selected={tab === c} onClick={() => setTab(c)} className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${tab === c ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted"}`}>{c} <span className="ml-1 opacity-70">{n}</span></button>; })}
+        {["All", ...FOOD_CATEGORIES].map((c) => { const n = c === "All" ? rows.length : rows.filter((i) => ingredientCategory(i) === c).length; if (c !== "All" && !n) return null; return <Button key={c} role="tab" aria-selected={tab === c} onClick={() => setTab(c)} variant={tab === c ? "default" : "outline"}>{c} <span className="ml-1 opacity-70">{n}</span></Button>; })}
       </div>
       {FOOD_CATEGORIES.filter((c) => tab === "All" || c === tab).map((category) => { const categoryRows = rows.filter((i) => ingredientCategory(i) === category); if (!categoryRows.length) return null; return <section key={category} aria-label={category} className="mb-8"><h2 className="mb-3 font-display text-xl font-semibold">{category} <span className="ml-2 text-sm font-normal text-muted-foreground">{categoryRows.length}</span></h2><div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full text-sm">
@@ -121,10 +130,7 @@ function InventoryPage() {
       </div></section>; })}
       {!rows.length && <p className="border-y py-8 text-center text-muted-foreground">No ingredients found.</p>}
       <p className="mt-3 text-xs text-muted-foreground">Estimate from the sample rotating menu, including dietary alternatives. Today's consumption is included. Incoming stock counts only from its expected delivery date; available stock changes when a delivery is received.</p>
-      <section className="mt-8">
-        <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold"><Truck className="h-5 w-5" />Incoming orders</h2>
-        {!incoming.length ? <div className="border-y py-5 text-sm text-muted-foreground">No approved orders are incoming. Pending requests are not yet on order.</div> : <div className="divide-y border-y">{incoming.map((order) => <div key={order.id} className="flex flex-wrap items-center gap-4 py-4"><div className="min-w-0 flex-1"><div className="font-semibold">{order.vendor} <span className="ml-2 text-xs font-normal text-muted-foreground">Expected {dateLabel(order.deliveryDate)}</span></div><div className="mt-1 text-sm text-muted-foreground">{order.lines.map((line) => { const ingredient = state.ingredients.find((i) => i.id === line.ingredientId); return `${ingredient?.name ?? line.ingredientId} · ${line.qty} ${ingredient?.unit ?? ""}`; }).join(" / ")}</div></div><Button variant="outline" onClick={() => dispatch({ type: "receiveOrder", id: order.id })}><PackageCheck />Mark received</Button></div>)}</div>}
-      </section>
+      </>}
       {(adding || editing) && <IngredientEditDialog {...(editing ? { ingredient: editing } : {})} onClose={() => { setAdding(false); setEditing(null); }} />}
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}><AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg"><AlertDialogHeader><AlertDialogTitle>Delete {deleting?.name}?</AlertDialogTitle><AlertDialogDescription>This removes this inventory item and its order lines. This cannot be undone.{deleting && DISHES.some((d) => d.ingredients.some((i) => i.id === deleting.id)) && " Meals still require this ingredient; it will be flagged as missing until you add it again or change the menu."}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction asChild><Button variant="destructive" onClick={() => { if (!deleting) return; dispatch({ type: "deleteIngredient", id: deleting.id }); setDeleting(null); }}>Confirm delete</Button></AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </>

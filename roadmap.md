@@ -75,3 +75,14 @@
 
 # Runtime crash fix
 - [x] Pre-bundle every Radix library so Vite never re-optimizes mid-session and loads a second React copy.
+
+# Inventory order tabs
+- [x] Add Food stock, Delivered orders, and Incoming orders tabs.
+- [x] Confirm deliveries once and edit incoming order details with synchronized stock forecasts.
+- [x] Test order rules and verify editing, receipt, and persistence in the page.
+
+# Command Center and resident meal history
+- [x] Use very faint pink for action cards and very faint green for completed cards.
+- [x] Add Delivered orders before Incoming ingredient orders and link both to the matching inventory tab.
+- [x] Add resident-specific meal history using recorded dated menus and observations.
+- [x] Test delivery counts and resident history; verify page navigation and layouts.

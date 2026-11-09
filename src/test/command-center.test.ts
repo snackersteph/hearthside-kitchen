@@ -7,7 +7,7 @@ import { dateKey, dayAt } from "@/lib/kitchen/schedule";
 import type { KitchenState, Observation } from "@/lib/kitchen/types";
 
 const REFERENCE = new Date("2026-11-09T12:00:00");
-const cardValue = (state: KitchenState, id: string) => actionCards(state, analyze(state, REFERENCE)).find((c) => c.id === id)?.value;
+const cardValue = (state: KitchenState, id: string) => actionCards(state, analyze(state, REFERENCE), REFERENCE).find((c) => c.id === id)?.value;
 
 describe("command center action cards", () => {
   it("shows the four action cards and counts only open work", () => {
@@ -22,12 +22,22 @@ describe("command center action cards", () => {
         { id: "u2", residentId: "R002", at: 2, summary: "Food allergies", review: "seen" },
       ],
     };
-    const cards = actionCards(state, analyze(state, REFERENCE));
-    expect(cards.map((c) => c.label)).toEqual(["Awaiting approval", "Ingredient shortfalls", "Incoming ingredient orders", "Resident profile updates"]);
-    expect(cards.map((c) => c.id)).toEqual(["approvals", "shortfalls", "incoming", "profiles"]);
+    const cards = actionCards(state, analyze(state, REFERENCE), REFERENCE);
+    expect(cards.map((c) => c.label)).toEqual(["Awaiting approval", "Ingredient shortfalls", "Delivered orders", "Incoming ingredient orders", "Resident profile updates"]);
+    expect(cards.map((c) => c.id)).toEqual(["approvals", "shortfalls", "delivered", "incoming", "profiles"]);
     expect(cardValue(state, "incoming")).toBe(2);
     expect(cardValue(state, "profiles")).toBe(1);
     expect(cardValue(state, "approvals")).toBeGreaterThan(0);
+  });
+
+  it("counts due unconfirmed deliveries and clears them after receipt", () => {
+    const s = reducer(initialState(), { type: "approvePurchase", proposalId: "due", vendor: "Sysco", deliveryDate: "2026-11-09", lines: [{ ingredientId: "milk", qty: 2, shortage: 2 }], modified: false, summary: "Order" }, REFERENCE);
+    expect(cardValue(s, "delivered")).toBe(1);
+    const id = s.orders?.[0]?.id;
+    if (!id) throw new Error("Missing order");
+    expect(cardValue(reducer(s, { type: "receiveOrder", id }, REFERENCE), "delivered")).toBe(0);
+    expect(actionCards(s, analyze(s, REFERENCE), REFERENCE).find((c) => c.id === "delivered")?.inventoryView).toBe("delivered");
+    expect(actionCards(s, analyze(s, REFERENCE), REFERENCE).find((c) => c.id === "incoming")?.inventoryView).toBe("incoming");
   });
 
   it("opens a resident profile update when a staff edit changes food requirements", () => {
