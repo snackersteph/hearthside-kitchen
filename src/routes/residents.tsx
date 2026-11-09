@@ -37,7 +37,7 @@ function ResidentsPage() {
     </PageHeader>
     <div className="overflow-hidden rounded-lg border bg-card">
       <Table className="min-w-[900px] xl:min-w-0">
-        <TableHeader className="bg-muted/50"><TableRow><TableHead className="w-16 px-3 py-4"><span className="sr-only">Photo</span></TableHead>{["First name", "Last name", "Gender", "Room number", "Medical conditions", "Diet type", "Food allergies"].map((h) => <TableHead key={h} className="px-3 py-4 text-base font-bold text-foreground">{h}</TableHead>)}</TableRow></TableHeader>
+        <TableHeader className="bg-muted/50"><TableRow><TableHead className="w-16 px-3 py-4"><span className="sr-only">Photo</span></TableHead>{["first", "last", "gender", "room", "medical conditions", "diet type", "food allergies"].map((h) => <TableHead key={h} className="px-3 py-4 text-base font-bold text-foreground">{h}</TableHead>)}</TableRow></TableHeader>
         <TableBody>{list.map((r) => {
           const { firstName, lastName } = residentNames(r);
           const values = [firstName, lastName, r.careProfile?.["Gender"] ?? "Not specified", r.room, medicalConditions(r), r.careProfile?.["Diet Type"] ?? (r.diets.join(", ") || "Regular"), r.careProfile?.["Food Allergies"] ?? (r.allergens.join(", ") || "None known")];
