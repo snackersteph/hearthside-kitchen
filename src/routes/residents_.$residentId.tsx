@@ -6,6 +6,7 @@ import { medicalConditions } from "@/lib/kitchen/resident-profile";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { EditDialog } from "@/components/kitchen/resident-edit-dialog";
 import { Button } from "@/components/ui/button";
+import { ResidentPhoto } from "@/components/kitchen/resident-photo";
 
 export const Route = createFileRoute("/residents_/$residentId")({
   head: ({ params }) => ({ meta: [
@@ -35,7 +36,10 @@ function ResidentProfilePage() {
   ];
   return <>
     {back}
-    <PageHeader eyebrow={`Resident ${r.id} · Room ${r.room}`} title={r.name}><Button onClick={() => setEditing(true)}><Pencil />Edit profile</Button></PageHeader>
+    <div className="mb-8 flex flex-wrap items-center gap-6">
+      <ResidentPhoto resident={r} large />
+      <div className="min-w-0 flex-1 [&>div]:mb-0"><PageHeader eyebrow={`Resident ${r.id} · Room ${r.room}`} title={r.name}><Button onClick={() => setEditing(true)}><Pencil />Edit profile</Button></PageHeader></div>
+    </div>
     <div className="space-y-8">
       {sections.map((section) => <section key={section.title} className="border-t pt-6">
         <h2 className="mb-5 font-display text-xl font-semibold">{section.title}</h2>

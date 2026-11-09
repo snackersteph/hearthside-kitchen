@@ -18,3 +18,4 @@
 - Resident and ingredient creation use validated reducer actions and the existing KitchenProvider persistence so new entries immediately participate in dietary analysis and inventory forecasts.
 - Uploaded resident care information is retained verbatim alongside supported engine categories; versioned catalog replacements clear previous resident-specific authorizations without resetting inventory or purchasing history.
 - Residents use a table index and un-nested profile detail routes with a shared editing dialog, so navigation preserves complete profiles and existing staff actions.
+- Fictional resident portraits are keyed by resident ID in a shared photo component so table thumbnails and profile portraits remain consistent without changing stored care records.
