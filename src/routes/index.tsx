@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ClipboardCheck, CircleCheck, PackageX, Truck, UserRound } from "lucide-react";
+import { ArrowRight, ClipboardCheck, CircleCheck, PackageX, Truck, UserRound } from "lucide-react";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { dishById } from "@/lib/kitchen/data";
 import { MEALS } from "@/lib/kitchen/types";
