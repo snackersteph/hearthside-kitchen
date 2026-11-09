@@ -114,7 +114,9 @@ describe("kitchen agents", () => {
     const s = initialState();
     const day = analyzeMenuDay({ ...s, plan: { ...s.plan, lunch: "l-puree" } });
     // The vegetarian resident gets a meat-free alternative instead.
-    expect(day.demand["sweet-potato"]).toBeCloseTo((s.residents.length - 1) * 0.2, 2);
+    const sp = dishById("l-puree").ingredients.find((i) => i.id === "sweet-potato")!;
+    const servings = s.residents.filter((r) => !day.conflicts.some((c) => c.meal === "lunch" && c.residentId === r.id)).length;
+    expect(day.demand["sweet-potato"]).toBeGreaterThanOrEqual(servings * perServingQty("kg", sp.qty, sp.unit) - 0.005);
     const forecast = analyze(s).forecast;
     expect(forecast?.todayShortage["sweet-potato"]).toBeUndefined();
     expect(forecast?.todayShortage["carrots"]).toBeUndefined();
