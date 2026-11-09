@@ -56,14 +56,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Gauge className="h-4 w-4" /><span className="flex-1">Dashboard</span>
           </Link>
           {(Object.keys(AGENTS) as AgentId[]).map((id) => (
-            <div key={id} className="flex items-center gap-3">
+            <Link key={id} to="/agents/$agentId" params={{ agentId: id }} className="-mx-3 flex items-center gap-3 rounded-lg px-3 py-1.5 transition-colors hover:bg-sidebar-accent" activeProps={{ className: "bg-sidebar-accent" }}>
               <AgentAvatar agent={id} size="sm" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium">{AGENTS[id].name}</div>
                 <div className="text-xs text-sidebar-foreground/55">{busy[id] ? `${busy[id]} open item${busy[id] > 1 ? "s" : ""}` : "Idle · all clear"}</div>
               </div>
               <span className={`h-2 w-2 rounded-full ${busy[id] ? "bg-sidebar-primary animate-pulse-dot" : "bg-success"}`} />
-            </div>
+            </Link>
           ))}
           <button onClick={() => dispatch({ type: "reset" })} className="mt-2 flex items-center gap-2 text-xs text-sidebar-foreground/55 hover:text-sidebar-foreground">
             <RotateCcw className="h-3 w-3" /> Reset demo day
