@@ -82,7 +82,7 @@
 - [x] Test order rules and verify editing, receipt, and persistence in the page.
 
 # Command Center and resident meal history
-- [ ] Use very faint pink for action cards and very faint green for completed cards.
-- [ ] Add Delivered orders before Incoming ingredient orders and link both to the matching inventory tab.
-- [ ] Add resident-specific meal history using recorded dated menus and observations.
-- [ ] Test delivery counts and resident history; verify page navigation and layouts.
+- [x] Use very faint pink for action cards and very faint green for completed cards.
+- [x] Add Delivered orders before Incoming ingredient orders and link both to the matching inventory tab.
+- [x] Add resident-specific meal history using recorded dated menus and observations.
+- [x] Test delivery counts and resident history; verify page navigation and layouts.
