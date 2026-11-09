@@ -139,7 +139,7 @@ function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: Substituti
 function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (id: string) => void }) {
   const { state } = useKitchen();
   const residents = state.residents.filter((resident) => p.residentIds.includes(resident.id));
-  const locked = p.approved && (!p.serviceDate || p.serviceDate <= dateKey(new Date()));
+  const locked = Boolean(p.approved && (!p.serviceDate || p.serviceDate <= dateKey(new Date())));
   return (
     <>
       <div className="mt-2 text-sm font-medium">Serve date: {p.serviceDate}</div>
