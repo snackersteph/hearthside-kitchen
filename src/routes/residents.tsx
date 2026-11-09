@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useKitchen } from "@/lib/kitchen/store";
-import { compareByFirstName, medicalConditions, residentNames } from "@/lib/kitchen/resident-profile";
+import { compareByFirstName, medicalConditions } from "@/lib/kitchen/resident-profile";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { EditDialog } from "@/components/kitchen/resident-edit-dialog";
 import { Button } from "@/components/ui/button";
@@ -36,13 +36,12 @@ function ResidentsPage() {
       <div className="flex flex-wrap gap-2"><Input aria-label="Search name or room" placeholder="Search name or room" value={q} onChange={(e) => setQ(e.target.value)} className="w-56 bg-card" /><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div>
     </PageHeader>
     <div className="overflow-hidden rounded-lg border bg-card">
-      <Table className="min-w-[900px] xl:min-w-0">
-        <TableHeader className="bg-muted/50"><TableRow><TableHead className="w-16 px-3 py-4"><span className="sr-only">Photo</span></TableHead>{["first", "last", "gender", "room", "medical conditions", "diet type", "food allergies"].map((h) => <TableHead key={h} className="px-3 py-4 text-base font-bold text-foreground">{h}</TableHead>)}</TableRow></TableHeader>
+      <Table className="min-w-[900px] xl:min-w-0 [&_th]:border-r [&_td]:border-r [&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0 [&_th]:border-border [&_td]:border-border">
+        <TableHeader className="bg-muted/50"><TableRow><TableHead className="w-16 px-3 py-4"><span className="sr-only">Photo</span></TableHead>{["Name", "Gender", "Room", "Medical conditions", "Diet type", "Food allergies"].map((h) => <TableHead key={h} className="px-3 py-4 text-base font-bold text-foreground">{h}</TableHead>)}</TableRow></TableHeader>
         <TableBody>{list.map((r) => {
-          const { firstName, lastName } = residentNames(r);
-          const values = [firstName, lastName, r.careProfile?.["Gender"] ?? "Not specified", r.room, medicalConditions(r), r.careProfile?.["Diet Type"] ?? (r.diets.join(", ") || "Regular"), r.careProfile?.["Food Allergies"] ?? (r.allergens.join(", ") || "None known")];
-          return <TableRow key={r.id} className="group"><TableCell className="p-0"><Link to="/residents/$residentId" params={{ residentId: r.id }} tabIndex={-1} className="block p-3"><ResidentPhoto resident={r} /></Link></TableCell>{values.map((value, i) => <TableCell key={i} className="p-0"><Link to="/residents/$residentId" params={{ residentId: r.id }} aria-label={i === 0 ? `View ${r.name}` : undefined} tabIndex={i === 0 ? 0 : -1} className={cn("block min-h-16 px-3 py-4 group-hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring", i < 2 && "font-semibold")}>{value || "—"}</Link></TableCell>)}</TableRow>;
-        })}{!list.length && <TableRow><TableCell colSpan={8} className="p-8 text-center text-muted-foreground">No residents found.</TableCell></TableRow>}</TableBody>
+          const values = [r.name, r.careProfile?.["Gender"] ?? "Not specified", r.room, medicalConditions(r), r.careProfile?.["Diet Type"] ?? (r.diets.join(", ") || "Regular"), r.careProfile?.["Food Allergies"] ?? (r.allergens.join(", ") || "None known")];
+          return <TableRow key={r.id} className="group"><TableCell className="p-0 align-middle"><Link to="/residents/$residentId" params={{ residentId: r.id }} tabIndex={-1} className="block p-3"><ResidentPhoto resident={r} /></Link></TableCell>{values.map((value, i) => <TableCell key={i} className="p-0 align-middle"><Link to="/residents/$residentId" params={{ residentId: r.id }} aria-label={i === 0 ? `View ${r.name}` : undefined} tabIndex={i === 0 ? 0 : -1} className={cn("flex min-h-16 items-center px-3 py-4 group-hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring", i === 0 && "font-semibold")}>{value || "—"}</Link></TableCell>)}</TableRow>;
+        })}{!list.length && <TableRow><TableCell colSpan={7} className="p-8 text-center text-muted-foreground">No residents found.</TableCell></TableRow>}</TableBody>
       </Table>
     </div>
     {adding && <EditDialog resident={{ id: "", name: "", room: "", age: 80, allergens: [], diets: [], likes: [], notes: "" }} isNew onClose={() => setAdding(false)} />}
