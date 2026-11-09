@@ -214,3 +214,17 @@ describe("demo seed", () => {
     expect(s.history.some((h) => h.at < reference.getTime() - 14 * 86400000)).toBe(true);
   });
 });
+
+describe("recipe-library menus", () => {
+  it("daily menu dishes come from the recipe library main dishes", async () => {
+    const { DISHES } = await import("@/lib/kitchen/data");
+    expect(DISHES.length).toBe(112);
+    expect(DISHES.every((d) => /^(BRK|LUN|DIN)-/.test(d.id))).toBe(true);
+  });
+  it("flags non-halal dishes for residents whose diet type is halal", () => {
+    const s = initialState();
+    const halalResident = s.residents.find((r) => r.careProfile?.["Diet Type"] === "Halal")!;
+    expect(conflictReasons(halalResident, dishById("BRK-REG-01"))).toContain("not halal");
+    expect(conflictReasons(halalResident, dishById("BRK-REG-05"))).not.toContain("not halal");
+  });
+});
