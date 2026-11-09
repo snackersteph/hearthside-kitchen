@@ -35,3 +35,8 @@
 - [x] Replace main meal cards with pending and approved resident alternatives.
 - [x] Remove grey date badges and ask whether to remember approved alternatives.
 - [x] Verify remembered choices, safety checks, date scope, and approval flows.
+
+# Saved approvals and new entries
+- [ ] Automatically approve saved alternatives until resident food requirements change; reopen affected reviews after changes.
+- [ ] Add resident and ingredient creation dialogs using the existing fields and inventory columns.
+- [ ] Test safety rules and verify creation and renewed approval flows.
