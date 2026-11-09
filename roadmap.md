@@ -54,3 +54,10 @@
 - [x] Add individual fictional portraits to rows and profile pages.
 - [x] Enlarge and bold table headers and slightly strengthen resident names.
 - [x] Verify portrait loading, navigation, and desktop/mobile layouts.
+
+# Additional resident profiles
+- [x] Add the five uploaded resident profiles with matching fictional portraits.
+
+# Inventory catalog
+- [x] Add inventory search and food sections with related items and photos.
+- [x] Allow confirmed editing and deleting of inventory items.

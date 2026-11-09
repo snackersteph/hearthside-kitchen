@@ -23,6 +23,8 @@ export interface Resident {
 }
 
 export interface Ingredient {
+  category?: import("./inventory-catalog").FoodCategory;
+  photoUrl?: string | undefined;
   id: string;
   name: string;
   unit: string;
@@ -56,6 +58,8 @@ export interface Decision {
 }
 
 export interface KitchenState {
+  deletedIngredientIds?: string[];
+  additionalResidentsVersion?: number;
   alternativePreferences?: { residentId: string; meal: Meal; fromDishId: string; dishId: string; dietarySignature?: string }[];
   seeded?: boolean;
   residentProfileVersion?: number;
