@@ -19,8 +19,8 @@ const CARE_FIELDS: Record<ProfileSection, string[]> = {
   "Clinical notes": [],
 };
 
-const FIELD = "h-11 text-base";
-const AREA = "min-h-[240px] text-base leading-relaxed";
+const FIELD = "h-11 text-base md:text-base";
+const AREA = "min-h-[240px] text-base md:text-base leading-relaxed";
 
 export function EditDialog({ resident, isNew = false, section, onClose }: { resident: Resident; isNew?: boolean; section?: ProfileSection; onClose: () => void }) {
   const { dispatch } = useKitchen();
@@ -79,7 +79,7 @@ export function EditDialog({ resident, isNew = false, section, onClose }: { resi
           </div></>}
           {show("Food preferences") && <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Likes</div>
-            <Textarea className="min-h-[120px] text-base leading-relaxed" aria-label="Favorite foods" value={r.likes.join(", ")} onChange={(e) => setR({ ...r, likes: e.target.value.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) })} />
+            <Textarea className="min-h-[120px] text-base md:text-base leading-relaxed" aria-label="Favorite foods" value={r.likes.join(", ")} onChange={(e) => setR({ ...r, likes: e.target.value.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) })} />
           </div>}
           {section === "Special meal instructions" && <label className="block text-base font-medium">Special meal instructions<Textarea className={AREA} aria-label="Special meal instructions" value={r.mealInstructions?.join("\n") ?? ""} onChange={(e) => setR({ ...r, mealInstructions: e.target.value.split("\n") })} /></label>}
           {show("Clinical notes") && <div>
