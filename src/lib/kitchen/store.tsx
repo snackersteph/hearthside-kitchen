@@ -45,10 +45,11 @@ export function profileChangeSummary(previous: Resident, next: Resident): string
 }
 
 /** Records an open profile update whenever a staff edit changes a resident's care information. */
-function profileUpdateRecord(previous: Resident, next: Resident, reference: Date): Pick<KitchenState, "profileUpdates"> {
+function profileUpdateRecord(s: KitchenState, previous: Resident, next: Resident, reference: Date): Pick<KitchenState, "profileUpdates"> {
   const summary = profileChangeSummary(previous, next);
   if (!summary) return {};
-  return { profileUpdates: [{ id: `profile-${next.id}-${reference.getTime()}`, residentId: next.id, at: reference.getTime(), summary, review: "open" }, ...(previous ? [] : [])] };
+  const update: ProfileUpdate = { id: `profile-${next.id}-${reference.getTime()}`, residentId: next.id, at: reference.getTime(), summary, review: "open" };
+  return { profileUpdates: [update, ...(s.profileUpdates ?? [])] };
 }
 
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
@@ -109,11 +110,11 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       if (!previous) return s;
       const changed = dietarySignature(previous) !== dietarySignature({ ...a.resident, dietaryRevision: previous.dietaryRevision ?? 0 });
       const resident = { ...a.resident, dietaryRevision: (previous.dietaryRevision ?? 0) + (changed ? 1 : 0) };
-      if (!changed) return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r), ...profileUpdateRecord(previous, resident, reference) };
+      if (!changed) return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r), ...profileUpdateRecord(s, previous, resident, reference) };
       const clear = (meals: Partial<Record<Meal, Record<string, string>>>) => Object.fromEntries(Object.entries(meals).map(([meal, entries]) => [meal, Object.fromEntries(Object.entries(entries ?? {}).filter(([id]) => id !== resident.id))]));
       const today = dateKey(reference);
       return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r),
-        ...profileUpdateRecord(previous, resident, reference),
+        ...profileUpdateRecord(s, previous, resident, reference),
         alternativePreferences: (s.alternativePreferences ?? []).filter((p) => p.residentId !== resident.id),
         overrides: clear(s.overrides) as KitchenState["overrides"],
         scheduledOverrides: Object.fromEntries(Object.entries(s.scheduledOverrides ?? {}).map(([date, meals]) => [date, date >= today ? clear(meals) : meals])),
