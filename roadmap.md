@@ -56,8 +56,8 @@
 - [x] Verify portrait loading, navigation, and desktop/mobile layouts.
 
 # Additional resident profiles
-- [ ] Add the five uploaded resident profiles with matching fictional portraits.
+- [x] Add the five uploaded resident profiles with matching fictional portraits.
 
 # Inventory catalog
-- [ ] Add inventory search and food sections with related items and photos.
-- [ ] Allow confirmed editing and deleting of inventory items.
+- [x] Add inventory search and food sections with related items and photos.
+- [x] Allow confirmed editing and deleting of inventory items.
