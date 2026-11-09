@@ -26,30 +26,6 @@ const LEGACY_DISHES: Dish[] = [
   { id: "d-lentil-puree", name: "Puréed Lentil Dal", meal: "dinner", description: "Mild, smooth red lentil dal (IDDSI level 4).", allergens: [], tags: ["vegetarian", "soft", "pureed"], ingredients: [{ id: "lentils", qty: 0.1 }, { id: "vegetables", qty: 0.05 }] },
 ];
 
-const SUGARY = /pancake|french toast|syrup|compote|cake|muffin|crumble|pudding|cobbler|waffle/i;
-/** Daily menus use the main dishes from the recipe library (uploaded catalog). */
-export const DISHES: Dish[] = RECIPE_CATALOG.filter((r) => (r.category ?? "main") === "main").map((r) => {
-  const tags: DishTag[] = [];
-  if (r.dietGroup !== "regular") tags.push("vegetarian");
-  if (r.texture !== "regular") tags.push("soft");
-  if (r.texture === "pureed") tags.push("pureed");
-  if (r.sodiumMg >= 900) tags.push("high-sodium");
-  if (SUGARY.test(r.name)) tags.push("high-sugar");
-  const names = r.ingredients.map((l) => [...INGREDIENTS, ...ADDITIONAL_INGREDIENTS].find((i) => i.id === l.id)?.name ?? l.id);
-  return {
-    id: r.id, name: r.name, meal: r.meal, allergens: [...r.allergens], tags, halal: r.halal, vegan: r.dietGroup === "vegan",
-    description: `${names.join(", ")}. ${r.texture === "regular" ? "Regular" : r.texture[0]!.toUpperCase() + r.texture.slice(1)} texture, ~${r.sodiumMg} mg sodium${r.halal ? ", halal" : ""}.`,
-    ingredients: r.ingredients.map((l) => l.unit === "g" || l.unit === "ml" ? { id: l.id, qty: l.qty, unit: l.unit } : { id: l.id, qty: l.qty }),
-  };
-});
-const LEGACY_IDS: Record<string, string> = Object.fromEntries(LEGACY_DISHES.flatMap((d) => {
-  const match = DISHES.find((x) => x.meal === d.meal && x.name === d.name) ?? DISHES.find((x) => x.meal === d.meal);
-  return match ? [[d.id, match.id]] : [];
-}));
-/** Map a dish id saved under the old sample menu to its recipe-library equivalent. */
-export const currentDishId = (id: string) => (DISHES.some((d) => d.id === id) ? id : LEGACY_IDS[id] ?? id);
-
-
 export const INGREDIENTS: Ingredient[] = [
   { id: "chicken", name: "Chicken breast", unit: "portions", stock: 6, onOrder: 0, vendor: "Sysco", packSize: 4, unitCost: 3.2 },
   { id: "salmon", name: "Salmon fillet", unit: "portions", stock: 9, onOrder: 0, vendor: "Pacific Seafood", packSize: 5, unitCost: 5.8 },
@@ -80,6 +56,30 @@ export const INGREDIENTS: Ingredient[] = [
   { id: "garlic", name: "Garlic", unit: "kg", stock: 0.5, onOrder: 0, vendor: "Valley Farms", packSize: 0.5, unitCost: 6 },
   { id: "butter", name: "Butter", unit: "kg", stock: 1, onOrder: 0, vendor: "Valley Farms", packSize: 0.5, unitCost: 7 },
 ];
+
+const SUGARY = /pancake|french toast|syrup|compote|cake|muffin|crumble|pudding|cobbler|waffle/i;
+/** Daily menus use the main dishes from the recipe library (uploaded catalog). */
+export const DISHES: Dish[] = RECIPE_CATALOG.filter((r) => (r.category ?? "main") === "main").map((r) => {
+  const tags: DishTag[] = [];
+  if (r.dietGroup !== "regular") tags.push("vegetarian");
+  if (r.texture !== "regular") tags.push("soft");
+  if (r.texture === "pureed") tags.push("pureed");
+  if (r.sodiumMg >= 900) tags.push("high-sodium");
+  if (SUGARY.test(r.name)) tags.push("high-sugar");
+  const names = r.ingredients.map((l) => [...INGREDIENTS, ...ADDITIONAL_INGREDIENTS].find((i) => i.id === l.id)?.name ?? l.id);
+  return {
+    id: r.id, name: r.name, meal: r.meal, allergens: [...r.allergens], tags, halal: r.halal, vegan: r.dietGroup === "vegan",
+    description: `${names.join(", ")}. ${r.texture === "regular" ? "Regular" : r.texture[0]!.toUpperCase() + r.texture.slice(1)} texture, ~${r.sodiumMg} mg sodium${r.halal ? ", halal" : ""}.`,
+    ingredients: r.ingredients.map((l) => l.unit === "g" || l.unit === "ml" ? { id: l.id, qty: l.qty, unit: l.unit } : { id: l.id, qty: l.qty }),
+  };
+});
+const LEGACY_IDS: Record<string, string> = Object.fromEntries(LEGACY_DISHES.flatMap((d) => {
+  const match = DISHES.find((x) => x.meal === d.meal && x.name === d.name) ?? DISHES.find((x) => x.meal === d.meal);
+  return match ? [[d.id, match.id]] : [];
+}));
+/** Map a dish id saved under the old sample menu to its recipe-library equivalent. */
+export const currentDishId = (id: string) => (DISHES.some((d) => d.id === id) ? id : LEGACY_IDS[id] ?? id);
+
 
 export const RESIDENT_PROFILE_VERSION = 1;
 
