@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { initialState } from "@/lib/kitchen/data";
 import { reducer as kitchenReducer } from "@/lib/kitchen/store";
-import { recipeLibrary, SEED_RECIPES, type Recipe } from "@/lib/kitchen/recipes";
+import { recipeAvailability, recipeLibrary, SEED_RECIPES, type Recipe } from "@/lib/kitchen/recipes";
 
 const base = () => initialState();
 const recipe = (over: Partial<Recipe> = {}): Recipe => ({ id: "r-test", name: "Test Soup", meal: "lunch", dietGroup: "vegan", texture: "soft", allergens: [], halal: true, sodiumMg: 300, ingredients: [{ id: "carrots", qty: 80, unit: "g" }], ...over });
@@ -23,5 +23,21 @@ describe("recipes", () => {
     const id = SEED_RECIPES[0]!.id;
     const s = kitchenReducer(base(), { type: "deleteRecipe", id });
     expect(recipeLibrary(s).some((r) => r.id === id)).toBe(false);
+  });
+  it("edits a built-in recipe in place", () => {
+    const seed = SEED_RECIPES[0]!;
+    const s = kitchenReducer(base(), { type: "editRecipe", recipe: { ...seed, name: "Renamed", category: "side" } });
+    const lib = recipeLibrary(s);
+    expect(lib.filter((r) => r.id === seed.id)).toHaveLength(1);
+    expect(lib.find((r) => r.id === seed.id)?.name).toBe("Renamed");
+    expect(lib.length).toBe(SEED_RECIPES.length);
+  });
+  it("imports all 135 uploaded recipes", () => expect(SEED_RECIPES).toHaveLength(135));
+  it("converts grams to kg when checking stock", () => {
+    const ing = [{ id: "carrots", name: "Carrots", unit: "kg", stock: 0.8, onOrder: 0, vendor: "V", packSize: 1, unitCost: 1 }];
+    const r = recipe({ ingredients: [{ id: "carrots", qty: 80, unit: "g" }] });
+    expect(recipeAvailability(r, ing, 10).status).toBe("available");
+    expect(recipeAvailability(r, ing, 11).status).toBe("low");
+    expect(recipeAvailability(r, [{ ...ing[0]!, stock: 0.05 }], 10).status).toBe("unavailable");
   });
 });

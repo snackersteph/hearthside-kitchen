@@ -105,7 +105,7 @@ function Filter<T extends string>({ label: l, value, onChange, options }: { labe
 
 const STOCK = {
   available: { icon: CheckCircle2, text: "All ingredients in stock", short: "In stock", cls: "bg-success-soft text-success" },
-  low: { icon: AlertTriangle, text: "Running low", short: "Running low", cls: "bg-warning-soft text-warning-foreground" },
+  low: { icon: AlertTriangle, text: "Running low", short: "Running low", cls: "bg-warning-soft text-warning" },
   unavailable: { icon: XCircle, text: "Missing ingredients", short: "Missing", cls: "bg-danger-soft text-destructive" },
 } as const;
 
