@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/residents")({
   head: () => ({
@@ -30,13 +31,14 @@ export const Route = createFileRoute("/residents")({
 function ResidentsPage() {
   const { state, analysis } = useKitchen();
   const [editing, setEditing] = useState<Resident | null>(null);
+  const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
   const list = state.residents.filter((r) => r.name.toLowerCase().includes(q.toLowerCase()) || r.room.includes(q));
 
   return (
     <>
       <PageHeader eyebrow={`${state.residents.length} residents`} title="Dietary Profiles">
-        <Input placeholder="Search name or room" value={q} onChange={(e) => setQ(e.target.value)} className="w-56 bg-card" />
+        <div className="flex flex-wrap gap-2"><Input placeholder="Search name or room" value={q} onChange={(e) => setQ(e.target.value)} className="w-56 bg-card" /><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div>
       </PageHeader>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((r) => (
@@ -72,11 +74,12 @@ function ResidentsPage() {
         ))}
       </div>
       {editing && <EditDialog resident={editing} onClose={() => setEditing(null)} />}
+      {adding && <EditDialog resident={{ id: "", name: "", room: "", age: 80, allergens: [], diets: [], likes: [], notes: "" }} isNew onClose={() => setAdding(false)} />}
     </>
   );
 }
 
-function EditDialog({ resident, onClose }: { resident: Resident; onClose: () => void }) {
+function EditDialog({ resident, isNew = false, onClose }: { resident: Resident; isNew?: boolean; onClose: () => void }) {
   const { dispatch } = useKitchen();
   const [r, setR] = useState(resident);
   const toggle = <K extends "allergens" | "diets">(k: K, v: Resident[K][number]) =>
@@ -84,8 +87,13 @@ function EditDialog({ resident, onClose }: { resident: Resident; onClose: () => 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle className="font-display text-2xl">{r.name}</DialogTitle></DialogHeader>
-        <div className="space-y-4">
+        <DialogHeader><DialogTitle className="font-display text-2xl">{isNew ? "Add resident" : r.name}</DialogTitle></DialogHeader>
+        <form onSubmit={(e) => { e.preventDefault(); dispatch(isNew ? { type: "addResident", resident: { ...r, id: crypto.randomUUID() } } : { type: "updateResident", resident: r }); toast.success(isNew ? "Resident added" : "Profile saved — meals rechecked"); onClose(); }} className="space-y-4">
+          {isNew && <div className="grid grid-cols-2 gap-3">
+            <label className="col-span-2 text-sm font-medium">Name<Input required aria-label="Resident name" value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} /></label>
+            <label className="text-sm font-medium">Room<Input required aria-label="Room" value={r.room} onChange={(e) => setR({ ...r, room: e.target.value })} /></label>
+            <label className="text-sm font-medium">Age<Input required aria-label="Age" type="number" min={1} max={120} value={r.age} onChange={(e) => setR({ ...r, age: Number(e.target.value) })} /></label>
+          </div>}
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Allergies & intolerances</div>
             <div className="flex flex-wrap gap-2">{ALLERGENS.map((a) => <Chip key={a} on={r.allergens.includes(a)} onClick={() => toggle("allergens", a)}>{a}</Chip>)}</div>
@@ -102,16 +110,16 @@ function EditDialog({ resident, onClose }: { resident: Resident; onClose: () => 
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Clinical notes</div>
             <Textarea value={r.notes} onChange={(e) => setR({ ...r, notes: e.target.value })} />
           </div>
-        </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => { dispatch({ type: "updateResident", resident: r }); toast.success("Profile saved — Dietary Agent re-checking meals"); onClose(); }}>Save profile</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={isNew && (!r.name.trim() || !r.room.trim())}>{isNew ? "Add resident" : "Save profile"}</Button>
         </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
 }
 
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" onClick={onClick} className={cn("rounded-full border px-3 py-1 text-sm capitalize transition", on ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:border-primary")}>{children}</button>;
+  return <Button type="button" variant={on ? "default" : "outline"} size="sm" aria-pressed={on} onClick={onClick} className="capitalize">{children}</Button>;
 }
