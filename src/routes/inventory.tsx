@@ -32,6 +32,7 @@ export const Route = createFileRoute("/inventory")({
 function InventoryPage() {
   const { state, analysis, dispatch } = useKitchen();
   const [adding, setAdding] = useState(false);
+  const [tab, setTab] = useState<string>("All");
   const [editing, setEditing] = useState<Ingredient | null>(null);
   const [deleting, setDeleting] = useState<Ingredient | null>(null);
   const [query, setQuery] = useState("");
@@ -83,7 +84,10 @@ function InventoryPage() {
         </div>
       )}
 
-      {FOOD_CATEGORIES.map((category) => { const categoryRows = rows.filter((i) => ingredientCategory(i) === category); if (!categoryRows.length) return null; return <section key={category} aria-label={category} className="mb-8"><h2 className="mb-3 font-display text-xl font-semibold">{category} <span className="ml-2 text-sm font-normal text-muted-foreground">{categoryRows.length}</span></h2><div className="overflow-x-auto rounded-lg border bg-card">
+      <div role="tablist" aria-label="Ingredient sections" className="sticky top-0 z-10 -mx-1 mb-6 flex flex-wrap gap-2 bg-background/95 px-1 py-3 backdrop-blur">
+        {["All", ...FOOD_CATEGORIES].map((c) => { const n = c === "All" ? rows.length : rows.filter((i) => ingredientCategory(i) === c).length; if (c !== "All" && !n) return null; return <button key={c} role="tab" aria-selected={tab === c} onClick={() => setTab(c)} className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${tab === c ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted"}`}>{c} <span className="ml-1 opacity-70">{n}</span></button>; })}
+      </div>
+      {FOOD_CATEGORIES.filter((c) => tab === "All" || c === tab).map((category) => { const categoryRows = rows.filter((i) => ingredientCategory(i) === category); if (!categoryRows.length) return null; return <section key={category} aria-label={category} className="mb-8"><h2 className="mb-3 font-display text-xl font-semibold">{category} <span className="ml-2 text-sm font-normal text-muted-foreground">{categoryRows.length}</span></h2><div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
             <tr><th className="px-4 py-3">Ingredient</th><th className="px-4 py-3">In stock</th><th className="px-4 py-3">On order</th><th className="px-4 py-3">Today</th><th className="px-4 py-3">{horizon}-day consumption</th><th className="w-44 px-4 py-3">First shortage</th><th className="px-4 py-3">Vendor</th><th className="px-4 py-3"><span className="sr-only">Actions</span></th></tr>
