@@ -27,6 +27,6 @@
 - [x] Verify date navigation, meal switching, editing, and exact approval links.
 
 # Dietary-focused approvals
-- [ ] Limit meal reviews to menus affected by resident dietary requirements.
-- [ ] Add dish dropdowns and remove the Service label while retaining dates.
-- [ ] Test filtering and verify saved changes and safe substitution choices.
+- [x] Limit meal reviews to menus affected by resident dietary requirements.
+- [x] Add dish dropdowns and remove the Service label while retaining dates.
+- [x] Test filtering and verify saved changes and safe substitution choices.
