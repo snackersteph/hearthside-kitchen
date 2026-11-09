@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { initialState } from "@/lib/kitchen/data";
-import { kitchenReducer } from "@/lib/kitchen/store";
+import { reducer as kitchenReducer } from "@/lib/kitchen/store";
 import { recipeLibrary, SEED_RECIPES, type Recipe } from "@/lib/kitchen/recipes";
 
-const base = () => structuredClone(initialState);
+const base = () => initialState();
 const recipe = (over: Partial<Recipe> = {}): Recipe => ({ id: "r-test", name: "Test Soup", meal: "lunch", dietGroup: "vegan", texture: "soft", allergens: [], halal: true, sodiumMg: 300, ingredients: [{ id: "carrots", qty: 80, unit: "g" }], ...over });
 
 describe("recipes", () => {
