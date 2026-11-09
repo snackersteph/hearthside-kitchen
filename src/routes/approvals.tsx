@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { canApproveMeal } from "@/lib/kitchen/schedule";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { approvedAlternatives } from "@/components/kitchen/approval-rules";
+import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-dialog";
 
 export const Route = createFileRoute("/approvals")({
   validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal } => {
