@@ -18,6 +18,9 @@ export function conflictReasons(r: Resident, dish: Dish): string[] {
   const out: string[] = [];
   for (const a of r.allergens) if (dish.allergens.includes(a)) out.push(`contains ${a}`);
   if (r.diets.includes("vegetarian") && !dish.tags.includes("vegetarian")) out.push("not vegetarian");
+  const care = `${r.careProfile?.["Diet Type"] ?? ""} ${r.careProfile?.["Religious/Cultural Requirements"] ?? ""}`.toLowerCase();
+  if (care.includes("halal") && dish.halal === false) out.push("not halal");
+  if (/\bvegan\b/.test(care) && dish.vegan === false) out.push("not vegan");
   if (r.diets.includes("low-sodium") && dish.tags.includes("high-sodium")) out.push("high sodium");
   if (r.diets.includes("diabetic") && dish.tags.includes("high-sugar")) out.push("high sugar");
   if (r.diets.includes("pureed") && !dish.tags.includes("pureed")) out.push("not puréed");

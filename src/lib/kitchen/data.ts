@@ -1,8 +1,10 @@
-import type { Dish, Ingredient, KitchenState, Resident } from "./types";
+import type { Dish, DishTag, Ingredient, KitchenState, Resident } from "./types";
+import { RECIPE_CATALOG } from "./recipe-catalog";
 import { ADDITIONAL_RESIDENTS } from "./additional-residents";
 import { ADDITIONAL_INGREDIENTS } from "./inventory-catalog";
 
-export const DISHES: Dish[] = [
+/** Original sample dishes, kept only to resolve ids saved before the recipe library drove menus. */
+const LEGACY_DISHES: Dish[] = [
   // Breakfast
   { id: "b-pancakes", name: "Buttermilk Pancakes & Berries", meal: "breakfast", description: "Fluffy buttermilk pancakes, warm berry compote, maple syrup.", allergens: ["dairy", "gluten", "egg"], tags: ["vegetarian", "high-sugar", "soft"], ingredients: [{ id: "flour", qty: 0.15 }, { id: "milk", qty: 0.2 }, { id: "eggs", qty: 1 }, { id: "berries", qty: 0.1 }] },
   { id: "b-oatmeal", name: "Steel-Cut Oatmeal & Berries", meal: "breakfast", description: "Certified gluten-free oats cooked in oat milk, fresh berries.", allergens: [], tags: ["vegetarian", "soft"], ingredients: [{ id: "oats", qty: 0.1 }, { id: "oat-milk", qty: 0.25 }, { id: "berries", qty: 0.08 }] },
@@ -23,6 +25,30 @@ export const DISHES: Dish[] = [
   { id: "d-puree", name: "Puréed Salmon & Carrot", meal: "dinner", description: "Smooth salmon and carrot purée (IDDSI level 4).", allergens: ["fish"], tags: ["soft", "pureed"], ingredients: [{ id: "salmon", qty: 0.6 }, { id: "vegetables", qty: 0.1 }] },
   { id: "d-lentil-puree", name: "Puréed Lentil Dal", meal: "dinner", description: "Mild, smooth red lentil dal (IDDSI level 4).", allergens: [], tags: ["vegetarian", "soft", "pureed"], ingredients: [{ id: "lentils", qty: 0.1 }, { id: "vegetables", qty: 0.05 }] },
 ];
+
+const SUGARY = /pancake|french toast|syrup|compote|cake|muffin|crumble|pudding|cobbler|waffle/i;
+/** Daily menus use the main dishes from the recipe library (uploaded catalog). */
+export const DISHES: Dish[] = RECIPE_CATALOG.filter((r) => (r.category ?? "main") === "main").map((r) => {
+  const tags: DishTag[] = [];
+  if (r.dietGroup !== "regular") tags.push("vegetarian");
+  if (r.texture !== "regular") tags.push("soft");
+  if (r.texture === "pureed") tags.push("pureed");
+  if (r.sodiumMg >= 900) tags.push("high-sodium");
+  if (SUGARY.test(r.name)) tags.push("high-sugar");
+  const names = r.ingredients.map((l) => [...INGREDIENTS, ...ADDITIONAL_INGREDIENTS].find((i) => i.id === l.id)?.name ?? l.id);
+  return {
+    id: r.id, name: r.name, meal: r.meal, allergens: [...r.allergens], tags, halal: r.halal, vegan: r.dietGroup === "vegan",
+    description: `${names.join(", ")}. ${r.texture === "regular" ? "Regular" : r.texture[0]!.toUpperCase() + r.texture.slice(1)} texture, ~${r.sodiumMg} mg sodium${r.halal ? ", halal" : ""}.`,
+    ingredients: r.ingredients.map((l) => l.unit === "g" || l.unit === "ml" ? { id: l.id, qty: l.qty, unit: l.unit } : { id: l.id, qty: l.qty }),
+  };
+});
+const LEGACY_IDS: Record<string, string> = Object.fromEntries(LEGACY_DISHES.flatMap((d) => {
+  const match = DISHES.find((x) => x.meal === d.meal && x.name === d.name) ?? DISHES.find((x) => x.meal === d.meal);
+  return match ? [[d.id, match.id]] : [];
+}));
+/** Map a dish id saved under the old sample menu to its recipe-library equivalent. */
+export const currentDishId = (id: string) => (DISHES.some((d) => d.id === id) ? id : LEGACY_IDS[id] ?? id);
+
 
 export const INGREDIENTS: Ingredient[] = [
   { id: "chicken", name: "Chicken breast", unit: "portions", stock: 6, onOrder: 0, vendor: "Sysco", packSize: 4, unitCost: 3.2 },
@@ -616,7 +642,7 @@ export function initialState(): KitchenState {
   return {
     additionalResidentsVersion: 1,
     residentProfileVersion: RESIDENT_PROFILE_VERSION,
-    plan: { breakfast: "b-pancakes", lunch: "l-alfredo", dinner: "d-salmon" },
+    plan: { breakfast: currentDishId("b-pancakes"), lunch: currentDishId("l-alfredo"), dinner: currentDishId("d-salmon") },
     overrides: { breakfast: {}, lunch: {}, dinner: {} },
     residents: [...RESIDENTS, ...ADDITIONAL_RESIDENTS].map((r) => ({ ...r, likes: [...r.likes], allergens: [...r.allergens], diets: [...r.diets], ...(r.careProfile ? { careProfile: { ...r.careProfile } } : {}), ...(r.mealInstructions ? { mealInstructions: [...r.mealInstructions] } : {}) })),
     ingredients: [...INGREDIENTS, ...ADDITIONAL_INGREDIENTS].map((i) => ({ ...i })),
@@ -624,4 +650,4 @@ export function initialState(): KitchenState {
   };
 }
 
-export const dishById = (id: string) => DISHES.find((d) => d.id === id)!;
+export const dishById = (id: string) => DISHES.find((d) => d.id === currentDishId(id))!;
