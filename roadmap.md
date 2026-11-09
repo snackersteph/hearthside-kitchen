@@ -37,6 +37,6 @@
 - [x] Verify remembered choices, safety checks, date scope, and approval flows.
 
 # Saved approvals and new entries
-- [ ] Automatically approve saved alternatives until resident food requirements change; reopen affected reviews after changes.
-- [ ] Add resident and ingredient creation dialogs using the existing fields and inventory columns.
-- [ ] Test safety rules and verify creation and renewed approval flows.
+- [x] Automatically approve saved alternatives until resident food requirements change; reopen affected reviews after changes.
+- [x] Add resident and ingredient creation dialogs using the existing fields and inventory columns.
+- [x] Test safety rules and verify creation and renewed approval flows.

@@ -14,7 +14,10 @@ describe("remembered resident alternatives", () => {
     return { state: reducer(state, action, reference), proposal, action };
   }
   it("does not remember a date-only approval", () => {
-    expect(approve(false).state.alternativePreferences).toBeUndefined();
+    const { state, proposal } = approve(false);
+    expect(state.alternativePreferences).toBeUndefined();
+    state.scheduledPlans = { ...state.scheduledPlans, "2026-11-11": { [proposal.meal]: proposal.fromDishId } };
+    expect(analyzeMenuDay(state, 2, reference).conflicts.some((c) => c.residentId === "r4" && c.meal === proposal.meal)).toBe(true);
   });
   it("automatically approves a saved choice for the same resident and returning main dish", () => {
     const { state, proposal } = approve(true);
@@ -44,6 +47,17 @@ describe("remembered resident alternatives", () => {
     if (!resident) throw new Error("Missing resident");
     const changed = reducer(state, { type: "updateResident", resident: { ...resident, name: "Updated name", notes: "Updated note" } }, reference);
     expect(changed.alternativePreferences).toEqual(state.alternativePreferences);
+  });
+  it("allows renewed approval after a changed profile despite prior approval history", () => {
+    const { state, proposal } = approve(true);
+    const resident = state.residents.find((r) => r.id === "r4");
+    if (!resident) throw new Error("Missing resident");
+    const changed = reducer(state, { type: "updateResident", resident: { ...resident, diets: [...resident.diets, "low-sodium"] } }, reference);
+    const next = analyzeMenuDay(changed, 1, reference).proposals.find((p) => p.kind === "substitution" && p.meal === proposal.meal && p.residentIds.includes("r4"));
+    if (!next || next.kind !== "substitution") throw new Error("Missing renewed suggestion");
+    const renewed = reducer(changed, { type: "approveSub", proposalId: next.id, meal: next.meal, dishId: next.dishId, residentIds: next.residentIds, serviceDate: next.serviceDate, modified: false, remember: true, summary: "Renewed approval" }, reference);
+    expect(analyzeMenuDay(renewed, 1, reference).conflicts.some((c) => c.residentId === "r4" && c.meal === proposal.meal)).toBe(false);
+    expect(renewed.alternativePreferences?.find((p) => p.residentId === "r4")?.dietarySignature).not.toBe(state.alternativePreferences?.find((p) => p.residentId === "r4")?.dietarySignature);
   });
   it("does not restore authorization when requirements change and later change back", () => {
     const { state, proposal } = approve(true);
