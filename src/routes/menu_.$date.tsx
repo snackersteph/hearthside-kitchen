@@ -20,18 +20,28 @@ export const Route = createFileRoute("/menu_/$date")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
+  validateSearch: (search: Record<string, unknown>): { meal?: "breakfast" | "lunch" | "dinner"; focus?: boolean } => ({
+    ...(search["meal"] === "breakfast" || search["meal"] === "lunch" || search["meal"] === "dinner" ? { meal: search["meal"] } : {}),
+    ...(search["focus"] === true || search["focus"] === "true" ? { focus: true } : {}),
+  }),
   component: DatedMenuPage,
 });
 
 function DatedMenuPage() {
   const { date } = Route.useParams();
   const { analysis } = useKitchen();
+  const { meal: focusMeal, focus } = Route.useSearch();
   const [reference, setReference] = useState<Date | null>(null);
   useEffect(() => {
     setReference(new Date());
     const timer = window.setInterval(() => setReference(new Date()), 60000);
     return () => window.clearInterval(timer);
   }, []);
+  useEffect(() => {
+    if (!reference || !focus || !focusMeal) return;
+    const t = window.setTimeout(() => document.getElementById(`meal-focus-${focusMeal}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    return () => window.clearTimeout(t);
+  }, [reference, focus, focusMeal]);
   if (!reference) return null;
   const selected = parseISO(date);
   if (!isValid(selected) || dateKey(selected) !== date) return <>
@@ -54,7 +64,7 @@ function DatedMenuPage() {
         {offset < maxOffset && <Button asChild variant="outline" size="icon" aria-label="Next day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(1, selected)) }}><ChevronRight /></Link></Button>}
       </div>
     </PageHeader>
-    <Tabs key={date} defaultValue="breakfast">
+    <Tabs key={date} defaultValue={focusMeal ?? "breakfast"}>
       <TabsList className="mb-5 grid h-auto w-full grid-cols-3 gap-1 bg-transparent p-0">
         {MEALS.map((meal) => {
           const review = analysis.mealReviews?.find((r) => r.serviceDate === date && r.meal === meal);
@@ -64,7 +74,9 @@ function DatedMenuPage() {
         })}
       </TabsList>
       {MEALS.map((meal) => <TabsContent key={meal} value={meal}>
-        {offset < 0 ? <PlannedMeal meal={meal} offset={offset} reference={reference} /> : <MealSection meal={meal} offset={offset} reference={reference} />}
+        <div id={`meal-focus-${meal}`} className={`scroll-mt-6 rounded-xl ${focus && focusMeal === meal ? "border-2 border-warning p-2" : ""}`}>
+          {offset < 0 ? <PlannedMeal meal={meal} offset={offset} reference={reference} /> : <MealSection meal={meal} offset={offset} reference={reference} />}
+        </div>
       </TabsContent>)}
     </Tabs>
   </>;
