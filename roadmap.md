@@ -100,3 +100,6 @@
 - [x] Add resident, recipe, daily consumption and estimated cost facts.
 - [x] Rename Incoming orders and populate the demo with two due deliveries and three incoming orders.
 - [x] Show old/new profile content and individually acknowledge updates; test and verify the flow.
+
+## Menu calendar readability
+- [x] Add an icon before "Past", make today's date stand out, and strengthen the to-approve and approved label contrast.
