@@ -45,3 +45,7 @@
 - [x] Replace sample residents with all 15 uploaded profiles and preserve the full care information.
 - [x] Update existing saved records safely and list residents alphabetically by first name.
 - [x] Verify profile details, saved updates, sorting, and dietary regression tests.
+# Resident table and detail pages
+- [ ] Replace resident cards with the seven-column alphabetical table.
+- [ ] Open complete resident profiles on separate pages and preserve editing and creation.
+- [ ] Verify row navigation, full details, and mobile layout.
