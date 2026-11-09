@@ -55,7 +55,7 @@ describe("remembered resident alternatives", () => {
   });
   it("does not auto-approve legacy remembered choices without a food-requirement signature", () => {
     const { state, proposal } = approve(true);
-    state.alternativePreferences = state.alternativePreferences?.map(({ dietarySignature: _signature, ...p }) => p);
+    state.alternativePreferences = (state.alternativePreferences ?? []).map(({ dietarySignature: _signature, ...p }) => p);
     expect(analyzeMenuDay({ ...state, scheduledOverrides: {} }, 1, reference).conflicts.some((c) => c.residentId === "r4" && c.meal === proposal.meal)).toBe(true);
   });
   it("does not propose remembered choices that became unsafe", () => {

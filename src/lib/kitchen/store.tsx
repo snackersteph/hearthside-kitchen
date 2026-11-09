@@ -67,7 +67,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       const clear = (meals: Partial<Record<Meal, Record<string, string>>>) => Object.fromEntries(Object.entries(meals).map(([meal, entries]) => [meal, Object.fromEntries(Object.entries(entries ?? {}).filter(([id]) => id !== resident.id))]));
       const today = dateKey(reference);
       return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r),
-        alternativePreferences: s.alternativePreferences?.filter((p) => p.residentId !== resident.id),
+        alternativePreferences: (s.alternativePreferences ?? []).filter((p) => p.residentId !== resident.id),
         overrides: clear(s.overrides) as KitchenState["overrides"],
         scheduledOverrides: Object.fromEntries(Object.entries(s.scheduledOverrides ?? {}).map(([date, meals]) => [date, date >= today ? clear(meals) : meals])),
       };
