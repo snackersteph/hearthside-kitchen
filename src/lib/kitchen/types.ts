@@ -11,6 +11,7 @@ export interface Resident {
   id: string;
   dietaryRevision?: number;
   name: string;
+  photoUrl?: string;
   room: string;
   age: number;
   allergens: Allergen[];
