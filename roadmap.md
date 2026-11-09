@@ -91,3 +91,4 @@
 - Generate one unique photo per recipe (135 total), saved as src/assets/dishes/<recipe-id>.jpg
 - Batches of 4 per turn; done: none yet
 - After all done: build src/lib/kitchen/recipe-photos.ts mapping recipe id -> photo, wire into recipes.tsx (card + detail), keep dishPhoto fallback for user-added recipes
+- Residents page: title "Residents", show resident count in smaller font below the alphabet filter line
