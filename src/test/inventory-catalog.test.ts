@@ -35,7 +35,7 @@ describe("inventory catalog changes", () => {
     expect(deleted.ingredients.some((i) => i.id === "milk")).toBe(false);
     expect(deleted.orders?.[0]?.lines).toEqual([{ ingredientId: "carrots", shortage: 1, qty: 2 }]);
     expect(mergeIngredientCatalog(JSON.parse(JSON.stringify(deleted))).ingredients.some((i) => i.id === "milk")).toBe(false);
-    expect(analyze(deleted, new Date("2026-11-09T12:00:00")).forecast?.todayShortage.milk).toBeGreaterThan(0);
+    expect(analyze(deleted, new Date("2026-11-09T12:00:00")).forecast?.todayShortage["milk"]).toBeGreaterThan(0);
     expect(deleted.history).toBe(state.history);
   });
 });
