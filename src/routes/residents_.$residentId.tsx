@@ -44,7 +44,6 @@ function ResidentProfilePage() {
       <div className="min-w-0 flex-1 [&>div]:mb-0"><PageHeader eyebrow={`Resident ${r.id} · Room ${r.room}`} title={r.name}><Button onClick={() => setEditing(true)}><Pencil />Edit profile</Button></PageHeader></div>
     </div>
     <div className="space-y-8">
-      <ResidentMealHistory residentId={r.id} />
       {sections.map((section) => <section key={section.title} className="border-t pt-6">
         <h2 className="mb-5 font-display text-xl font-semibold">{section.title}</h2>
         <dl className="grid gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">{section.entries.map(([label, value]) => <div key={label} className="min-w-0"><dt className="mb-1 text-sm text-muted-foreground">{label}</dt><dd className="break-words text-sm leading-relaxed">{value}</dd></div>)}</dl>
@@ -53,6 +52,7 @@ function ResidentProfilePage() {
         {r.mealInstructions?.length ? <ul className="list-disc space-y-3 pl-5 text-sm leading-relaxed">{r.mealInstructions.map((instruction) => <li key={instruction}>{instruction}</li>)}</ul> : <p className="text-sm text-muted-foreground">Not specified</p>}
       </section>
       <section className="border-t pt-6"><h2 className="mb-5 font-display text-xl font-semibold">Clinical notes</h2><p className="whitespace-pre-line text-sm leading-relaxed">{r.notes || "Not specified"}</p></section>
+      <ResidentMealHistory residentId={r.id} />
     </div>
     <section className="mt-8 border-t pt-6">
       <AlertDialog>
