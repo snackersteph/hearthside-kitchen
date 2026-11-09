@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Context, type ReactNode } from "react";
-import { initialState, dishById, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS } from "./data";
+import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
 import type { Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
