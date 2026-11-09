@@ -120,6 +120,23 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
 
     // Menu Agent: greedy cover of conflicted residents with safe alternatives.
     let remaining = [...conflicted];
+    const remembered = new Map<string, typeof remaining>();
+    for (const c of remaining) {
+      const preference = state.alternativePreferences?.find((p) => p.residentId === c.r.id && p.meal === meal && p.fromDishId === main.id);
+      const dish = preference ? DISHES.find((d) => d.id === preference.dishId && d.meal === meal) : undefined;
+      if (dish && conflictReasons(c.r, dish).length === 0) remembered.set(dish.id, [...(remembered.get(dish.id) ?? []), c]);
+    }
+    for (const [dishId, covered] of remembered) {
+      const ids = covered.map((c) => c.r.id).sort();
+      const id = `sub-${serviceDate}-${meal}-${main.id}-${dishId}-${ids.join(".")}`;
+      remaining = remaining.filter((c) => !ids.includes(c.r.id));
+      if (decided.has(id)) {
+        for (const c of covered) conflicts.push({ meal, residentId: c.r.id, dishId: c.dishId, reasons: c.reasons, status: "needs-staff" });
+        continue;
+      }
+      proposals.push({ id, kind: "substitution", agent: "menu", meal, fromDishId: main.id, dishId, residentIds: ids, reasons: Object.fromEntries(covered.map((c) => [c.r.id, c.reasons])), ...(serviceDate ? { serviceDate, approvalDueDate: approvalDueDate(serviceDate) } : {}) });
+      for (const c of covered) { conflicts.push({ meal, residentId: c.r.id, dishId: c.dishId, reasons: c.reasons, status: "proposal-pending" }); served[meal][c.r.id] = dishId; }
+    }
     const candidates = DISHES.filter((d) => d.meal === meal && d.id !== main.id);
     while (remaining.length) {
       let best: Dish | null = null;

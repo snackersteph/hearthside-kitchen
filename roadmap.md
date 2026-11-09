@@ -30,3 +30,8 @@
 - [x] Limit meal reviews to menus affected by resident dietary requirements.
 - [x] Add dish dropdowns and remove the Service label while retaining dates.
 - [x] Test filtering and verify saved changes and safe substitution choices.
+
+# Alternatives-only approvals
+- [ ] Replace main meal cards with pending and approved resident alternatives.
+- [ ] Remove grey date badges and ask whether to remember approved alternatives.
+- [ ] Verify remembered choices, safety checks, date scope, and approval flows.
