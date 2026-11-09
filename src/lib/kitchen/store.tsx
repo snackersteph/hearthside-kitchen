@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Context, type ReactNode } from "react";
 import { initialState, dishById, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
-import type { Ingredient, KitchenState, Meal, PurchaseLine, Resident } from "./types";
+import type { Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 import { ADDITIONAL_RESIDENTS } from "./additional-residents";
 import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
@@ -23,13 +23,15 @@ type Action =
   | { type: "setMain"; meal: Meal; dishId: string }
   | { type: "setScheduledMain"; date: string; meal: Meal; dishId: string }
   | { type: "updateResident"; resident: Resident }
+  | { type: "logObservation"; observation: Observation }
+  | { type: "reviewObservation"; id: string }
+  | { type: "markProfileUpdatesSeen" }
   | { type: "setStock"; id: string; stock: number }
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
   | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string };
 
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
-  switch (a.type) {
     case "deleteResident": {
       if (!s.residents.some((r) => r.id === a.id)) return s;
       const clear = (meals: Partial<Record<Meal, Record<string, string>>>) => Object.fromEntries(Object.entries(meals).map(([meal, entries]) => [meal, Object.fromEntries(Object.entries(entries ?? {}).filter(([id]) => id !== a.id))]));
