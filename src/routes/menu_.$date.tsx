@@ -13,9 +13,9 @@ import { MEALS } from "@/lib/kitchen/types";
 
 export const Route = createFileRoute("/menu_/$date")({
   head: ({ params }) => ({ meta: [
-    { title: `${params.date} Daily Menu · Hearth Kitchen Command` },
+    { title: `${params.date} Daily Menu · NutriSync` },
     { name: "description", content: `Breakfast, lunch, dinner and resident alternatives for ${params.date}.` },
-    { property: "og:title", content: `${params.date} Daily Menu · Hearth Kitchen Command` },
+    { property: "og:title", content: `${params.date} Daily Menu · NutriSync` },
     { property: "og:description", content: `Review meals and resident alternatives for ${params.date}.` },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },

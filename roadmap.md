@@ -61,3 +61,17 @@
 # Inventory catalog
 - [x] Add inventory search and food sections with related items and photos.
 - [x] Allow confirmed editing and deleting of inventory items.
+
+# NutriSync brand
+- [x] Rename the app to NutriSync with the slogan "SMART NUTRITION, CONNECTED CARE".
+- [x] Add a temporary logo mark and use it in the sidebar and browser tab.
+
+# Command Center action cards
+- [x] Remove the agent team section from the Command Center.
+- [x] Replace resident and conflict cards with approval, shortfall, incoming order and profile update cards.
+- [x] Show an actionable state on every card and a peaceful state once its items are clear.
+- [x] Turn Staff decisions into an observation board of resident reactions after meals.
+- [x] Test card counts, profile update tracking, and observation review rules.
+
+# Runtime crash fix
+- [x] Pre-bundle every Radix library so Vite never re-optimizes mid-session and loads a second React copy.

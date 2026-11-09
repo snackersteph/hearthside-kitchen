@@ -18,9 +18,9 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 export const Route = createFileRoute("/inventory")({
   head: () => ({
     meta: [
-      { title: "Inventory · Hearth Kitchen Command" },
+      { title: "Inventory · NutriSync" },
       { name: "description", content: "Seven- and fourteen-day ingredient forecasts, delivery risks and incoming kitchen orders." },
-      { property: "og:title", content: "Inventory · Hearth Kitchen Command" },
+      { property: "og:title", content: "Inventory · NutriSync" },
       { property: "og:description", content: "Plan ingredient purchases ahead of service and track incoming deliveries." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { AGENTS, AgentAvatar } from "./agents";
 import type { AgentId } from "@/lib/kitchen/types";
+import logo from "@/assets/nutrisync-logo.png";
 
 const NAV = [
   { to: "/", label: "Command Center", icon: LayoutDashboard },
@@ -25,9 +26,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
-        <div className="px-6 pb-6 pt-7">
-          <div className="font-display text-2xl font-semibold leading-none">Hearth</div>
-          <div className="mt-1 text-xs uppercase tracking-[0.18em] text-sidebar-foreground/60">Kitchen Command</div>
+        <div className="px-5 pb-6 pt-7">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0" />
+            <div className="min-w-0">
+              <div className="font-display text-2xl font-semibold leading-none">NutriSync</div>
+              <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/60">SMART NUTRITION, CONNECTED CARE</div>
+            </div>
+          </div>
         </div>
         <nav className="flex flex-col gap-1 px-3">
           {NAV.map((n) => (

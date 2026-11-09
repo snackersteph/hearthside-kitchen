@@ -1,20 +1,27 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, ArrowRight, ClipboardCheck, PackageX, Users } from "lucide-react";
+import { ArrowRight, ClipboardCheck, CircleCheck, PackageX, Truck, UserRound } from "lucide-react";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { dishById } from "@/lib/kitchen/data";
 import { MEALS } from "@/lib/kitchen/types";
 import { PageHeader } from "@/components/kitchen/app-shell";
-import { AGENTS, AgentAvatar, AgentChip, MEAL_LABEL, MEAL_TIME } from "@/components/kitchen/agents";
+import { AgentAvatar, AgentChip, MEAL_LABEL, MEAL_TIME } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
 import { scheduledState } from "@/lib/kitchen/schedule";
+import { actionCards, openObservations, reviewedObservations } from "@/lib/kitchen/overview";
+import { ActionCardTile } from "@/components/kitchen/action-card";
+import { ObservationDialog } from "@/components/kitchen/observation-dialog";
+import { ResidentPhoto } from "@/components/kitchen/resident-photo";
 import { cn } from "@/lib/utils";
+
+const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: PackageX, incoming: Truck, profiles: UserRound } as const;
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Command Center · Hearth Kitchen Command" },
+      { title: "Command Center · NutriSync" },
       { name: "description", content: "Today's meals, dietary issues and live agent activity at a glance." },
-      { property: "og:title", content: "Command Center · Hearth Kitchen Command" },
+      { property: "og:title", content: "Command Center · NutriSync" },
       { property: "og:description", content: "Today's meals, dietary issues and live agent activity at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -24,32 +31,29 @@ export const Route = createFileRoute("/")({
 });
 
 function CommandCenter() {
-  const { state, analysis } = useKitchen();
+  const { state, analysis, dispatch } = useKitchen();
   const needsStaff = analysis.conflicts.filter((c) => c.status === "needs-staff");
-  const purchases = analysis.proposals.filter((p) => p.kind === "purchase");
-  const pendingMeals = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
-  const awaiting = analysis.proposals.length + pendingMeals;
+  const cards = actionCards(state, analysis);
   const dayState = scheduledState(state, 0);
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-
-  const stats = [
-    { label: "Residents served", value: state.residents.length, icon: Users, sub: "3 meals planned" },
-    { label: "Dietary conflicts", value: analysis.conflicts.length, icon: AlertTriangle, sub: needsStaff.length ? `${needsStaff.length} need staff` : "all have proposals" },
-    { label: "Awaiting approval", value: awaiting, icon: ClipboardCheck, sub: "Review meals & orders", action: "approvals" },
-    { label: "Ingredient shortfalls", value: purchases.reduce((n, p) => n + p.lines.length, 0), icon: PackageX, sub: `${purchases.length} orders to review`, action: "inventory" },
-  ];
+  const open = openObservations(state);
+  const reviewed = reviewedObservations(state);
+  const [logging, setLogging] = useState(false);
+  const residentOf = (id: string) => state.residents.find((r) => r.id === id);
 
   return (
     <>
       <PageHeader eyebrow={today} title="Good evening, Chef." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className={cn("rounded-xl border p-5 shadow-soft", s.action === "approvals" ? "border-warning/50 bg-warning-soft" : s.action === "inventory" ? "border-destructive/30 bg-danger-soft" : "bg-card")}>
-            <div className="flex items-center justify-between gap-2 text-sm font-medium">{s.label}<span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", s.action === "approvals" ? "bg-warning/20 text-foreground" : s.action === "inventory" ? "bg-destructive/10 text-destructive" : "text-muted-foreground")}><s.icon className="h-5 w-5" /></span></div>
-            <div className="mt-2 font-display text-4xl font-semibold">{s.value}</div>
-            {s.action ? <Button asChild variant="link" size="sm" className="mt-1 h-auto p-0"><Link to={s.action === "approvals" ? "/approvals" : "/inventory"}>{s.sub}<ArrowRight className="h-4 w-4" /></Link></Button> : <div className="mt-1 text-xs text-muted-foreground">{s.sub}</div>}
-          </div>
+        {cards.map((card) => (
+          <ActionCardTile
+            key={card.id}
+            card={card}
+            icon={CARD_ICONS[card.id]}
+            reviewLabel={card.id === "profiles" ? "Mark reviewed" : undefined}
+            onReview={card.id === "profiles" ? () => dispatch({ type: "markProfileUpdatesSeen" }) : undefined}
+          />
         ))}
       </div>
 
@@ -84,31 +88,65 @@ function CommandCenter() {
             })}
           </div>
 
-          <h2 className="mb-3 mt-8 text-xl font-semibold">Your agent team</h2>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {(Object.keys(AGENTS) as (keyof typeof AGENTS)[]).map((id) => (
-              <div key={id} className={`rounded-xl border-t-4 bg-card p-4 shadow-soft ${AGENTS[id].border}`}>
-                <AgentAvatar agent={id} />
-                <div className="mt-3 font-semibold">{AGENTS[id].name}</div>
-                <div className="text-xs text-muted-foreground">{AGENTS[id].role}</div>
+          <section className="mt-8">
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold">Observation board</h2>
+                <p className="text-sm text-muted-foreground">Reactions reported after a resident ate a specific meal.</p>
               </div>
-            ))}
-          </div>
+              <div className="flex gap-2">
+                {open.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => open.forEach((o) => dispatch({ type: "reviewObservation", id: o.id }))}>
+                    Mark all reviewed
+                  </Button>
+                )}
+                <Button size="sm" onClick={() => setLogging(true)}>Log a reaction</Button>
+              </div>
+            </div>
 
-          {state.history.length > 0 && (
-            <>
-              <h2 className="mb-3 mt-8 text-xl font-semibold">Staff decisions</h2>
+            {open.length === 0 ? (
+              <div className="flex items-center gap-3 rounded-xl border border-success/35 bg-success-soft/45 p-5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success/15 text-success"><CircleCheck className="h-5 w-5" /></span>
+                <div>
+                  <div className="font-semibold text-success">No reactions to review</div>
+                  <div className="text-sm text-muted-foreground">Every resident ate without incident. Reactions you log will appear here.</div>
+                </div>
+              </div>
+            ) : (
               <ul className="divide-y rounded-xl border bg-card shadow-soft">
-                {state.history.slice(0, 5).map((h) => (
-                  <li key={h.proposalId + h.at} className="flex items-center gap-3 px-4 py-3 text-sm">
-                    <span className={`h-2 w-2 rounded-full ${h.status === "approved" ? "bg-success" : "bg-destructive"}`} />
-                    <span className="flex-1">{h.summary}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(h.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
-                  </li>
-                ))}
+                {open.map((o) => {
+                  const resident = residentOf(o.residentId);
+                  return (
+                    <li key={o.id} className="flex flex-wrap items-center gap-4 px-4 py-3">
+                      {resident && <ResidentPhoto resident={resident} className="h-10 w-10" />}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                          {resident?.name ?? o.residentId}
+                          <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", o.severity === "concern" ? "bg-danger-soft text-destructive" : "bg-muted text-muted-foreground")}>
+                            {o.severity === "concern" ? "Needs follow-up" : "Note only"}
+                          </span>
+                        </div>
+                        <div className="text-sm">{o.reaction}</div>
+                        <div className="text-xs text-muted-foreground">{MEAL_LABEL[o.meal]} · {dishById(o.dishId).name} · served {o.serviceDate}</div>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => dispatch({ type: "reviewObservation", id: o.id })}>Mark reviewed</Button>
+                    </li>
+                  );
+                })}
               </ul>
-            </>
-          )}
+            )}
+
+            {reviewed.length > 0 && (
+              <details className="mt-3 rounded-xl border bg-card p-4 shadow-soft">
+                <summary className="cursor-pointer text-sm font-medium">Reviewed reactions ({reviewed.length})</summary>
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  {reviewed.map((o) => (
+                    <li key={o.id}>{residentOf(o.residentId)?.name ?? o.residentId} — {o.reaction} ({MEAL_LABEL[o.meal]}, {o.serviceDate})</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </section>
         </section>
 
         <section className="lg:col-span-2">
@@ -139,6 +177,8 @@ function CommandCenter() {
           </div>
         </section>
       </div>
+
+      {logging && <ObservationDialog onClose={() => setLogging(false)} />}
     </>
   );
 }
