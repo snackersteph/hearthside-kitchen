@@ -5,12 +5,15 @@ import { AgentAvatar, Tag } from "@/components/kitchen/agents";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PackageCheck, Plus, Truck } from "lucide-react";
+import { PackageCheck, Plus, Truck, Pencil, Trash2, Search } from "lucide-react";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
+import { IngredientEditDialog } from "@/components/kitchen/ingredient-edit-dialog";
+import { IngredientPhoto } from "@/components/kitchen/ingredient-photo";
+import { FOOD_CATEGORIES, ingredientCategory, matchesIngredientSearch } from "@/lib/kitchen/inventory-catalog";
+import type { Ingredient } from "@/lib/kitchen/types";
+import { DISHES } from "@/lib/kitchen/data";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -29,20 +32,23 @@ export const Route = createFileRoute("/inventory")({
 function InventoryPage() {
   const { state, analysis, dispatch } = useKitchen();
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<Ingredient | null>(null);
+  const [deleting, setDeleting] = useState<Ingredient | null>(null);
+  const [query, setQuery] = useState("");
   const purchases = analysis.proposals.filter((p) => p.kind === "purchase");
   const forecast = analysis.forecast;
   const horizon = state.purchaseHorizonDays ?? 7;
   const incoming = (state.orders ?? []).filter((order) => order.status === "incoming");
   const today = dateKey(dayAt(0));
   const dateLabel = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  const rows = [...state.ingredients].sort((a, b) => {
+  const rows = state.ingredients.filter((i) => matchesIngredientSearch(i, query)).sort((a, b) => {
     const r = (i: typeof a) => (forecast?.demand[i.id] ?? 0) / Math.max(0.01, i.stock + i.onOrder);
     return r(b) - r(a);
   });
 
   return (
     <>
-      <PageHeader eyebrow="Pantry & walk-in" title="Inventory"><Button onClick={() => setAdding(true)}><Plus />Add New</Button></PageHeader>
+      <PageHeader eyebrow="Pantry & walk-in" title="Inventory"><div className="flex flex-wrap gap-2"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Search ingredients" placeholder="Search ingredients or vendors" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 pl-9" /></div><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div></PageHeader>
 
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b pb-5">
         <div>
@@ -63,11 +69,11 @@ function InventoryPage() {
         <div className="border-l-2 border-agent-inventory pl-4"><div className="text-xs text-muted-foreground">Purchases to review</div><div className="mt-1 text-2xl font-semibold">${purchases.reduce((sum, p) => sum + p.total, 0).toFixed(2)}</div></div>
         <div className="border-l-2 border-success pl-4"><div className="text-xs text-muted-foreground">Incoming deliveries</div><div className="mt-1 text-2xl font-semibold">{incoming.length} orders</div></div>
       </div>
-      {Object.keys(forecast?.todayShortage ?? {}).length > 0 && <div className="mb-5 border-l-4 border-destructive bg-danger-soft p-4 text-sm"><div className="font-semibold text-destructive">Today's service needs attention</div><div className="mt-1">{state.ingredients.filter((i) => forecast?.todayShortage[i.id]).map((i) => `${i.name}: short ${forecast?.todayShortage[i.id]} ${i.unit}`).join(" · ")}</div><div className="mt-2 text-muted-foreground">Use an available-stock alternative or arrange an emergency transfer. New orders will not arrive in time for today's meals.</div></div>}
+      {Object.keys(forecast?.todayShortage ?? {}).length > 0 && <div className="mb-5 border-l-4 border-destructive bg-danger-soft p-4 text-sm"><div className="font-semibold text-destructive">Today's service needs attention</div><div className="mt-1">{Object.entries(forecast?.todayShortage ?? {}).map(([id, qty]) => { const i = state.ingredients.find((i) => i.id === id); return i ? `${i.name}: short ${qty} ${i.unit}` : `${id}: missing from inventory`; }).join(" · ")}</div><div className="mt-2 text-muted-foreground">Use an available-stock alternative or arrange an emergency transfer. New orders will not arrive in time for today's meals.</div></div>}
       {(forecast?.unresolved ?? 0) > 0 && <div className="mb-5 border-l-4 border-warning bg-warning-soft p-4 text-sm">{forecast?.unresolved} resident-meal conflicts have no safe alternative on file in this period. Forecast is provisional until staff resolve them.</div>}
 
       {purchases.length > 0 && (
-        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-agent-inventory bg-agent-inventory-soft p-4">
+        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-agent-inventory bg-agent-inventory-soft p-4">
           <AgentAvatar agent="inventory" />
           <div className="flex-1 text-sm">
             <div className="font-semibold">{purchases.length} purchase request{purchases.length > 1 ? "s" : ""} for the {horizon}-day plan</div>
@@ -77,22 +83,22 @@ function InventoryPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border bg-card shadow-soft">
+      {FOOD_CATEGORIES.map((category) => { const categoryRows = rows.filter((i) => ingredientCategory(i) === category); if (!categoryRows.length) return null; return <section key={category} aria-label={category} className="mb-8"><h2 className="mb-3 font-display text-xl font-semibold">{category} <span className="ml-2 text-sm font-normal text-muted-foreground">{categoryRows.length}</span></h2><div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-            <tr><th className="px-4 py-3">Ingredient</th><th className="px-4 py-3">In stock</th><th className="px-4 py-3">On order</th><th className="px-4 py-3">Today</th><th className="px-4 py-3">{horizon}-day consumption</th><th className="w-44 px-4 py-3">First shortage</th><th className="px-4 py-3">Vendor</th></tr>
+            <tr><th className="px-4 py-3">Ingredient</th><th className="px-4 py-3">In stock</th><th className="px-4 py-3">On order</th><th className="px-4 py-3">Today</th><th className="px-4 py-3">{horizon}-day consumption</th><th className="w-44 px-4 py-3">First shortage</th><th className="px-4 py-3">Vendor</th><th className="px-4 py-3"><span className="sr-only">Actions</span></th></tr>
           </thead>
           <tbody className="divide-y">
-            {rows.map((i) => {
+            {categoryRows.map((i) => {
               const need = forecast?.demand[i.id] ?? 0;
               const shortageDate = forecast?.firstShortDate[i.id];
               const deliveries = incoming.filter((order) => order.lines.some((line) => line.ingredientId === i.id));
               return (
                 <tr key={i.id}>
-                  <td className="px-4 py-3 font-medium">{i.name}</td>
+                  <td className="px-4 py-3 font-medium"><div className="flex items-center gap-3"><IngredientPhoto ingredient={i} /><span>{i.name}</span></div></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      <Input aria-label={`${i.name} in stock`} type="number" step="any" min={0} value={i.stock} onChange={(e) => dispatch({ type: "setStock", id: i.id, stock: Number(e.target.value) })} className="h-8 w-20 bg-background" />
+                      <span>{i.stock}</span>
                       <span className="text-xs text-muted-foreground">{i.unit}</span>
                     </div>
                   </td>
@@ -102,52 +108,21 @@ function InventoryPage() {
                   <td className="px-4 py-3">
                     {shortageDate ? <div className={cn("text-xs font-semibold", shortageDate <= dateKey(dayAt(state.leadTimeDays ?? 2)) ? "text-destructive" : "text-warning")}><div>{shortageDate === today ? "Today" : dateLabel(shortageDate)}</div><div className="mt-1 font-normal">{shortageDate <= dateKey(dayAt(state.leadTimeDays ?? 2)) ? "Inside lead time" : "Order ahead"}</div></div> : <Tag tone="ok">Covered</Tag>}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{i.vendor}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{i.vendor}</td><td className="px-3 py-3"><div className="flex gap-1"><Button size="icon" variant="ghost" aria-label={`Edit ${i.name}`} title={`Edit ${i.name}`} onClick={() => setEditing(i)}><Pencil /></Button><Button size="icon" variant="ghost" className="text-destructive" aria-label={`Delete ${i.name}`} title={`Delete ${i.name}`} onClick={() => setDeleting(i)}><Trash2 /></Button></div></td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-      </div>
+      </div></section>; })}
+      {!rows.length && <p className="border-y py-8 text-center text-muted-foreground">No ingredients found.</p>}
       <p className="mt-3 text-xs text-muted-foreground">Estimate from the sample rotating menu, including dietary alternatives. Today's consumption is included. Incoming stock counts only from its expected delivery date; available stock changes when a delivery is received.</p>
       <section className="mt-8">
         <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold"><Truck className="h-5 w-5" />Incoming orders</h2>
         {!incoming.length ? <div className="border-y py-5 text-sm text-muted-foreground">No approved orders are incoming. Pending requests are not yet on order.</div> : <div className="divide-y border-y">{incoming.map((order) => <div key={order.id} className="flex flex-wrap items-center gap-4 py-4"><div className="min-w-0 flex-1"><div className="font-semibold">{order.vendor} <span className="ml-2 text-xs font-normal text-muted-foreground">Expected {dateLabel(order.deliveryDate)}</span></div><div className="mt-1 text-sm text-muted-foreground">{order.lines.map((line) => { const ingredient = state.ingredients.find((i) => i.id === line.ingredientId); return `${ingredient?.name ?? line.ingredientId} · ${line.qty} ${ingredient?.unit ?? ""}`; }).join(" / ")}</div></div><Button variant="outline" onClick={() => dispatch({ type: "receiveOrder", id: order.id })}><PackageCheck />Mark received</Button></div>)}</div>}
       </section>
-      {adding && <AddIngredientDialog onClose={() => setAdding(false)} />}
+      {(adding || editing) && <IngredientEditDialog {...(editing ? { ingredient: editing } : {})} onClose={() => { setAdding(false); setEditing(null); }} />}
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}><AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg"><AlertDialogHeader><AlertDialogTitle>Delete {deleting?.name}?</AlertDialogTitle><AlertDialogDescription>This removes this inventory item and its order lines. This cannot be undone.{deleting && DISHES.some((d) => d.ingredients.some((i) => i.id === deleting.id)) && " Meals still require this ingredient; it will be flagged as missing until you add it again or change the menu."}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction asChild><Button variant="destructive" onClick={() => { if (!deleting) return; dispatch({ type: "deleteIngredient", id: deleting.id }); setDeleting(null); }}>Confirm delete</Button></AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </>
   );
-}
-
-function AddIngredientDialog({ onClose }: { onClose: () => void }) {
-  const { state, dispatch } = useKitchen();
-  const [name, setName] = useState("");
-  const [vendor, setVendor] = useState("");
-  const [unit, setUnit] = useState("kg");
-  const [stock, setStock] = useState("0");
-  const [packSize, setPackSize] = useState("1");
-  const [unitCost, setUnitCost] = useState("0");
-  const duplicate = state.ingredients.some((i) => i.name.trim().toLowerCase() === name.trim().toLowerCase());
-  return <Dialog open onOpenChange={(open) => !open && onClose()}>
-    <DialogContent className="max-w-lg">
-      <DialogHeader><DialogTitle>Add ingredient</DialogTitle></DialogHeader>
-      <form className="space-y-4" onSubmit={(e) => {
-        e.preventDefault();
-        if (duplicate) return;
-        dispatch({ type: "addIngredient", ingredient: { id: crypto.randomUUID(), name, vendor, unit, stock: Number(stock), packSize: Number(packSize), unitCost: Number(unitCost), onOrder: 0 } });
-        toast.success("Ingredient added"); onClose();
-      }}>
-        <label className="block text-sm font-medium">Ingredient name<Input required aria-label="Ingredient name" value={name} onChange={(e) => setName(e.target.value)} /></label>
-        {duplicate && <p role="alert" className="text-sm text-destructive">This ingredient already exists.</p>}
-        <div className="grid grid-cols-2 gap-3">
-          <label className="text-sm font-medium">Unit<Select value={unit} onValueChange={setUnit}><SelectTrigger aria-label="Ingredient unit"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="kg">kg</SelectItem><SelectItem value="L">L</SelectItem><SelectItem value="each">each</SelectItem></SelectContent></Select></label>
-          <label className="text-sm font-medium">In stock ({unit})<Input required aria-label="Initial stock" type="number" min={0} step="any" value={stock} onChange={(e) => setStock(e.target.value)} /></label>
-          <label className="text-sm font-medium">Order pack size ({unit})<Input required aria-label="Order pack size" type="number" min={0.001} step="any" value={packSize} onChange={(e) => setPackSize(e.target.value)} /></label>
-          <label className="text-sm font-medium">Cost per {unit} ($)<Input required aria-label="Unit cost" type="number" min={0} step="any" value={unitCost} onChange={(e) => setUnitCost(e.target.value)} /></label>
-        </div>
-        <label className="block text-sm font-medium">Vendor<Input required aria-label="Vendor" value={vendor} onChange={(e) => setVendor(e.target.value)} /></label>
-        <DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" disabled={duplicate || !name.trim() || !vendor.trim()}>Add ingredient</Button></DialogFooter>
-      </form>
-    </DialogContent>
-  </Dialog>;
 }
