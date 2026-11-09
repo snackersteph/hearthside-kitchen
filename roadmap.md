@@ -77,6 +77,6 @@
 - [x] Pre-bundle every Radix library so Vite never re-optimizes mid-session and loads a second React copy.
 
 # Inventory order tabs
-- [ ] Add Food stock, Delivered orders, and Incoming orders tabs.
-- [ ] Confirm deliveries once and edit incoming order details with synchronized stock forecasts.
-- [ ] Test order rules and verify editing, receipt, and persistence in the page.
+- [x] Add Food stock, Delivered orders, and Incoming orders tabs.
+- [x] Confirm deliveries once and edit incoming order details with synchronized stock forecasts.
+- [x] Test order rules and verify editing, receipt, and persistence in the page.
