@@ -93,6 +93,6 @@
 - [x] Residents page: title "Residents", resident count in smaller font below the alphabet filter line
 
 ## Command Center snapshot and profile reviews
-- [ ] Add resident, recipe, daily consumption and estimated cost facts.
-- [ ] Rename Incoming orders and populate the demo with two due deliveries and three incoming orders.
-- [ ] Show old/new profile content and individually acknowledge updates; test and verify the flow.
+- [x] Add resident, recipe, daily consumption and estimated cost facts.
+- [x] Rename Incoming orders and populate the demo with two due deliveries and three incoming orders.
+- [x] Show old/new profile content and individually acknowledge updates; test and verify the flow.
