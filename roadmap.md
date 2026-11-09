@@ -22,6 +22,6 @@
 - [x] Test decision rules and verify the full workflow.
 
 # Date-first menu workflow
-- [ ] Show the two-week date picker with daily approval status.
-- [ ] Open each date on a dedicated page with Breakfast, Lunch, and Dinner tabs.
-- [ ] Verify date navigation, meal switching, editing, and exact approval links.
+- [x] Show the two-week date picker with daily approval status.
+- [x] Open each date on a dedicated page with Breakfast, Lunch, and Dinner tabs.
+- [x] Verify date navigation, meal switching, editing, and exact approval links.
