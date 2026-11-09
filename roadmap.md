@@ -6,7 +6,7 @@
 
 ## Resident section editing
 - [x] Move confirmed resident deletion to the profile header and replace the global edit button with section-specific controls.
-- [ ] Verify section edits, saved values, cancellation, and mobile layout.
+- [x] Verify section edits, saved values, cancellation, and mobile layout.
 
 # Daily menu updates
 - [x] Allow date-specific upcoming meal changes while keeping past menus view-only.
