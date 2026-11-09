@@ -86,3 +86,8 @@
 - [x] Add Delivered orders before Incoming ingredient orders and link both to the matching inventory tab.
 - [x] Add resident-specific meal history using recorded dated menus and observations.
 - [x] Test delivery counts and resident history; verify page navigation and layouts.
+
+## Unique recipe photos (in progress)
+- Generate one unique photo per recipe (135 total), saved as src/assets/dishes/<recipe-id>.jpg
+- Batches of 4 per turn; done: none yet
+- After all done: build src/lib/kitchen/recipe-photos.ts mapping recipe id -> photo, wire into recipes.tsx (card + detail), keep dishPhoto fallback for user-added recipes
