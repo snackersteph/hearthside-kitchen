@@ -80,6 +80,8 @@ export interface Observation {
 }
 
 export interface KitchenState {
+  recipes?: import("./recipes").Recipe[];
+  deletedRecipeIds?: string[];
   deletedIngredientIds?: string[];
   additionalResidentsVersion?: number;
   alternativePreferences?: { residentId: string; meal: Meal; fromDishId: string; dishId: string; dietarySignature?: string }[];

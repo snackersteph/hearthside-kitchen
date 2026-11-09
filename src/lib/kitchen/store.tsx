@@ -4,6 +4,7 @@ import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignatu
 import type { Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 import { ADDITIONAL_RESIDENTS } from "./additional-residents";
+import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
 import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 
 type Action =
@@ -12,6 +13,8 @@ type Action =
   | { type: "addIngredient"; ingredient: Ingredient }
   | { type: "updateIngredient"; ingredient: Ingredient }
   | { type: "deleteIngredient"; id: string }
+  | { type: "addRecipe"; recipe: Recipe }
+  | { type: "deleteRecipe"; id: string }
   | { type: "approveMeal"; date: string; meal: Meal }
   | { type: "rejectMeal"; date: string; meal: Meal }
   | { type: "setMealPlan"; date: string; meal: Meal; dishId: string; overrides: Record<string, string> }
@@ -68,6 +71,15 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
     case "addResident": {
       if (!a.resident.name.trim() || !a.resident.room.trim() || !Number.isInteger(a.resident.age) || a.resident.age < 1 || a.resident.age > 120 || s.residents.some((r) => r.id === a.resident.id)) return s;
       return { ...s, residents: [...s.residents, { ...a.resident, name: a.resident.name.trim(), room: a.resident.room.trim() }] };
+    }
+    case "addRecipe": {
+      const r = a.recipe;
+      if (!isValidRecipe(r, s.ingredients) || recipeLibrary(s).some((x) => x.id === r.id || x.name.trim().toLowerCase() === r.name.trim().toLowerCase())) return s;
+      return { ...s, recipes: [...(s.recipes ?? []), { ...r, name: r.name.trim() }] };
+    }
+    case "deleteRecipe": {
+      if (!recipeLibrary(s).some((x) => x.id === a.id)) return s;
+      return { ...s, recipes: (s.recipes ?? []).filter((x) => x.id !== a.id), deletedRecipeIds: [...(s.deletedRecipeIds ?? []), a.id] };
     }
     case "deleteIngredient": {
       if (!s.ingredients.some((i) => i.id === a.id)) return s;
