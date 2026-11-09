@@ -72,3 +72,6 @@
 - [x] Show an actionable state on every card and a peaceful state once its items are clear.
 - [x] Turn Staff decisions into an observation board of resident reactions after meals.
 - [x] Test card counts, profile update tracking, and observation review rules.
+
+# Runtime crash fix
+- [x] Pre-bundle every Radix library so Vite never re-optimizes mid-session and loads a second React copy.
