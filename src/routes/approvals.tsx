@@ -43,12 +43,25 @@ function ApprovalsPage() {
   const { kind, date, meal } = Route.useSearch();
   const navigate = Route.useNavigate();
   const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
-  const reviews = proposals.filter((p): p is SubstitutionProposal => p.kind === "substitution").sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
+  const today = dateKey(new Date());
+  const reviews = proposals.filter((p): p is SubstitutionProposal => p.kind === "substitution" && (p.serviceDate ?? "") > today).sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
   const approved = kind === "purchase" ? [] : approvedAlternatives(state, analysis.mealReviews ?? []).filter((p) => (!date || p.serviceDate === date) && (!meal || p.meal === meal));
   const purchases = proposals.filter((p) => p.kind === "purchase");
   const defaultTab = kind === "purchase" ? "orders" : date && meal && approved.length ? "approved" : "pending";
   const [tab, setTab] = useState(defaultTab);
   useEffect(() => { setTab(defaultTab); }, [defaultTab]);
+  useEffect(() => {
+    const id = window.location.hash.replace(/^#proposal-/, "");
+    if (!id || id === window.location.hash) return;
+    if (approved.some((p) => p.id === id)) setTab("approved");
+    else if (reviews.some((p) => p.id === id)) setTab("pending");
+    const t = window.setTimeout(() => {
+      const el = document.getElementById(`proposal-${id}`);
+      if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("ring-2", "ring-primary"); window.setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2500); }
+    }, 100);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [approvalRequest, setApprovalRequest] = useState<SubstitutionProposal | null>(null);
   const [range, setRange] = useState<7 | 14 | 30>(7);
   const now = Date.now();
@@ -122,7 +135,7 @@ function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: Substituti
   const selected: Proposal = p.kind === "substitution" ? { ...p, dishId: selectedDish } : p;
   const agent = AGENTS[p.agent];
   return (
-    <article className={cn("rounded-lg border border-l-4 bg-card p-4 shadow-soft", agent.border)}>
+    <article id={`proposal-${p.id}`} className={cn("scroll-mt-24 transition-shadow", "rounded-lg border border-l-4 bg-card p-4 shadow-soft", agent.border)}>
       <div className="flex flex-wrap items-start gap-4">
         <AgentAvatar agent={p.agent} />
         <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-0">
@@ -142,7 +155,7 @@ function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (
   const locked = Boolean(p.approved && (!p.serviceDate || p.serviceDate <= dateKey(new Date())));
   return (
     <>
-      <div className="mt-2 text-sm font-medium">Serve date: {p.serviceDate}</div>
+      <div className="mt-2 text-xl font-semibold tracking-tight">Serve date: {p.serviceDate}</div>
       <div className="mt-2 flex flex-wrap gap-2">{p.approved ? <Tag tone="ok">Approved</Tag> : <Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag>}</div>
       <Select value={p.dishId} onValueChange={onDishChange} disabled={locked}>
         <SelectTrigger aria-label={`Alternative dish for ${p.residentIds.map((id) => residentName(state, id)).join(", ")}`} className="mt-2 h-auto min-h-10 w-full max-w-lg whitespace-normal text-left text-base font-semibold [&>span]:line-clamp-none [&>span]:break-words"><SelectValue /></SelectTrigger>
@@ -152,7 +165,7 @@ function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {p.residentIds.map((id) => (
           <li key={id}>
-            <Link to="/residents/$residentId" params={{ residentId: id }} className="block rounded-lg bg-muted/60 px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Link to="/residents/$residentId" params={{ residentId: id }} search={{ approval: p.id }} className="block rounded-lg bg-muted/60 px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span className="font-medium underline-offset-2 hover:underline">{residentName(state, id)}</span>
               <span className="text-muted-foreground"> — {p.reasons[id]?.join(", ")}</span>
             </Link>

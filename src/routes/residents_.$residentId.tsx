@@ -19,6 +19,7 @@ export const Route = createFileRoute("/residents_/$residentId")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
+  validateSearch: (search: Record<string, unknown>): { approval?: string } => typeof search["approval"] === "string" ? { approval: search["approval"] } : {},
   component: ResidentProfilePage,
 });
 
@@ -28,7 +29,10 @@ function ResidentProfilePage() {
   const navigate = Route.useNavigate();
   const [editing, setEditing] = useState<ProfileSection | null>(null);
   const r = state.residents.find((resident) => resident.id === residentId);
-  const back = <Button asChild variant="ghost" className="mb-6"><Link to="/residents"><ArrowLeft />All residents</Link></Button>;
+  const { approval } = Route.useSearch();
+  const back = approval
+    ? <Button asChild variant="ghost" className="mb-6"><Link to="/approvals" hash={`proposal-${approval}`}><ArrowLeft />Back to approval card</Link></Button>
+    : <Button asChild variant="ghost" className="mb-6"><Link to="/residents"><ArrowLeft />All residents</Link></Button>;
   if (!r) return <>{back}<PageHeader eyebrow="Residents" title="Resident not found" /></>;
   const profile = r.careProfile ?? {};
   const priority = profile["Nutritional Priority"] ?? r.notes.split("\n").find((line) => line.startsWith("Nutritional priority:"))?.slice("Nutritional priority:".length).trim() ?? "Not specified";
