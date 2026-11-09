@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /** One Command Center card: loud and actionable while items remain, calm once they are cleared. */
-export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { card: ActionCard; icon: LucideIcon; reviewLabel?: string; onReview?: () => void }) {
+export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { card: ActionCard; icon: LucideIcon; reviewLabel?: string | undefined; onReview?: (() => void) | undefined }) {
   const clear = card.value === 0;
   return (
     <div className={cn(
