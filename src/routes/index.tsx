@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ClipboardCheck, CircleCheck, PackageCheck, PackageX, Truck, UserRound } from "lucide-react";
+import { ArrowRight, ClipboardCheck, CircleCheck, PackageCheck, PackageX, Truck, UserRound, Users, BookOpen, Utensils, Scale, DollarSign } from "lucide-react";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { dishById } from "@/lib/kitchen/data";
 import { MEALS } from "@/lib/kitchen/types";
@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/kitchen/app-shell";
 import { AgentAvatar, AgentChip, MEAL_LABEL, MEAL_TIME } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
 import { scheduledState } from "@/lib/kitchen/schedule";
-import { actionCards, openObservations, reviewedObservations } from "@/lib/kitchen/overview";
+import { actionCards, dailySnapshot, openObservations, reviewedObservations } from "@/lib/kitchen/overview";
 import { ActionCardTile } from "@/components/kitchen/action-card";
 import { ObservationDialog } from "@/components/kitchen/observation-dialog";
 import { ResidentPhoto } from "@/components/kitchen/resident-photo";
@@ -34,6 +34,16 @@ function CommandCenter() {
   const { state, analysis, dispatch } = useKitchen();
   const needsStaff = analysis.conflicts.filter((c) => c.status === "needs-staff");
   const cards = actionCards(state, analysis);
+  const snapshot = dailySnapshot(state, analysis);
+  const money = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const quantity = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 1 });
+  const facts = [
+    { label: "Residents served", value: snapshot.residents, detail: "Today's residents", icon: Users },
+    { label: "Recipe library", value: snapshot.recipes, detail: "Recipes on file", icon: BookOpen },
+    { label: "Daily meals", value: snapshot.meals, detail: "Breakfast, lunch & dinner", icon: Utensils },
+    { label: "Planned daily consumption", value: `${quantity(snapshot.quantities["kg"] ?? 0)} kg · ${quantity(snapshot.quantities["L"] ?? 0)} L`, detail: Object.entries(snapshot.quantities).filter(([unit, qty]) => unit !== "kg" && unit !== "L" && qty > 0).map(([unit, qty]) => `${quantity(qty)} ${unit}`).join(" · ") || "Today's menu estimate", icon: Scale },
+    { label: "Estimated daily food cost", value: money(snapshot.cost), detail: `${money(snapshot.costPerResident)} / resident${snapshot.unpriced ? " · some prices missing" : " · ingredients only"}`, icon: DollarSign },
+  ];
   const dayState = scheduledState(state, 0);
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const open = openObservations(state);
@@ -45,14 +55,21 @@ function CommandCenter() {
     <>
       <PageHeader eyebrow={today} title="Good evening, Chef." />
 
+      <section className="mb-8 border-y py-5" aria-label="Daily snapshot">
+        <h2 className="mb-4 text-sm font-semibold text-muted-foreground">Today's snapshot</h2>
+        <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">{facts.map((fact) => <div key={fact.label} className="min-w-0">
+          <dt className="flex items-center gap-2 text-sm text-muted-foreground"><fact.icon className="h-4 w-4 shrink-0 text-primary" />{fact.label}</dt>
+          <dd className="mt-2 break-words font-display text-2xl font-semibold">{fact.value}</dd>
+          <dd className="mt-1 text-xs text-muted-foreground">{fact.detail}</dd>
+        </div>)}</dl>
+      </section>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
         {cards.map((card) => (
           <ActionCardTile
             key={card.id}
             card={card}
             icon={CARD_ICONS[card.id]}
-            reviewLabel={card.id === "profiles" ? "Mark reviewed" : undefined}
-            onReview={card.id === "profiles" ? () => dispatch({ type: "markProfileUpdatesSeen" }) : undefined}
           />
         ))}
       </div>

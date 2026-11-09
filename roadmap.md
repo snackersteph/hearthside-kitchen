@@ -91,3 +91,8 @@
 - [x] Generate one unique photo per recipe (135 total), saved as src/assets/dishes/<recipe-id>.jpg
 - [x] Build src/lib/kitchen/recipe-photos.ts mapping recipe id -> photo, wired into recipes.tsx (card + detail), dishPhoto fallback for user-added recipes
 - [x] Residents page: title "Residents", resident count in smaller font below the alphabet filter line
+
+## Command Center snapshot and profile reviews
+- [ ] Add resident, recipe, daily consumption and estimated cost facts.
+- [ ] Rename Incoming orders and populate the demo with two due deliveries and three incoming orders.
+- [ ] Show old/new profile content and individually acknowledge updates; test and verify the flow.
