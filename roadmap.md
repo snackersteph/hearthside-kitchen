@@ -32,6 +32,6 @@
 - [x] Test filtering and verify saved changes and safe substitution choices.
 
 # Alternatives-only approvals
-- [ ] Replace main meal cards with pending and approved resident alternatives.
-- [ ] Remove grey date badges and ask whether to remember approved alternatives.
-- [ ] Verify remembered choices, safety checks, date scope, and approval flows.
+- [x] Replace main meal cards with pending and approved resident alternatives.
+- [x] Remove grey date badges and ask whether to remember approved alternatives.
+- [x] Verify remembered choices, safety checks, date scope, and approval flows.
