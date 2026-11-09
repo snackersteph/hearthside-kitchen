@@ -9,6 +9,7 @@ export type AgentId = "dietary" | "menu" | "inventory";
 
 export interface Resident {
   id: string;
+  dietaryRevision?: number;
   name: string;
   room: string;
   age: number;
@@ -52,7 +53,7 @@ export interface Decision {
 }
 
 export interface KitchenState {
-  alternativePreferences?: { residentId: string; meal: Meal; fromDishId: string; dishId: string }[];
+  alternativePreferences?: { residentId: string; meal: Meal; fromDishId: string; dishId: string; dietarySignature?: string }[];
   seeded?: boolean;
   purchaseHorizonDays?: 7 | 14;
   leadTimeDays?: number;

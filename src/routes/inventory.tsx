@@ -5,8 +5,12 @@ import { AgentAvatar, Tag } from "@/components/kitchen/agents";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PackageCheck, Truck } from "lucide-react";
+import { PackageCheck, Plus, Truck } from "lucide-react";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -24,6 +28,7 @@ export const Route = createFileRoute("/inventory")({
 
 function InventoryPage() {
   const { state, analysis, dispatch } = useKitchen();
+  const [adding, setAdding] = useState(false);
   const purchases = analysis.proposals.filter((p) => p.kind === "purchase");
   const forecast = analysis.forecast;
   const horizon = state.purchaseHorizonDays ?? 7;
@@ -37,7 +42,7 @@ function InventoryPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Pantry & walk-in" title="Inventory" />
+      <PageHeader eyebrow="Pantry & walk-in" title="Inventory"><Button onClick={() => setAdding(true)}><Plus />Add New</Button></PageHeader>
 
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b pb-5">
         <div>
@@ -109,6 +114,40 @@ function InventoryPage() {
         <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold"><Truck className="h-5 w-5" />Incoming orders</h2>
         {!incoming.length ? <div className="border-y py-5 text-sm text-muted-foreground">No approved orders are incoming. Pending requests are not yet on order.</div> : <div className="divide-y border-y">{incoming.map((order) => <div key={order.id} className="flex flex-wrap items-center gap-4 py-4"><div className="min-w-0 flex-1"><div className="font-semibold">{order.vendor} <span className="ml-2 text-xs font-normal text-muted-foreground">Expected {dateLabel(order.deliveryDate)}</span></div><div className="mt-1 text-sm text-muted-foreground">{order.lines.map((line) => { const ingredient = state.ingredients.find((i) => i.id === line.ingredientId); return `${ingredient?.name ?? line.ingredientId} · ${line.qty} ${ingredient?.unit ?? ""}`; }).join(" / ")}</div></div><Button variant="outline" onClick={() => dispatch({ type: "receiveOrder", id: order.id })}><PackageCheck />Mark received</Button></div>)}</div>}
       </section>
+      {adding && <AddIngredientDialog onClose={() => setAdding(false)} />}
     </>
   );
+}
+
+function AddIngredientDialog({ onClose }: { onClose: () => void }) {
+  const { state, dispatch } = useKitchen();
+  const [name, setName] = useState("");
+  const [vendor, setVendor] = useState("");
+  const [unit, setUnit] = useState("kg");
+  const [stock, setStock] = useState("0");
+  const [packSize, setPackSize] = useState("1");
+  const [unitCost, setUnitCost] = useState("0");
+  const duplicate = state.ingredients.some((i) => i.name.trim().toLowerCase() === name.trim().toLowerCase());
+  return <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <DialogContent className="max-w-lg">
+      <DialogHeader><DialogTitle>Add ingredient</DialogTitle></DialogHeader>
+      <form className="space-y-4" onSubmit={(e) => {
+        e.preventDefault();
+        if (duplicate) return;
+        dispatch({ type: "addIngredient", ingredient: { id: crypto.randomUUID(), name, vendor, unit, stock: Number(stock), packSize: Number(packSize), unitCost: Number(unitCost), onOrder: 0 } });
+        toast.success("Ingredient added"); onClose();
+      }}>
+        <label className="block text-sm font-medium">Ingredient name<Input required aria-label="Ingredient name" value={name} onChange={(e) => setName(e.target.value)} /></label>
+        {duplicate && <p role="alert" className="text-sm text-destructive">This ingredient already exists.</p>}
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-sm font-medium">Unit<Select value={unit} onValueChange={setUnit}><SelectTrigger aria-label="Ingredient unit"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="kg">kg</SelectItem><SelectItem value="L">L</SelectItem><SelectItem value="each">each</SelectItem></SelectContent></Select></label>
+          <label className="text-sm font-medium">In stock ({unit})<Input required aria-label="Initial stock" type="number" min={0} step="any" value={stock} onChange={(e) => setStock(e.target.value)} /></label>
+          <label className="text-sm font-medium">Order pack size ({unit})<Input required aria-label="Order pack size" type="number" min={0.001} step="any" value={packSize} onChange={(e) => setPackSize(e.target.value)} /></label>
+          <label className="text-sm font-medium">Cost per {unit} ($)<Input required aria-label="Unit cost" type="number" min={0} step="any" value={unitCost} onChange={(e) => setUnitCost(e.target.value)} /></label>
+        </div>
+        <label className="block text-sm font-medium">Vendor<Input required aria-label="Vendor" value={vendor} onChange={(e) => setVendor(e.target.value)} /></label>
+        <DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" disabled={duplicate || !name.trim() || !vendor.trim()}>Add ingredient</Button></DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>;
 }

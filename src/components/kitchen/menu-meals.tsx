@@ -9,13 +9,13 @@ import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
 import { Button } from "@/components/ui/button";
-import { analyzeMenuDay } from "@/lib/kitchen/engine";
+import { analyzeMenuDay, resolveMenuState } from "@/lib/kitchen/engine";
 
 const MEAL_BG: Record<Meal, string> = { breakfast: "bg-meal-breakfast", lunch: "bg-meal-lunch", dinner: "bg-meal-dinner" };
 
 export function MealSection({ meal, offset, reference }: { meal: Meal; offset: number; reference: Date }) {
   const { state: kitchen, analysis: allAnalysis, dispatch } = useKitchen();
-  const state = scheduledState(kitchen, offset, reference);
+  const state = resolveMenuState(kitchen, offset, reference);
   const analysis = analyzeMenuDay(kitchen, offset, reference);
   const date = dateKey(dayAt(offset, reference));
   const review = allAnalysis.mealReviews?.find((r) => r.serviceDate === date && r.meal === meal);

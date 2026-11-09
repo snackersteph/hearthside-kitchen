@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Context, type ReactNode } from "react";
 import { initialState, dishById, INGREDIENTS } from "./data";
-import { analyze, analyzeMenuDay, conflictReasons, mealSignature, type Analysis } from "./engine";
-import type { KitchenState, Meal, PurchaseLine, Resident } from "./types";
+import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
+import type { Ingredient, KitchenState, Meal, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 
 type Action =
+  | { type: "addResident"; resident: Resident }
+  | { type: "addIngredient"; ingredient: Ingredient }
   | { type: "approveMeal"; date: string; meal: Meal }
   | { type: "rejectMeal"; date: string; meal: Meal }
   | { type: "setMealPlan"; date: string; meal: Meal; dishId: string; overrides: Record<string, string> }
@@ -23,6 +25,15 @@ type Action =
 
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
   switch (a.type) {
+    case "addResident": {
+      if (!a.resident.name.trim() || !a.resident.room.trim() || !Number.isInteger(a.resident.age) || a.resident.age < 1 || a.resident.age > 120 || s.residents.some((r) => r.id === a.resident.id)) return s;
+      return { ...s, residents: [...s.residents, { ...a.resident, name: a.resident.name.trim(), room: a.resident.room.trim() }] };
+    }
+    case "addIngredient": {
+      const i = a.ingredient;
+      if (!i.name.trim() || !i.vendor.trim() || !["kg", "L", "each"].includes(i.unit) || !Number.isFinite(i.stock) || i.stock < 0 || !Number.isFinite(i.packSize) || i.packSize <= 0 || !Number.isFinite(i.unitCost) || i.unitCost < 0 || i.onOrder !== 0 || s.ingredients.some((x) => x.id === i.id || x.name.trim().toLowerCase() === i.name.trim().toLowerCase())) return s;
+      return { ...s, ingredients: [...s.ingredients, { ...i, name: i.name.trim(), vendor: i.vendor.trim() }] };
+    }
     case "setHorizon": return { ...s, purchaseHorizonDays: a.days };
     case "setLeadTime": return { ...s, leadTimeDays: Math.max(1, Math.min(14, Math.round(a.days) || 2)) };
     case "receiveOrder": {
@@ -47,7 +58,20 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       const date = dateKey(reference);
       return { ...s, plan: { ...s.plan, [a.meal]: a.dishId }, scheduledPlans: { ...s.scheduledPlans, [date]: { ...s.scheduledPlans?.[date], [a.meal]: a.dishId } }, overrides: { ...s.overrides, [a.meal]: {} }, scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: {} } }, mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } } };
     }
-    case "updateResident": return { ...s, residents: s.residents.map((r) => (r.id === a.resident.id ? a.resident : r)) };
+    case "updateResident": {
+      const previous = s.residents.find((r) => r.id === a.resident.id);
+      if (!previous) return s;
+      const changed = dietarySignature(previous) !== dietarySignature({ ...a.resident, dietaryRevision: previous.dietaryRevision ?? 0 });
+      const resident = { ...a.resident, dietaryRevision: (previous.dietaryRevision ?? 0) + (changed ? 1 : 0) };
+      if (!changed) return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r) };
+      const clear = (meals: Partial<Record<Meal, Record<string, string>>>) => Object.fromEntries(Object.entries(meals).map(([meal, entries]) => [meal, Object.fromEntries(Object.entries(entries ?? {}).filter(([id]) => id !== resident.id))]));
+      const today = dateKey(reference);
+      return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r),
+        alternativePreferences: (s.alternativePreferences ?? []).filter((p) => p.residentId !== resident.id),
+        overrides: clear(s.overrides) as KitchenState["overrides"],
+        scheduledOverrides: Object.fromEntries(Object.entries(s.scheduledOverrides ?? {}).map(([date, meals]) => [date, date >= today ? clear(meals) : meals])),
+      };
+    }
     case "setStock": return { ...s, ingredients: s.ingredients.map((i) => (i.id === a.id ? { ...i, stock: Math.max(0, a.stock) } : i)) };
     case "setMealPlan": {
       if (a.date < dateKey(reference) || dishById(a.dishId).meal !== a.meal) return s;
@@ -67,7 +91,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
     case "rejectMeal": {
       if (a.date < dateKey(reference)) return s;
       const offset = Math.round((new Date(`${a.date}T12:00:00`).getTime() - new Date(`${dateKey(reference)}T12:00:00`).getTime()) / 86400000);
-      const dayState = scheduledState(s, offset, reference);
+      const dayState = resolveMenuState(s, offset, reference);
       return { ...s,
         scheduledPlans: { ...s.scheduledPlans, [a.date]: { ...s.scheduledPlans?.[a.date], [a.meal]: dayState.plan[a.meal] } },
         mealApprovals: { ...s.mealApprovals, [a.date]: { ...s.mealApprovals?.[a.date], [a.meal]: undefined } },
@@ -78,7 +102,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
     case "approveMeal": {
       if (!canApproveMeal(a.date, reference)) return s;
       const offset = Math.round((new Date(`${a.date}T12:00:00`).getTime() - new Date(`${dateKey(reference)}T12:00:00`).getTime()) / 86400000);
-      const dayState = scheduledState(s, offset, reference);
+      const dayState = resolveMenuState(s, offset, reference);
       if (analyzeMenuDay(s, offset, reference).conflicts.some((c) => c.meal === a.meal)) return s;
       const signature = mealSignature(dayState, a.meal);
       if (s.mealRejections?.[a.date]?.[a.meal]?.signature === signature) return s;
@@ -102,8 +126,8 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         const fromDishId = scheduledState(s, offset, reference).plan[a.meal];
         const preferences = a.remember ? [
           ...(s.alternativePreferences ?? []).filter((p) => !(p.meal === a.meal && p.fromDishId === fromDishId && a.residentIds.includes(p.residentId))),
-          ...a.residentIds.map((residentId) => ({ residentId, meal: a.meal, fromDishId, dishId: a.dishId })),
-        ] : s.alternativePreferences;
+          ...a.residentIds.flatMap((residentId) => { const resident = s.residents.find((r) => r.id === residentId); return resident ? [{ residentId, meal: a.meal, fromDishId, dishId: a.dishId, dietarySignature: dietarySignature(resident) }] : []; }),
+        ] : s.alternativePreferences?.filter((p) => !(p.meal === a.meal && p.fromDishId === fromDishId && a.residentIds.includes(p.residentId) && p.dishId !== a.dishId));
         return { ...s, scheduledPlans: { ...s.scheduledPlans, [date]: { ...s.scheduledPlans?.[date], [a.meal]: scheduledState(s, offset, reference).plan[a.meal] } },
           ...(preferences ? { alternativePreferences: preferences } : {}),
           scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: o } },
