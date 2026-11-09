@@ -30,11 +30,25 @@ function ResidentsPage() {
   const { state } = useKitchen();
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
-  const list = state.residents.filter((r) => r.name.toLowerCase().includes(q.toLowerCase()) || r.room.includes(q)).sort(compareByFirstName);
+  const [letter, setLetter] = useState("All");
+  const list = state.residents.filter((r) =>
+    (letter === "All" || r.name.trim().toUpperCase().startsWith(letter)) &&
+    (r.name.toLowerCase().includes(q.toLowerCase()) || r.room.includes(q))
+  ).sort(compareByFirstName);
   return <>
     <PageHeader eyebrow="" title={`${state.residents.length} Residents`}>
       <div className="flex flex-wrap gap-2"><Input aria-label="Search name or room" placeholder="Search name or room" value={q} onChange={(e) => setQ(e.target.value)} className="w-56 bg-card" /><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div>
     </PageHeader>
+    <nav aria-label="Filter residents by first letter" className="mb-5 flex flex-wrap items-center gap-1 border-b border-border pb-3">
+      {["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map((value) => <Button
+        key={value}
+        variant="link"
+        size="sm"
+        aria-pressed={letter === value}
+        onClick={() => setLetter(value)}
+        className={cn("h-9 min-w-8 rounded-none px-2", letter === value ? "font-bold text-primary underline decoration-2 underline-offset-8" : "font-medium text-muted-foreground no-underline")}
+      >{value}</Button>)}
+    </nav>
     <div className="overflow-hidden rounded-lg border bg-card">
       <Table className="min-w-[900px] xl:min-w-0 [&_th]:border-r [&_td]:border-r [&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0 [&_th]:border-border [&_td]:border-border">
         <TableHeader className="bg-muted/50"><TableRow><TableHead className="w-20 min-w-20 px-3 py-4"><span className="sr-only">Photo</span></TableHead>{["Name", "Gender", "Room", "Medical conditions", "Diet type", "Food allergies"].map((h) => <TableHead key={h} className="px-3 py-4 text-base font-bold text-foreground">{h}</TableHead>)}</TableRow></TableHeader>
