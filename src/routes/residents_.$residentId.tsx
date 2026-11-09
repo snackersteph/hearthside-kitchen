@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { medicalConditions } from "@/lib/kitchen/resident-profile";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { EditDialog } from "@/components/kitchen/resident-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { ResidentPhoto } from "@/components/kitchen/resident-photo";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/residents_/$residentId")({
   head: ({ params }) => ({ meta: [
@@ -22,7 +23,8 @@ export const Route = createFileRoute("/residents_/$residentId")({
 
 function ResidentProfilePage() {
   const { residentId } = Route.useParams();
-  const { state } = useKitchen();
+  const { state, dispatch } = useKitchen();
+  const navigate = Route.useNavigate();
   const [editing, setEditing] = useState(false);
   const r = state.residents.find((resident) => resident.id === residentId);
   const back = <Button asChild variant="ghost" className="mb-6"><Link to="/residents"><ArrowLeft />All residents</Link></Button>;
@@ -50,6 +52,21 @@ function ResidentProfilePage() {
       </section>
       <section className="border-t pt-6"><h2 className="mb-5 font-display text-xl font-semibold">Clinical notes</h2><p className="whitespace-pre-line text-sm leading-relaxed">{r.notes || "Not specified"}</p></section>
     </div>
+    <section className="mt-8 border-t pt-6">
+      <AlertDialog>
+        <AlertDialogTrigger asChild><Button variant="destructive"><Trash2 />Delete resident</Button></AlertDialogTrigger>
+        <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {r.name}?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently remove their profile, photo, and saved meal choices. This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction asChild><Button variant="destructive" onClick={() => { dispatch({ type: "deleteResident", id: r.id }); void navigate({ to: "/residents" }); }}><Trash2 />Delete resident</Button></AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
     {editing && <EditDialog resident={r} onClose={() => setEditing(false)} />}
   </>;
 }
