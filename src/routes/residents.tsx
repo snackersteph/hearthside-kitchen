@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Plus } from "lucide-react";
+import { ResidentPhoto } from "@/components/kitchen/resident-photo";
+import { cn } from "@/lib/utils";
 export { compareByFirstName } from "@/lib/kitchen/resident-profile";
 
 export const Route = createFileRoute("/residents")({
@@ -35,12 +37,12 @@ function ResidentsPage() {
     </PageHeader>
     <div className="overflow-hidden rounded-lg border bg-card">
       <Table className="min-w-[900px] xl:min-w-0">
-        <TableHeader className="bg-muted/50"><TableRow>{["First name", "Last name", "Gender", "Room number", "Medical conditions", "Diet type", "Food allergies"].map((h) => <TableHead key={h} className="px-4 py-3">{h}</TableHead>)}</TableRow></TableHeader>
+        <TableHeader className="bg-muted/50"><TableRow><TableHead className="w-16 px-3 py-4"><span className="sr-only">Photo</span></TableHead>{["First name", "Last name", "Gender", "Room number", "Medical conditions", "Diet type", "Food allergies"].map((h) => <TableHead key={h} className="px-3 py-4 text-base font-bold text-foreground">{h}</TableHead>)}</TableRow></TableHeader>
         <TableBody>{list.map((r) => {
           const { firstName, lastName } = residentNames(r);
           const values = [firstName, lastName, r.careProfile?.["Gender"] ?? "Not specified", r.room, medicalConditions(r), r.careProfile?.["Diet Type"] ?? (r.diets.join(", ") || "Regular"), r.careProfile?.["Food Allergies"] ?? (r.allergens.join(", ") || "None known")];
-          return <TableRow key={r.id} className="group">{values.map((value, i) => <TableCell key={i} className="p-0 align-top"><Link to="/residents/$residentId" params={{ residentId: r.id }} aria-label={i === 0 ? `View ${r.name}` : undefined} tabIndex={i === 0 ? 0 : -1} className="block min-h-16 px-4 py-4 group-hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{value || "—"}</Link></TableCell>)}</TableRow>;
-        })}{!list.length && <TableRow><TableCell colSpan={7} className="p-8 text-center text-muted-foreground">No residents found.</TableCell></TableRow>}</TableBody>
+          return <TableRow key={r.id} className="group"><TableCell className="p-0"><Link to="/residents/$residentId" params={{ residentId: r.id }} tabIndex={-1} className="block p-3"><ResidentPhoto resident={r} /></Link></TableCell>{values.map((value, i) => <TableCell key={i} className="p-0"><Link to="/residents/$residentId" params={{ residentId: r.id }} aria-label={i === 0 ? `View ${r.name}` : undefined} tabIndex={i === 0 ? 0 : -1} className={cn("block min-h-16 px-3 py-4 group-hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring", i < 2 && "font-semibold")}>{value || "—"}</Link></TableCell>)}</TableRow>;
+        })}{!list.length && <TableRow><TableCell colSpan={8} className="p-8 text-center text-muted-foreground">No residents found.</TableCell></TableRow>}</TableBody>
       </Table>
     </div>
     {adding && <EditDialog resident={{ id: "", name: "", room: "", age: 80, allergens: [], diets: [], likes: [], notes: "" }} isNew onClose={() => setAdding(false)} />}
