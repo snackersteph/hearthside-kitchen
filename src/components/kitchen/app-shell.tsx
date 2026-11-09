@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge } from "lucide-react";
 import type { ReactNode } from "react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { AGENTS, AgentAvatar } from "./agents";
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/inventory", label: "Inventory", icon: Boxes },
   { to: "/approvals", label: "Approval Center", icon: ClipboardCheck },
 ] as const;
+const MOBILE_NAV = [...NAV, { to: "/dashboard", label: "Dashboard", icon: Gauge }] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { analysis, dispatch } = useKitchen();
@@ -50,7 +51,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="mt-auto space-y-3 border-t border-sidebar-border px-5 py-5">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-sidebar-foreground/50">Agents online</div>
+          <div className="text-[11px] uppercase tracking-[0.16em] text-sidebar-foreground/50">Agents</div>
+          <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 -mx-3 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>
+            <Gauge className="h-4 w-4" /><span className="flex-1">Dashboard</span>
+          </Link>
           {(Object.keys(AGENTS) as AgentId[]).map((id) => (
             <div key={id} className="flex items-center gap-3">
               <AgentAvatar agent={id} size="sm" />
@@ -68,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <nav className="flex gap-1 overflow-x-auto border-b bg-sidebar px-3 py-2 md:hidden">
-          {NAV.map((n) => (
+          {MOBILE_NAV.map((n) => (
             <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }} className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium text-sidebar-foreground/75" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>{n.label}</Link>
           ))}
         </nav>
