@@ -1,4 +1,5 @@
 import type { Dish, Ingredient, KitchenState, Resident } from "./types";
+import { ADDITIONAL_RESIDENTS } from "./additional-residents";
 
 export const DISHES: Dish[] = [
   // Breakfast
@@ -612,10 +613,11 @@ export const RESIDENTS: Resident[] = [
 
 export function initialState(): KitchenState {
   return {
+    additionalResidentsVersion: 1,
     residentProfileVersion: RESIDENT_PROFILE_VERSION,
     plan: { breakfast: "b-pancakes", lunch: "l-alfredo", dinner: "d-salmon" },
     overrides: { breakfast: {}, lunch: {}, dinner: {} },
-    residents: RESIDENTS.map((r) => ({ ...r, likes: [...r.likes], allergens: [...r.allergens], diets: [...r.diets], ...(r.careProfile ? { careProfile: { ...r.careProfile } } : {}), ...(r.mealInstructions ? { mealInstructions: [...r.mealInstructions] } : {}) })),
+    residents: [...RESIDENTS, ...ADDITIONAL_RESIDENTS].map((r) => ({ ...r, likes: [...r.likes], allergens: [...r.allergens], diets: [...r.diets], ...(r.careProfile ? { careProfile: { ...r.careProfile } } : {}), ...(r.mealInstructions ? { mealInstructions: [...r.mealInstructions] } : {}) })),
     ingredients: INGREDIENTS.map((i) => ({ ...i })),
     history: [],
   };

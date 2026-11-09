@@ -3,6 +3,7 @@ import { initialState, dishById, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENT
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
 import type { Ingredient, KitchenState, Meal, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
+import { ADDITIONAL_RESIDENTS } from "./additional-residents";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -189,6 +190,10 @@ export function migrateResidentProfiles(s: KitchenState): KitchenState {
 }
 
 const KEY = "kitchen-command-v1";
+export function migrateAdditionalResidents(s: KitchenState): KitchenState {
+  if (s.additionalResidentsVersion === 1) return s;
+  return { ...s, additionalResidentsVersion: 1, residents: [...s.residents, ...ADDITIONAL_RESIDENTS.filter((r) => !s.residents.some((existing) => existing.id === r.id))] };
+}
 type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
 // Mixed component/function exports can refresh consumers before the mounted provider.
 // Preserve the context identity across hot updates so both generations share it.
@@ -208,7 +213,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     try { const raw = localStorage.getItem(KEY); const saved = raw ? JSON.parse(raw) as KitchenState : null;
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? { ...saved, ingredients: [...saved.ingredients, ...INGREDIENTS.filter((i) => !saved.ingredients.some((x) => x.id === i.id)).map((i) => ({ ...i }))] } : null;
-      const merged = withIngredients ? migrateResidentProfiles(withIngredients) : null;
+      const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
       dispatch({ type: "load", state: merged?.seeded ? merged : seedDemo(merged ?? initialState()) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);

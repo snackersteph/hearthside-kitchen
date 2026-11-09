@@ -56,6 +56,7 @@ export interface Decision {
 }
 
 export interface KitchenState {
+  additionalResidentsVersion?: number;
   alternativePreferences?: { residentId: string; meal: Meal; fromDishId: string; dishId: string; dietarySignature?: string }[];
   seeded?: boolean;
   residentProfileVersion?: number;
