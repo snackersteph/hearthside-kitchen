@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
-import { differenceInCalendarDays, isValid, parseISO } from "date-fns";
+import { differenceInCalendarDays, isValid, parseISO , addMonths } from "date-fns";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { MealSection, PlannedMeal } from "@/components/kitchen/menu-meals";
 import { MEAL_LABEL, Tag } from "@/components/kitchen/agents";
@@ -39,7 +39,9 @@ function DatedMenuPage() {
     <Button asChild variant="outline"><Link to="/menu"><ArrowLeft />Back to dates</Link></Button>
   </>;
   const offset = differenceInCalendarDays(selected, reference);
-  if (offset < -7 || offset > 7) return <>
+  const minOffset = differenceInCalendarDays(addMonths(reference, -6), reference);
+  const maxOffset = differenceInCalendarDays(addMonths(reference, 2), reference);
+  if (offset < minOffset || offset > maxOffset) return <>
     <PageHeader eyebrow="Daily Menu" title="Date outside the current menu" />
     <Button asChild variant="outline"><Link to="/menu"><ArrowLeft />Back to dates</Link></Button>
   </>;
@@ -48,8 +50,8 @@ function DatedMenuPage() {
     <PageHeader eyebrow="Daily Menu" title={selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}>
       <div className="flex items-center gap-2">
         {offset === 0 && <Tag tone="ok">Today</Tag>}
-        {offset > -7 && <Button asChild variant="outline" size="icon" aria-label="Previous day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(-1, selected)) }}><ChevronLeft /></Link></Button>}
-        {offset < 7 && <Button asChild variant="outline" size="icon" aria-label="Next day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(1, selected)) }}><ChevronRight /></Link></Button>}
+        {offset > minOffset && <Button asChild variant="outline" size="icon" aria-label="Previous day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(-1, selected)) }}><ChevronLeft /></Link></Button>}
+        {offset < maxOffset && <Button asChild variant="outline" size="icon" aria-label="Next day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(1, selected)) }}><ChevronRight /></Link></Button>}
       </div>
     </PageHeader>
     <Tabs key={date} defaultValue="breakfast">

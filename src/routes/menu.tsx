@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { addMonths } from "date-fns";
 import { CheckCircle2, ClipboardCheck, CalendarDays } from "lucide-react";
 import { type DayButton } from "react-day-picker";
 import { useKitchen } from "@/lib/kitchen/store";
@@ -32,8 +33,8 @@ function MenuPage() {
   }, []);
   if (!reference) return null;
   const today = dateKey(reference);
-  const start = dayAt(-7, reference);
-  const end = dayAt(7, reference);
+  const start = addMonths(dayAt(0, reference), -6);
+  const end = addMonths(dayAt(0, reference), 2);
   const reviews = analysis.mealReviews ?? [];
   const daysPending = new Set(reviews.filter((review) => !review.approved).map((review) => review.serviceDate)).size;
 
@@ -65,7 +66,7 @@ function MenuPage() {
           <span className="flex items-center gap-1.5"><CheckCircle2 className="size-4 text-success" />Approved</span>
         </div>
       </div>
-      <Calendar mode="single" month={reference} today={reference} startMonth={start} endMonth={end}
+      <Calendar mode="single" defaultMonth={reference} today={reference} startMonth={start} endMonth={end}
         disabled={[{ before: start }, { after: end }]}
         onSelect={(date) => { if (date) navigate({ to: "/menu/$date", params: { date: dateKey(date) } }); }}
         className="pointer-events-auto w-full bg-transparent p-0"
