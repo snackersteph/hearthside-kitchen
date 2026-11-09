@@ -38,6 +38,7 @@ function RecipesPage() {
   const [diet, setDiet] = useState<"all" | DietGroup>("all");
   const [texture, setTexture] = useState<"all" | Texture>("all");
   const [category, setCategory] = useState<"all" | DishCategory>("all");
+  const [stock, setStock] = useState<"all" | "available" | "low" | "unavailable">("all");
   const [editing, setEditing] = useState<Recipe | null>(null);
   const servings = state.residents.length;
   const [open, setOpen] = useState<Recipe | null>(null);
@@ -45,7 +46,7 @@ function RecipesPage() {
   const [adding, setAdding] = useState(false);
   const all = recipeLibrary(state);
   const q = query.trim().toLowerCase();
-  const rows = all.filter((r) => (meal === "all" || r.meal === meal) && (diet === "all" || r.dietGroup === diet) && (texture === "all" || r.texture === texture) && (category === "all" || recipeCategory(r) === category)
+  const rows = all.filter((r) => (meal === "all" || r.meal === meal) && (diet === "all" || r.dietGroup === diet) && (texture === "all" || r.texture === texture) && (category === "all" || recipeCategory(r) === category) && (stock === "all" || recipeAvailability(r, state.ingredients, servings).status === stock)
     && (!q || r.name.toLowerCase().includes(q) || r.ingredients.some((l) => state.ingredients.find((i) => i.id === l.id)?.name.toLowerCase().includes(q))))
     .sort((a, b) => MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal) || a.name.localeCompare(b.name));
 
@@ -63,7 +64,13 @@ function RecipesPage() {
         <Filter label="Category" value={category} onChange={setCategory} options={DISH_CATEGORIES} />
         <Filter label="Diet group" value={diet} onChange={setDiet} options={DIET_GROUPS} />
         <Filter label="Texture" value={texture} onChange={setTexture} options={TEXTURES} />
-        {(meal !== "all" || category !== "all" || diet !== "all" || texture !== "all" || q) && <Button variant="ghost" className="self-end" onClick={() => { setMeal("all"); setCategory("all"); setDiet("all"); setTexture("all"); setQuery(""); }}><X />Clear</Button>}
+        <label className="text-sm font-medium">Stock
+          <Select value={stock} onValueChange={(v) => setStock(v as typeof stock)}>
+            <SelectTrigger aria-label="Stock" className="mt-1.5 w-44 bg-background"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="available">In stock</SelectItem><SelectItem value="low">Running low</SelectItem><SelectItem value="unavailable">Missing</SelectItem></SelectContent>
+          </Select>
+        </label>
+        {(meal !== "all" || stock !== "all" || category !== "all" || diet !== "all" || texture !== "all" || q) && <Button variant="ghost" className="self-end" onClick={() => { setMeal("all"); setCategory("all"); setStock("all"); setDiet("all"); setTexture("all"); setQuery(""); }}><X />Clear</Button>}
       </div>
 
       <p className="mb-3 text-sm font-medium text-muted-foreground">{rows.length === all.length ? `${all.length} recipes` : `${rows.length} of ${all.length} recipes`}</p>
