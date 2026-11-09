@@ -105,7 +105,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
           ...a.residentIds.map((residentId) => ({ residentId, meal: a.meal, fromDishId, dishId: a.dishId })),
         ] : s.alternativePreferences;
         return { ...s, scheduledPlans: { ...s.scheduledPlans, [date]: { ...s.scheduledPlans?.[date], [a.meal]: scheduledState(s, offset, reference).plan[a.meal] } },
-          alternativePreferences: preferences,
+          ...(preferences ? { alternativePreferences: preferences } : {}),
           scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: o } },
           mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } },
           history: [{ proposalId: a.proposalId, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: a.modified }, ...s.history] };

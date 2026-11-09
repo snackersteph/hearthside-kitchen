@@ -129,7 +129,7 @@ function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: Substituti
           <div className="text-xs font-semibold text-muted-foreground">{agent.name} · {p.kind === "substitution" ? `${MEAL_LABEL[p.meal]} substitution` : "Purchase request"}</div>
           {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={setSelectedDish} /> : <PurchaseBody p={selected} />}
         </div>
-        <Actions p={selected} modified={p.kind === "substitution" && selectedDish !== p.dishId} onApprove={onApprove} onModify={() => setEditing(true)} />
+        <Actions p={selected} onApprove={onApprove} onModify={() => setEditing(true)} />
       </div>
       {editing && (p.kind === "substitution" ? <RejectSubDialog p={p} onApprove={onApprove} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}
     </article>
@@ -185,7 +185,7 @@ function summarize(state: ReturnType<typeof useKitchen>["state"], p: Proposal, v
     : `${verb} ${p.vendor} order ($${p.total.toFixed(2)})`;
 }
 
-function Actions({ p, modified = false, onModify, onApprove }: { p: Proposal; modified?: boolean; onModify: () => void; onApprove: (p: SubstitutionProposal) => void }) {
+function Actions({ p, onModify, onApprove }: { p: Proposal; onModify: () => void; onApprove: (p: SubstitutionProposal) => void }) {
   const { state, dispatch } = useKitchen();
   const late = p.kind === "substitution" && (!p.serviceDate || !canApproveMeal(p.serviceDate));
   const approve = () => {
