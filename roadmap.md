@@ -42,6 +42,6 @@
 - [x] Test safety rules and verify creation and renewed approval flows.
 
 # Uploaded resident profiles
-- [ ] Replace sample residents with all 15 uploaded profiles and preserve the full care information.
-- [ ] Update existing saved records safely and list residents alphabetically by first name.
-- [ ] Verify profile details, saved updates, sorting, and dietary regression tests.
+- [x] Replace sample residents with all 15 uploaded profiles and preserve the full care information.
+- [x] Update existing saved records safely and list residents alphabetically by first name.
+- [x] Verify profile details, saved updates, sorting, and dietary regression tests.

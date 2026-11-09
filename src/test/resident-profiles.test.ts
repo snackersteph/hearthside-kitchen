@@ -15,7 +15,7 @@ describe("uploaded resident profiles", () => {
     expect([...initialState().residents].sort(compareByFirstName).slice(0, 4).map((r) => r.name)).toEqual(["Bill Parker", "David Kim", "Eleanor Davis", "Fatima Hassan"]);
   });
   it("replaces outdated saved residents and their resident-specific decisions", () => {
-    const old = { ...initialState(), residentProfileVersion: undefined, residents: [], alternativePreferences: [{ residentId: "r1", meal: "lunch" as const, fromDishId: "l-alfredo", dishId: "l-primavera" }] };
+    const old = { ...initialState(), residentProfileVersion: 0, residents: [], alternativePreferences: [{ residentId: "r1", meal: "lunch" as const, fromDishId: "l-alfredo", dishId: "l-primavera" }] };
     const migrated = migrateResidentProfiles(old);
     expect(migrated.residentProfileVersion).toBe(RESIDENT_PROFILE_VERSION);
     expect(migrated.residents).toHaveLength(15);
