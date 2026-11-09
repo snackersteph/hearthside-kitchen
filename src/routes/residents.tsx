@@ -34,7 +34,7 @@ function ResidentsPage() {
       <div className="flex flex-wrap gap-2"><Input aria-label="Search name or room" placeholder="Search name or room" value={q} onChange={(e) => setQ(e.target.value)} className="w-56 bg-card" /><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div>
     </PageHeader>
     <div className="overflow-hidden rounded-lg border bg-card">
-      <Table className="min-w-[1000px]">
+      <Table className="min-w-[900px] xl:min-w-0">
         <TableHeader className="bg-muted/50"><TableRow>{["First name", "Last name", "Gender", "Room number", "Medical conditions", "Diet type", "Food allergies"].map((h) => <TableHead key={h} className="px-4 py-3">{h}</TableHead>)}</TableRow></TableHeader>
         <TableBody>{list.map((r) => {
           const { firstName, lastName } = residentNames(r);
