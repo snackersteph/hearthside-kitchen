@@ -44,6 +44,13 @@ export function profileChangeSummary(previous: Resident, next: Resident): string
   return parts.length ? parts.join(", ") : null;
 }
 
+/** Records an open profile update whenever a staff edit changes a resident's care information. */
+function profileUpdateRecord(previous: Resident, next: Resident, reference: Date): Pick<KitchenState, "profileUpdates"> {
+  const summary = profileChangeSummary(previous, next);
+  if (!summary) return {};
+  return { profileUpdates: [{ id: `profile-${next.id}-${reference.getTime()}`, residentId: next.id, at: reference.getTime(), summary, review: "open" }, ...(previous ? [] : [])] };
+}
+
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
   switch (a.type) {
     case "deleteResident": {
@@ -102,14 +109,28 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       if (!previous) return s;
       const changed = dietarySignature(previous) !== dietarySignature({ ...a.resident, dietaryRevision: previous.dietaryRevision ?? 0 });
       const resident = { ...a.resident, dietaryRevision: (previous.dietaryRevision ?? 0) + (changed ? 1 : 0) };
-      if (!changed) return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r) };
+      if (!changed) return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r), ...profileUpdateRecord(previous, resident, reference) };
       const clear = (meals: Partial<Record<Meal, Record<string, string>>>) => Object.fromEntries(Object.entries(meals).map(([meal, entries]) => [meal, Object.fromEntries(Object.entries(entries ?? {}).filter(([id]) => id !== resident.id))]));
       const today = dateKey(reference);
       return { ...s, residents: s.residents.map((r) => r.id === resident.id ? resident : r),
+        ...profileUpdateRecord(previous, resident, reference),
         alternativePreferences: (s.alternativePreferences ?? []).filter((p) => p.residentId !== resident.id),
         overrides: clear(s.overrides) as KitchenState["overrides"],
         scheduledOverrides: Object.fromEntries(Object.entries(s.scheduledOverrides ?? {}).map(([date, meals]) => [date, date >= today ? clear(meals) : meals])),
       };
+    }
+    case "logObservation": {
+      const o = a.observation;
+      if (!s.residents.some((r) => r.id === o.residentId) || dishById(o.dishId).meal !== o.meal || !o.reaction.trim()) return s;
+      return { ...s, observations: [{ ...o, reaction: o.reaction.trim() }, ...(s.observations ?? [])] };
+    }
+    case "reviewObservation": {
+      if (!(s.observations ?? []).some((o) => o.id === a.id)) return s;
+      return { ...s, observations: (s.observations ?? []).map((o) => (o.id === a.id ? { ...o, status: "reviewed" } : o)) };
+    }
+    case "markProfileUpdatesSeen": {
+      if (!(s.profileUpdates ?? []).some((u) => u.review === "open")) return s;
+      return { ...s, profileUpdates: (s.profileUpdates ?? []).map((u) => ({ ...u, review: "seen" })) };
     }
     case "setStock": return { ...s, ingredients: s.ingredients.map((i) => (i.id === a.id ? { ...i, stock: Math.max(0, a.stock) } : i)) };
     case "setMealPlan": {
@@ -207,7 +228,26 @@ export function seedDemo(base: KitchenState, reference = new Date()): KitchenSta
       ? { proposalId: `seed-${ago}`, kind: "purchase", status: "approved", at: reference.getTime() - ago * day, summary: `Approved Sysco produce order ($${(80 + ago * 7).toFixed(2)})`, modified: false }
       : { proposalId: `seed-${ago}`, kind: "substitution", status: i % 5 === 4 ? "rejected" : "approved", at: reference.getTime() - (ago + 1) * day, serviceDate: date, summary: `${i % 5 === 4 ? "Rejected" : "Approved"} ${meal} menu for ${date}`, modified: i % 3 === 1 };
   });
-  return { ...s, history: [...s.history.map((h, i) => ({ ...h, at: reference.getTime() - (i % 3 + 1) * 3600000 })), ...past] };
+  return { ...s, observations: SEED_OBSERVATIONS(reference), profileUpdates: SEED_PROFILE_UPDATES(reference), history: [...s.history.map((h, i) => ({ ...h, at: reference.getTime() - (i % 3 + 1) * 3600000 })), ...past] };
+}
+
+/** Demo reactions and profile changes so the Command Center board starts with real work visible. */
+function SEED_OBSERVATIONS(reference: Date): Observation[] {
+  const hour = 3600000;
+  return [
+    { id: "obs-seed-1", residentId: "R005", serviceDate: dateKey(dayAt(0, reference)), meal: "lunch", dishId: "l-lentil", reaction: "Refused most of the tray — soup came back nearly full", severity: "concern", status: "open", notedAt: reference.getTime() - 3 * hour },
+    { id: "obs-seed-2", residentId: "R011", serviceDate: dateKey(dayAt(-1, reference)), meal: "dinner", dishId: "d-salmon", reaction: "Coughing during the last few bites; temperature normal afterwards", severity: "concern", status: "open", notedAt: reference.getTime() - 20 * hour },
+    { id: "obs-seed-3", residentId: "R002", serviceDate: dateKey(dayAt(-1, reference)), meal: "breakfast", dishId: "b-oatmeal", reaction: "Reported nausea about 30 minutes after the meal", severity: "concern", status: "open", notedAt: reference.getTime() - 22 * hour },
+    { id: "obs-seed-4", residentId: "R008", serviceDate: dateKey(dayAt(-2, reference)), meal: "lunch", dishId: "l-club", reaction: "Finished the meal and asked for a second portion", severity: "note", status: "reviewed", notedAt: reference.getTime() - 3 * 86400000 },
+  ];
+}
+
+function SEED_PROFILE_UPDATES(reference: Date): ProfileUpdate[] {
+  const hour = 3600000;
+  return [
+    { id: "profile-seed-1", residentId: "R003", at: reference.getTime() - 5 * hour, summary: "Care information updated", review: "open" },
+    { id: "profile-seed-2", residentId: "R012", at: reference.getTime() - 26 * hour, summary: "Care information updated", review: "open" },
+  ];
 }
 
 /** Replaces outdated resident records and clears decisions tied to the previous residents. */
