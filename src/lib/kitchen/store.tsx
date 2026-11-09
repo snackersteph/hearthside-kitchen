@@ -4,11 +4,14 @@ import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignatu
 import type { Ingredient, KitchenState, Meal, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 import { ADDITIONAL_RESIDENTS } from "./additional-residents";
+import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 
 type Action =
   | { type: "addResident"; resident: Resident }
   | { type: "deleteResident"; id: string }
   | { type: "addIngredient"; ingredient: Ingredient }
+  | { type: "updateIngredient"; ingredient: Ingredient }
+  | { type: "deleteIngredient"; id: string }
   | { type: "approveMeal"; date: string; meal: Meal }
   | { type: "rejectMeal"; date: string; meal: Meal }
   | { type: "setMealPlan"; date: string; meal: Meal; dishId: string; overrides: Record<string, string> }
@@ -41,9 +44,17 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       if (!a.resident.name.trim() || !a.resident.room.trim() || !Number.isInteger(a.resident.age) || a.resident.age < 1 || a.resident.age > 120 || s.residents.some((r) => r.id === a.resident.id)) return s;
       return { ...s, residents: [...s.residents, { ...a.resident, name: a.resident.name.trim(), room: a.resident.room.trim() }] };
     }
-    case "addIngredient": {
+    case "deleteIngredient": {
+      if (!s.ingredients.some((i) => i.id === a.id)) return s;
+      return { ...s, ingredients: s.ingredients.filter((i) => i.id !== a.id), deletedIngredientIds: [...(s.deletedIngredientIds ?? []), a.id], orders: (s.orders ?? []).map((o) => ({ ...o, lines: o.lines.filter((l) => l.ingredientId !== a.id) })).filter((o) => o.lines.length > 0) };
+    }
+    case "addIngredient":
+    case "updateIngredient": {
       const i = a.ingredient;
-      if (!i.name.trim() || !i.vendor.trim() || !["kg", "L", "each"].includes(i.unit) || !Number.isFinite(i.stock) || i.stock < 0 || !Number.isFinite(i.packSize) || i.packSize <= 0 || !Number.isFinite(i.unitCost) || i.unitCost < 0 || i.onOrder !== 0 || s.ingredients.some((x) => x.id === i.id || x.name.trim().toLowerCase() === i.name.trim().toLowerCase())) return s;
+      const previous = s.ingredients.find((x) => x.id === i.id);
+      if (a.type === "updateIngredient" && !previous) return s;
+      if (!i.name.trim() || !i.vendor.trim() || !["kg", "L", "each", ...(previous ? [previous.unit] : [])].includes(i.unit) || (previous && i.unit !== previous.unit) || !Number.isFinite(i.stock) || i.stock < 0 || !Number.isFinite(i.packSize) || i.packSize <= 0 || !Number.isFinite(i.unitCost) || i.unitCost < 0 || i.onOrder !== (previous?.onOrder ?? 0) || (i.category && !FOOD_CATEGORIES.includes(i.category)) || s.ingredients.some((x) => (a.type === "addIngredient" || x.id !== i.id) && (x.id === i.id || x.name.trim().toLowerCase() === i.name.trim().toLowerCase()))) return s;
+      if (a.type === "updateIngredient") return { ...s, ingredients: s.ingredients.map((x) => x.id === i.id ? { ...i, name: i.name.trim(), vendor: i.vendor.trim() } : x) };
       return { ...s, ingredients: [...s.ingredients, { ...i, name: i.name.trim(), vendor: i.vendor.trim() }] };
     }
     case "setHorizon": return { ...s, purchaseHorizonDays: a.days };
@@ -194,6 +205,9 @@ export function migrateAdditionalResidents(s: KitchenState): KitchenState {
   if (s.additionalResidentsVersion === 1) return s;
   return { ...s, additionalResidentsVersion: 1, residents: [...s.residents, ...ADDITIONAL_RESIDENTS.filter((r) => !s.residents.some((existing) => existing.id === r.id))] };
 }
+export function mergeIngredientCatalog(s: KitchenState): KitchenState {
+  return { ...s, ingredients: [...s.ingredients, ...[...INGREDIENTS, ...ADDITIONAL_INGREDIENTS].filter((i) => !s.ingredients.some((x) => x.id === i.id) && !s.deletedIngredientIds?.includes(i.id)).map((i) => ({ ...i }))] };
+}
 type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
 // Mixed component/function exports can refresh consumers before the mounted provider.
 // Preserve the context identity across hot updates so both generations share it.
@@ -212,7 +226,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try { const raw = localStorage.getItem(KEY); const saved = raw ? JSON.parse(raw) as KitchenState : null;
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
-      const withIngredients = saved ? { ...saved, ingredients: [...saved.ingredients, ...INGREDIENTS.filter((i) => !saved.ingredients.some((x) => x.id === i.id)).map((i) => ({ ...i }))] } : null;
+      const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
       dispatch({ type: "load", state: merged?.seeded ? merged : seedDemo(merged ?? initialState()) }); } catch { /* ignore */ }
     loaded.current = true;

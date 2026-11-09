@@ -248,7 +248,8 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
   const firstShortDate: Record<string, string> = {};
   const todayShortage: Record<string, number> = {};
   const byVendor = new Map<string, PurchaseProposal["lines"]>();
-  for (const ingredient of state.ingredients) {
+  const forecastIngredients = [...state.ingredients, ...Object.keys(Object.assign({}, ...days.map((day) => day.demand))).filter((id) => !state.ingredients.some((i) => i.id === id)).map((id) => ({ id, stock: 0, onOrder: 0, packSize: 1, vendor: "Unlisted ingredient", unitCost: 0 }))];
+  for (const ingredient of forecastIngredients) {
     let balance = ingredient.stock;
     const incoming = (state.orders ?? []).filter((order) => order.status === "incoming").flatMap((order) => order.lines.filter((line) => line.ingredientId === ingredient.id).map((line) => ({ date: order.deliveryDate, qty: line.qty })));
     const tracked = incoming.reduce((sum, line) => sum + line.qty, 0);
@@ -269,6 +270,7 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
     demand[ingredient.id] = used;
     const arrivingWithinWindow = incoming.filter((line) => line.date <= (days.at(-1)?.date ?? "")).reduce((sum, line) => sum + line.qty, 0);
     const shortage = round(used - ingredient.stock - arrivingWithinWindow);
+    if (!state.ingredients.some((i) => i.id === ingredient.id)) continue;
     if (shortage <= 0) continue;
     const qty = Math.ceil(shortage / ingredient.packSize) * ingredient.packSize;
     byVendor.set(ingredient.vendor, [...(byVendor.get(ingredient.vendor) ?? []), { ingredientId: ingredient.id, shortage, qty }]);
