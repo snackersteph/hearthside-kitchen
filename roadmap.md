@@ -20,3 +20,8 @@
 - [x] Allow future approved meals to be edited and require fresh approval after changes.
 - [x] Link each menu meal to its exact review and remove the Command Center header approval button.
 - [x] Test decision rules and verify the full workflow.
+
+# Date-first menu workflow
+- [x] Show the two-week date picker with daily approval status.
+- [x] Open each date on a dedicated page with Breakfast, Lunch, and Dinner tabs.
+- [x] Verify date navigation, meal switching, editing, and exact approval links.

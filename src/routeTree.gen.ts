@@ -14,6 +14,7 @@ import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ResidentsRouteImport } from './routes/residents'
+import { Route as MenuDateRouteImport } from './routes/menu_.$date'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const ResidentsRoute = ResidentsRouteImport.update({
   path: '/residents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MenuDateRoute = MenuDateRouteImport.update({
+  id: '/menu_/$date',
+  path: '/menu/$date',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
   '/residents': typeof ResidentsRoute
+  '/menu/$date': typeof MenuDateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
   '/residents': typeof ResidentsRoute
+  '/menu/$date': typeof MenuDateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,22 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
   '/residents': typeof ResidentsRoute
+  '/menu_/$date': typeof MenuDateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/approvals' | '/inventory' | '/menu' | '/residents'
+  fullPaths:
+    '/' | '/approvals' | '/inventory' | '/menu' | '/residents' | '/menu/$date'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/approvals' | '/inventory' | '/menu' | '/residents'
-  id: '__root__' | '/' | '/approvals' | '/inventory' | '/menu' | '/residents'
+  to: '/' | '/approvals' | '/inventory' | '/menu' | '/residents' | '/menu/$date'
+  id:
+    | '__root__'
+    | '/'
+    | '/approvals'
+    | '/inventory'
+    | '/menu'
+    | '/residents'
+    | '/menu_/$date'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +94,7 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   MenuRoute: typeof MenuRoute
   ResidentsRoute: typeof ResidentsRoute
+  MenuDateRoute: typeof MenuDateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +134,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/menu_/$date': {
+      id: '/menu_/$date'
+      path: '/menu/$date'
+      fullPath: '/menu/$date'
+      preLoaderRoute: typeof MenuDateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +150,7 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   MenuRoute: MenuRoute,
   ResidentsRoute: ResidentsRoute,
+  MenuDateRoute: MenuDateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
