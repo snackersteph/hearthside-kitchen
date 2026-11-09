@@ -11,3 +11,4 @@
 - KitchenProvider renders operational pages only after the browser calendar is available and refreshes its clock each minute to avoid server/browser timezone mismatches in deadlines.
 - Whole-meal rejections are signature-scoped staff decisions; replacing the plan reopens review, while service-day approved meals are locked in the review editor.
 - Menu review links carry service date and meal search filters so pending and approved reviews resolve to the exact service.
+- Daily Menu uses a date overview and an un-nested dated detail route with shared meal sections, so date navigation and meal tabs reuse existing review and editing behavior.
