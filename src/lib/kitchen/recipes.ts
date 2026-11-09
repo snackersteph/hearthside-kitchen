@@ -1,10 +1,12 @@
-import { DISHES } from "./data";
+import { RECIPE_CATALOG } from "./recipe-catalog";
 import type { Allergen, Ingredient, KitchenState, Meal } from "./types";
 
 export type DietGroup = "regular" | "vegetarian" | "vegan";
 export const DIET_GROUPS: DietGroup[] = ["regular", "vegetarian", "vegan"];
 export type Texture = "regular" | "soft" | "minced" | "pureed";
 export const TEXTURES: Texture[] = ["regular", "soft", "minced", "pureed"];
+export type DishCategory = "main" | "side" | "snack";
+export const DISH_CATEGORIES: DishCategory[] = ["main", "side", "snack"];
 export type RecipeUnit = "g" | "kg" | "ml" | "L" | "each" | "portions" | "slices";
 
 export interface RecipeIngredient { id: string; qty: number; unit: RecipeUnit }
@@ -12,6 +14,7 @@ export interface Recipe {
   id: string;
   name: string;
   meal: Meal;
+  category?: DishCategory;
   dietGroup: DietGroup;
   texture: Texture;
   allergens: Allergen[];
@@ -70,29 +73,36 @@ export function recipeNutrition(recipe: Recipe, ingredients: Ingredient[]): Nutr
   return { calories: Math.round(total.calories), protein: Math.round(total.protein), carbs: Math.round(total.carbs), fat: Math.round(total.fat) };
 }
 
-const SEED_SODIUM: Record<string, number> = {
-  "b-pancakes": 520, "b-oatmeal": 90, "b-eggs": 480, "b-tofu": 360, "b-smoothie": 60, "l-alfredo": 1180, "l-primavera": 420, "l-lentil": 280,
-  "l-club": 1450, "l-puree": 210, "d-salmon": 340, "d-chicken": 560, "d-shrimp": 1120, "d-quinoa": 260, "d-puree": 220, "d-lentil-puree": 240,
-};
-const NOT_HALAL = new Set(["l-club", "d-shrimp"]); // bacon; white wine
-const ANIMAL = new Set(["milk", "cream", "parmesan", "butter", "eggs", "yogurt"]);
-const STOCK_UNIT: Record<string, string> = { chicken: "portions", salmon: "portions", shrimp: "portions", turkey: "portions", eggs: "each", banana: "each", bread: "slices", "gf-bread": "slices", milk: "L", "oat-milk": "L", cream: "L", "olive-oil": "L" };
-
-export const SEED_RECIPES: Recipe[] = DISHES.map((d) => ({
-  id: d.id, name: d.name, meal: d.meal,
-  dietGroup: !d.tags.includes("vegetarian") ? "regular" : d.ingredients.some((i) => ANIMAL.has(i.id)) || d.allergens.some((a) => a === "dairy" || a === "egg") ? "vegetarian" : "vegan",
-  texture: d.tags.includes("pureed") ? "pureed" : d.tags.includes("soft") ? "soft" : "regular",
-  allergens: [...d.allergens], halal: !NOT_HALAL.has(d.id), sodiumMg: SEED_SODIUM[d.id] ?? 400,
-  ingredients: d.ingredients.map((i) => ({ id: i.id, qty: i.unit ? i.qty : i.qty, unit: (i.unit ?? (STOCK_UNIT[i.id] ?? "kg")) as RecipeUnit })),
-}));
+export const SEED_RECIPES: Recipe[] = RECIPE_CATALOG;
 
 export function recipeLibrary(state: KitchenState): Recipe[] {
   const deleted = new Set(state.deletedRecipeIds ?? []);
-  return [...SEED_RECIPES, ...(state.recipes ?? [])].filter((r) => !deleted.has(r.id));
+  const saved = state.recipes ?? [];
+  const savedIds = new Set(saved.map((r) => r.id));
+  return [...SEED_RECIPES.filter((r) => !savedIds.has(r.id)), ...saved].filter((r) => !deleted.has(r.id));
 }
 
 export function isValidRecipe(r: Recipe, ingredients: Ingredient[]): boolean {
-  return !!r.name.trim() && ["breakfast", "lunch", "dinner"].includes(r.meal) && DIET_GROUPS.includes(r.dietGroup) && TEXTURES.includes(r.texture)
+  return !!r.name.trim() && ["breakfast", "lunch", "dinner"].includes(r.meal) && DIET_GROUPS.includes(r.dietGroup) && TEXTURES.includes(r.texture) && (!r.category || DISH_CATEGORIES.includes(r.category))
     && Number.isFinite(r.sodiumMg) && r.sodiumMg >= 0 && r.ingredients.length > 0
     && r.ingredients.every((l) => { const i = ingredients.find((x) => x.id === l.id); return !!i && Number.isFinite(l.qty) && l.qty > 0 && unitsFor(i.unit).includes(l.unit); });
+}
+
+export const recipeCategory = (r: Recipe): DishCategory => r.category ?? "main";
+
+export type Availability = "available" | "low" | "unavailable";
+/**
+ * Compares per-serving recipe needs (g/ml converted to kg/L) against current stock for `servings` portions.
+ * unavailable: an ingredient is missing or stock can't cover one serving; low: stock can't cover every serving.
+ */
+export function recipeAvailability(r: Recipe, ingredients: Ingredient[], servings: number) {
+  let status: Availability = "available";
+  const short: string[] = [];
+  for (const line of r.ingredients) {
+    const i = ingredients.find((x) => x.id === line.id);
+    const per = toStockUnit(line);
+    if (!i || i.stock + 1e-9 < per) { status = "unavailable"; short.push(i?.name ?? line.id); }
+    else if (i.stock + 1e-9 < per * Math.max(1, servings)) { if (status === "available") status = "low"; short.push(i.name); }
+  }
+  return { status, short };
 }

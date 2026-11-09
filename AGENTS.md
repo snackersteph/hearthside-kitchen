@@ -27,4 +27,4 @@
 - Command Center card totals and observation board filters come from src/lib/kitchen/overview.ts so a card's actionable and peaceful states always match stored state.
 - Inventory view search parameters deep-link delivery cards to their order tabs; delivered work counts due unconfirmed receipts rather than archived orders.
 - Resident meal history derives only from dated staff menus, resident overrides and meal observations; never present generated rotation or current dietary decisions as historical consumption.
-- Recipe library (src/lib/kitchen/recipes.ts) seeds from DISHES and stores added/deleted recipes in state; it does not feed the menu engine yet.
+- Recipe library seeds from the generated recipe-catalog.ts (uploaded CSV); added/edited recipes are stored in state.recipes and override seeds by id, deletions are tombstoned; availability converts g/ml to kg/L against stock for one serving per resident. It does not feed the menu engine yet.
