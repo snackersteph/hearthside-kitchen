@@ -615,7 +615,7 @@ export function initialState(): KitchenState {
     residentProfileVersion: RESIDENT_PROFILE_VERSION,
     plan: { breakfast: "b-pancakes", lunch: "l-alfredo", dinner: "d-salmon" },
     overrides: { breakfast: {}, lunch: {}, dinner: {} },
-    residents: RESIDENTS.map((r) => ({ ...r })),
+    residents: RESIDENTS.map((r) => ({ ...r, likes: [...r.likes], allergens: [...r.allergens], diets: [...r.diets], ...(r.careProfile ? { careProfile: { ...r.careProfile } } : {}), ...(r.mealInstructions ? { mealInstructions: [...r.mealInstructions] } : {}) })),
     ingredients: INGREDIENTS.map((i) => ({ ...i })),
     history: [],
   };

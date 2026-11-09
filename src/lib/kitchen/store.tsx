@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Context, type ReactNode } from "react";
-import { initialState, dishById, INGREDIENTS } from "./data";
+import { initialState, dishById, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
 import type { Ingredient, KitchenState, Meal, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
@@ -171,6 +171,12 @@ export function seedDemo(base: KitchenState, reference = new Date()): KitchenSta
   return { ...s, history: [...s.history.map((h, i) => ({ ...h, at: reference.getTime() - (i % 3 + 1) * 3600000 })), ...past] };
 }
 
+/** Replaces outdated resident records and clears decisions tied to the previous residents. */
+export function migrateResidentProfiles(s: KitchenState): KitchenState {
+  if (s.residentProfileVersion === RESIDENT_PROFILE_VERSION) return s;
+  return { ...s, residentProfileVersion: RESIDENT_PROFILE_VERSION, residents: RESIDENTS.map((r) => ({ ...r, likes: [...r.likes], allergens: [...r.allergens], diets: [...r.diets], ...(r.careProfile ? { careProfile: { ...r.careProfile } } : {}), ...(r.mealInstructions ? { mealInstructions: [...r.mealInstructions] } : {}) })), overrides: { breakfast: {}, lunch: {}, dinner: {} }, scheduledOverrides: {}, alternativePreferences: [], mealApprovals: {}, mealRejections: {} };
+}
+
 const KEY = "kitchen-command-v1";
 type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
 // Mixed component/function exports can refresh consumers before the mounted provider.
@@ -190,7 +196,8 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try { const raw = localStorage.getItem(KEY); const saved = raw ? JSON.parse(raw) as KitchenState : null;
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
-      const merged = saved ? { ...saved, ingredients: [...saved.ingredients, ...INGREDIENTS.filter((i) => !saved.ingredients.some((x) => x.id === i.id)).map((i) => ({ ...i }))] } : null;
+      const withIngredients = saved ? { ...saved, ingredients: [...saved.ingredients, ...INGREDIENTS.filter((i) => !saved.ingredients.some((x) => x.id === i.id)).map((i) => ({ ...i }))] } : null;
+      const merged = withIngredients ? migrateResidentProfiles(withIngredients) : null;
       dispatch({ type: "load", state: merged?.seeded ? merged : seedDemo(merged ?? initialState()) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);

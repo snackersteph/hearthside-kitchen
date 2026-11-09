@@ -40,7 +40,7 @@ describe("kitchen agents", () => {
   it("blocks unsafe resident alternatives when saving a meal review", () => {
     const s = initialState();
     const reference = new Date("2026-11-07T12:00:00");
-    expect(reducer(s, { type: "setMealPlan", date: "2026-11-08", meal: "lunch", dishId: "l-alfredo", overrides: { r1: "l-alfredo" } }, reference)).toBe(s);
+    expect(reducer(s, { type: "setMealPlan", date: "2026-11-08", meal: "lunch", dishId: "l-alfredo", overrides: { R005: "l-alfredo" } }, reference)).toBe(s);
   });
 
   it("requires approval by November 7 for November 8 service and blocks same-day approval", () => {
@@ -113,7 +113,7 @@ describe("kitchen agents", () => {
     expect(perServingQty("each", 1)).toBe(1);
     const s = initialState();
     const day = analyzeMenuDay({ ...s, plan: { ...s.plan, lunch: "l-puree" } });
-    // 13 of 14 residents: the vegetarian gets the lentil-soup alternative instead.
+    // The vegetarian resident gets a meat-free alternative instead.
     expect(day.demand["sweet-potato"]).toBeCloseTo((s.residents.length - 1) * 0.2, 2);
     const forecast = analyze(s).forecast;
     expect(forecast?.todayShortage["sweet-potato"]).toBeUndefined();
@@ -127,7 +127,7 @@ describe("kitchen agents", () => {
   it("dietary agent flags dairy residents for the alfredo", () => {
     const s = initialState();
     const flagged = analyze(s).conflicts.filter((c) => c.meal === "lunch" && c.reasons.includes("contains dairy")).map((c) => c.residentId).sort();
-    expect(flagged).toEqual(["r1", "r12", "r7"]);
+    expect(flagged).toEqual(["R005"]);
   });
 
   it("menu agent only proposes dishes safe for every covered resident", () => {
