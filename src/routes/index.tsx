@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ClipboardCheck, CircleCheck, PackageX, Truck, UserRound } from "lucide-react";
+import { ArrowRight, ClipboardCheck, CircleCheck, PackageCheck, PackageX, Truck, UserRound } from "lucide-react";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { dishById } from "@/lib/kitchen/data";
 import { MEALS } from "@/lib/kitchen/types";
@@ -14,7 +14,7 @@ import { ObservationDialog } from "@/components/kitchen/observation-dialog";
 import { ResidentPhoto } from "@/components/kitchen/resident-photo";
 import { cn } from "@/lib/utils";
 
-const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: PackageX, incoming: Truck, profiles: UserRound } as const;
+const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: PackageX, delivered: PackageCheck, incoming: Truck, profiles: UserRound } as const;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,7 +45,7 @@ function CommandCenter() {
     <>
       <PageHeader eyebrow={today} title="Good evening, Chef." />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
           <ActionCardTile
             key={card.id}

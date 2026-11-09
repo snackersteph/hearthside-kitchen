@@ -11,7 +11,7 @@ export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { ca
   return (
     <div className={cn(
       "flex flex-col rounded-xl border p-5 shadow-soft transition-colors",
-      clear ? "border-success/35 bg-success-soft/45" : "border-primary/45 bg-card ring-1 ring-primary/15",
+      clear ? "border-success/25 bg-action-complete" : "border-destructive/20 bg-action-needed",
     )}>
       <div className="flex min-h-10 items-center justify-between gap-2 text-sm font-medium">
         {card.label}
@@ -35,9 +35,9 @@ export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { ca
           )}
         </div>
         <div className="flex h-5 items-center">
-          {!clear && (
-            <Link to={card.to} className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-primary hover:underline">
-              {card.actionLabel}
+          {(
+            <Link to={card.to} search={card.inventoryView ? { view: card.inventoryView } : {}} className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+              {clear && card.inventoryView ? "View orders" : card.actionLabel}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}

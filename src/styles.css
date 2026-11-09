@@ -76,6 +76,8 @@
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-danger-soft: var(--danger-soft);
+  --color-action-needed: var(--action-needed);
+  --color-action-complete: var(--action-complete);
   --color-agent-dietary: var(--agent-dietary);
   --color-agent-dietary-soft: var(--agent-dietary-soft);
   --color-agent-menu: var(--agent-menu);
@@ -117,6 +119,8 @@
   --warning: oklch(0.7 0.14 70);
   --warning-soft: oklch(0.94 0.06 85);
   --danger-soft: oklch(0.94 0.04 30);
+  --action-needed: oklch(0.978 0.012 5);
+  --action-complete: oklch(0.978 0.014 150);
   --agent-dietary: oklch(0.52 0.09 190);
   --agent-dietary-soft: oklch(0.93 0.035 190);
   --agent-menu: oklch(0.6 0.14 42);

@@ -25,3 +25,5 @@
 - Additional resident batches use one-time additive migrations so saved edits, deletions, and staff decisions remain intact.
 - Inventory edits use validated reducer actions; deletion tombstones prevent catalog restoration, and missing recipe ingredients remain visible as forecast shortages.
 - Command Center card totals and observation board filters come from src/lib/kitchen/overview.ts so a card's actionable and peaceful states always match stored state.
+- Inventory view search parameters deep-link delivery cards to their order tabs; delivered work counts due unconfirmed receipts rather than archived orders.
+- Resident meal history derives only from dated staff menus, resident overrides and meal observations; never present generated rotation or current dietary decisions as historical consumption.

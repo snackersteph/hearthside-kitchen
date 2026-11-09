@@ -17,6 +17,7 @@ import { DISHES } from "@/lib/kitchen/data";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/inventory")({
+  validateSearch: (search: Record<string, unknown>): { view?: "stock" | "delivered" | "incoming" } => ({ ...(search.view === "stock" || search.view === "delivered" || search.view === "incoming" ? { view: search.view } : {}) }),
   head: () => ({
     meta: [
       { title: "Inventory · NutriSync" },
@@ -34,7 +35,9 @@ function InventoryPage() {
   const { state, analysis, dispatch } = useKitchen();
   const [adding, setAdding] = useState(false);
   const [tab, setTab] = useState<string>("All");
-  const [view, setView] = useState<"stock" | "delivered" | "incoming">("stock");
+  const { view = "stock" } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setView = (view: "stock" | "delivered" | "incoming") => navigate({ search: { view } });
   const [editing, setEditing] = useState<Ingredient | null>(null);
   const [deleting, setDeleting] = useState<Ingredient | null>(null);
   const [query, setQuery] = useState("");
