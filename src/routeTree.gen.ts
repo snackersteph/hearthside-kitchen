@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as ResidentsRouteImport } from './routes/residents'
 import { Route as MenuDateRouteImport } from './routes/menu_.$date'
 import { Route as ResidentsResidentIdRouteImport } from './routes/residents_.$residentId'
@@ -37,6 +38,11 @@ const MenuRoute = MenuRouteImport.update({
   path: '/menu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecipesRoute = RecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResidentsRoute = ResidentsRouteImport.update({
   id: '/residents',
   path: '/residents',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/approvals': typeof ApprovalsRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
+  '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
   '/menu/$date': typeof MenuDateRoute
   '/residents/$residentId': typeof ResidentsResidentIdRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/approvals': typeof ApprovalsRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
+  '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
   '/menu/$date': typeof MenuDateRoute
   '/residents/$residentId': typeof ResidentsResidentIdRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/approvals': typeof ApprovalsRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
+  '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
   '/menu_/$date': typeof MenuDateRoute
   '/residents_/$residentId': typeof ResidentsResidentIdRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/inventory'
     | '/menu'
+    | '/recipes'
     | '/residents'
     | '/menu/$date'
     | '/residents/$residentId'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/inventory'
     | '/menu'
+    | '/recipes'
     | '/residents'
     | '/menu/$date'
     | '/residents/$residentId'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/inventory'
     | '/menu'
+    | '/recipes'
     | '/residents'
     | '/menu_/$date'
     | '/residents_/$residentId'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   ApprovalsRoute: typeof ApprovalsRoute
   InventoryRoute: typeof InventoryRoute
   MenuRoute: typeof MenuRoute
+  RecipesRoute: typeof RecipesRoute
   ResidentsRoute: typeof ResidentsRoute
   MenuDateRoute: typeof MenuDateRoute
   ResidentsResidentIdRoute: typeof ResidentsResidentIdRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MenuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recipes': {
+      id: '/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof RecipesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/residents': {
       id: '/residents'
       path: '/residents'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApprovalsRoute: ApprovalsRoute,
   InventoryRoute: InventoryRoute,
   MenuRoute: MenuRoute,
+  RecipesRoute: RecipesRoute,
   ResidentsRoute: ResidentsRoute,
   MenuDateRoute: MenuDateRoute,
   ResidentsResidentIdRoute: ResidentsResidentIdRoute,
