@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { dishPhoto } from "@/lib/kitchen/dish-photos";
 import { ALLERGENS, MEALS, type Allergen, type Meal } from "@/lib/kitchen/types";
 import { DISH_CATEGORIES, recipeAvailability, recipeCategory, type DishCategory, DIET_GROUPS, TEXTURES, isValidRecipe, recipeLibrary, recipeNutrition, unitsFor, type DietGroup, type Recipe, type RecipeIngredient, type Texture } from "@/lib/kitchen/recipes";
 
@@ -68,12 +69,15 @@ function RecipesPage() {
       {rows.length === 0 ? <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">No recipes match these filters.</div> :
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((r) => (
-            <button key={r.id} onClick={() => setOpen(r)} className={cn("rounded-xl border p-5 text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
+            <button key={r.id} onClick={() => setOpen(r)} className={cn("overflow-hidden rounded-xl border text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
+              <img src={dishPhoto(r.name)} alt={r.name} loading="lazy" width={992} height={672} className="aspect-[16/9] w-full object-cover" />
+              <div className="p-5">
               <div className="flex items-start justify-between gap-2"><div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[r.meal]} · {recipeCategory(r)}</div><StockBadge recipe={r} servings={servings} compact /></div>
               <div className="mt-1 text-lg font-semibold leading-snug">{r.name}</div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Tag>{r.dietGroup}</Tag><Tag>{r.texture} texture</Tag>
                 {r.allergens.map((a) => <Tag key={a} tone="danger">{a}</Tag>)}
+              </div>
               </div>
             </button>
           ))}
@@ -128,6 +132,7 @@ function RecipeDetail({ recipe, servings, onClose, onDelete, onEdit }: { recipe:
     <Dialog open={!!recipe} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         {recipe && n && <>
+          <img src={dishPhoto(recipe.name)} alt={recipe.name} width={992} height={672} className="aspect-[16/9] w-full rounded-lg object-cover" />
           <DialogHeader>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[recipe.meal]} · {recipeCategory(recipe)}</div>
             <DialogTitle className="text-2xl">{recipe.name}</DialogTitle>
