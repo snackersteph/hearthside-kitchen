@@ -4,7 +4,7 @@ import { Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { DISHES, dishById } from "@/lib/kitchen/data";
-import { compareMealUrgency, conflictReasons, lineCost, type MealReview } from "@/lib/kitchen/engine";
+import { conflictReasons, lineCost } from "@/lib/kitchen/engine";
 import { MEALS, type Meal, type Proposal, type PurchaseProposal, type SubstitutionProposal } from "@/lib/kitchen/types";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AGENTS, AgentAvatar, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
@@ -13,9 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { canApproveMeal, dateKey, scheduledState } from "@/lib/kitchen/schedule";
+import { canApproveMeal } from "@/lib/kitchen/schedule";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { needsDietaryReview } from "@/components/kitchen/approval-rules";
+import { approvedAlternatives } from "@/components/kitchen/approval-rules";
 
 export const Route = createFileRoute("/approvals")({
   validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal } => {
@@ -42,17 +42,16 @@ function ApprovalsPage() {
   const { kind, date, meal } = Route.useSearch();
   const navigate = Route.useNavigate();
   const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
-  const allReviews = kind === "purchase" ? [] : (analysis.mealReviews ?? []).filter((r) => needsDietaryReview(state, r) && (!date || r.serviceDate === date) && (!meal || r.meal === meal)).sort(compareMealUrgency);
-  const reviews = allReviews.filter((r) => !r.approved);
-  const approved = allReviews.filter((r) => r.approved);
+  const reviews = proposals.filter((p): p is SubstitutionProposal => p.kind === "substitution").sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
+  const approved = kind === "purchase" ? [] : approvedAlternatives(state, analysis.mealReviews ?? []).filter((p) => (!date || p.serviceDate === date) && (!meal || p.meal === meal));
   const purchases = proposals.filter((p) => p.kind === "purchase");
   const defaultTab = kind === "purchase" ? "orders" : date && meal && approved.length ? "approved" : "pending";
   const [tab, setTab] = useState(defaultTab);
   useEffect(() => { setTab(defaultTab); }, [defaultTab]);
+  const [approvalRequest, setApprovalRequest] = useState<SubstitutionProposal | null>(null);
   const [range, setRange] = useState<7 | 14 | 30>(7);
   const now = Date.now();
   const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000).sort((x, y) => y.at - x.at);
-  const subsFor = (r: MealReview) => proposals.filter((p): p is SubstitutionProposal => p.kind === "substitution" && p.serviceDate === r.serviceDate && p.meal === r.meal);
   return (
     <>
       <PageHeader eyebrow="Human in the loop" title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
@@ -64,22 +63,22 @@ function ApprovalsPage() {
       {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: kind ? { kind } : {} })}>All dates</Button></div>}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-          {kind !== "purchase" && <TabsTrigger value="pending">Meals to approve ({reviews.length})</TabsTrigger>}
-          {kind !== "purchase" && <TabsTrigger value="approved">Approved meals ({approved.length})</TabsTrigger>}
+          {kind !== "purchase" && <TabsTrigger value="pending">Alternatives to approve ({reviews.length})</TabsTrigger>}
+          {kind !== "purchase" && <TabsTrigger value="approved">Approved alternatives ({approved.length})</TabsTrigger>}
           {kind !== "substitution" && <TabsTrigger value="orders">Purchase orders ({purchases.length})</TabsTrigger>}
           <TabsTrigger value="history">History ({history.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-6 space-y-3">
-          {reviews.length === 0 ? <Empty text="No meals awaiting approval." /> : <>
-            <p className="text-sm text-muted-foreground">Most urgent first — each meal must be signed off by the day before service.</p>
-            {reviews.map((r) => <MealReviewCard key={r.serviceDate + r.meal} review={r} proposals={subsFor(r)} />)}
+          {reviews.length === 0 ? <Empty text="No alternatives awaiting approval." /> : <>
+            <p className="text-sm text-muted-foreground">Most urgent first</p>
+            {reviews.map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}
           </>}
         </TabsContent>
         <TabsContent value="approved" className="mt-6 space-y-3">
-          {approved.length ? approved.map((r) => <MealReviewCard key={r.serviceDate + r.meal} review={r} proposals={[]} />) : <Empty text="No approved meals for this selection." />}
+          {approved.length ? approved.map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />) : <Empty text="No approved alternatives for this selection." />}
         </TabsContent>
         <TabsContent value="orders" className="mt-6 space-y-3">
-          {purchases.length ? purchases.map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} /></div>) : <Empty text="No purchase requests awaiting approval." />}
+          {purchases.length ? purchases.map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} /></div>) : <Empty text="No purchase requests awaiting approval." />}
         </TabsContent>
         <TabsContent value="history" className="mt-6 space-y-3">
           <div className="flex gap-2" role="group" aria-label="History range">
@@ -99,6 +98,7 @@ function ApprovalsPage() {
           )}
         </TabsContent>
       </Tabs>
+      {approvalRequest && <RememberApprovalDialog p={approvalRequest} onClose={() => setApprovalRequest(null)} />}
     </>
   );
 }
@@ -115,92 +115,22 @@ function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boo
   );
 }
 
-function MealReviewCard({ review: r, proposals }: { review: MealReview; proposals: SubstitutionProposal[] }) {
-  const { dispatch } = useKitchen();
-  const [editing, setEditing] = useState(false);
-  const [rejecting, setRejecting] = useState(false);
-  const timely = canApproveMeal(r.serviceDate);
-  const ready = !r.pending && !r.unresolved && !r.rejected;
-  const editable = !r.approved || r.serviceDate > dateKey(new Date());
-  const blockReason = !timely ? `Past the ${r.approvalDueDate} deadline`
-    : r.rejected ? "Choose a replacement first"
-    : r.unresolved ? `${r.unresolved} resident${r.unresolved > 1 ? "s" : ""} still need a safe dish`
-    : r.pending ? `${r.pending} alternative${r.pending > 1 ? "s" : ""} awaiting approval` : undefined;
-  return <article id={`meal-${r.serviceDate}-${r.meal}`} className="scroll-mt-6 rounded-lg border bg-card p-4 shadow-soft">
-    <div className="flex flex-wrap items-center justify-between gap-3">
-    <div className="min-w-0">
-      <div className="text-xs font-semibold text-muted-foreground">{r.serviceDate} · {MEAL_LABEL[r.meal]}</div>
-      <Select value={r.mainDishId} disabled={!editable} onValueChange={(dishId) => {
-        dispatch({ type: "setMealPlan", date: r.serviceDate, meal: r.meal, dishId, overrides: {} });
-        toast("Meal updated — fresh approval required");
-      }}>
-        <SelectTrigger aria-label={`${r.serviceDate} ${MEAL_LABEL[r.meal]} main dish`} className="mt-2 h-auto min-h-12 w-full max-w-xl gap-3 whitespace-normal text-left font-display text-2xl font-semibold [&>span]:line-clamp-none [&>span]:break-words"><SelectValue /></SelectTrigger>
-        <SelectContent>{DISHES.filter((dish) => dish.meal === r.meal).map((dish) => <SelectItem key={dish.id} value={dish.id}>{dish.name}</SelectItem>)}</SelectContent>
-      </Select>
-      <div className="mt-2 flex flex-wrap gap-2"><Tag tone={r.approved ? "ok" : "warn"}>{r.approved ? "Approved" : r.rejected ? "Rejected · replacement needed" : "Awaiting sign-off"}</Tag>{!r.approved && <Tag tone={timely ? "warn" : "danger"}>{timely ? `Due ${r.approvalDueDate}` : `Overdue · due ${r.approvalDueDate}`}</Tag>}
-      <Tag tone={ready ? "ok" : "warn"}>{r.unresolved ? `${r.unresolved} unresolved residents` : r.pending ? `${r.pending} residents awaiting alternatives` : "Dietary checks clear"}</Tag></div>
-    </div>
-    <div className="flex flex-wrap gap-2">
-      {!r.approved && <Button size="sm" variant="outline" onClick={() => setRejecting(true)}><X />Reject</Button>}
-      {r.approved && <Button size="sm" variant="outline" disabled={!editable} onClick={() => setEditing(true)}><Pencil />Edit meal</Button>}
-      {!r.approved && <ApproveButton disabled={!timely || !ready} reason={blockReason} onClick={() => { dispatch({ type: "approveMeal", date: r.serviceDate, meal: r.meal }); toast.success(`${MEAL_LABEL[r.meal]} approved for ${r.serviceDate}`); }} />}
-    </div></div>
-    {proposals.length > 0 && <div className="mt-4 space-y-3 border-t pt-4">{proposals.map((p) => <ProposalCard key={p.id} p={p} />)}</div>}
-    {editing && <MealEditor review={r} onClose={() => setEditing(false)} />}
-    {rejecting && <RejectMealDialog review={r} onClose={() => setRejecting(false)} />}
-  </article>;
-}
-
-function MealEditor({ review: r, onClose }: { review: MealReview; onClose: () => void }) {
-  const { state, dispatch } = useKitchen();
-  const reference = new Date();
-  const offset = Math.round((new Date(`${r.serviceDate}T12:00:00`).getTime() - new Date(`${dateKey(reference)}T12:00:00`).getTime()) / 86400000);
-  const dayState = scheduledState(state, offset, reference);
-  const [dishId, setDishId] = useState(r.mainDishId);
-  const [overrides, setOverrides] = useState(dayState.overrides[r.meal]);
-  const dishes = DISHES.filter((d) => d.meal === r.meal);
-  const unsafeOverrides = Object.entries(overrides).some(([id, did]) => {
-    const resident = state.residents.find((person) => person.id === id);
-    return !resident || conflictReasons(resident, dishById(did)).length > 0;
-  });
-  return <Dialog open onOpenChange={(open) => !open && onClose()}>
-    <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-      <DialogHeader><DialogTitle>{r.serviceDate} · {MEAL_LABEL[r.meal]}</DialogTitle></DialogHeader>
-      <label className="text-sm font-semibold">Main dish</label>
-      <Select value={dishId} onValueChange={(id) => { setDishId(id); setOverrides({}); }}><SelectTrigger aria-label="Meal main dish"><SelectValue /></SelectTrigger><SelectContent>{dishes.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
-      <h3 className="mt-2 font-semibold">Resident alternatives</h3>
-      <div className="divide-y">{state.residents.map((resident) => {
-        const reasons = conflictReasons(resident, dishById(overrides[resident.id] ?? dishId));
-        const safe = dishes.filter((d) => d.id !== dishId && !conflictReasons(resident, d).length);
-        return <div key={resident.id} className="grid gap-2 py-3 sm:grid-cols-2">
-          <div className="text-sm"><div className="font-medium">{resident.name}</div>{reasons.length > 0 && <div className="text-xs text-destructive">{reasons.join(", ")}</div>}</div>
-          <Select value={overrides[resident.id] ?? "main"} onValueChange={(id) => setOverrides((current) => { const next = { ...current }; if (id === "main") delete next[resident.id]; else next[resident.id] = id; return next; })}>
-            <SelectTrigger aria-label={`Alternative for ${resident.name}`}><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="main">Main dish</SelectItem>{safe.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>;
-      })}</div>
-      <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={unsafeOverrides} onClick={() => { dispatch({ type: "setMealPlan", date: r.serviceDate, meal: r.meal, dishId, overrides }); toast("Meal updated — fresh approval required"); onClose(); }}>Save for review</Button></DialogFooter>
-    </DialogContent>
-  </Dialog>;
-}
-
-function ProposalCard({ p }: { p: Proposal }) {
+function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: SubstitutionProposal) => void }) {
   const [editing, setEditing] = useState(false);
   const [selectedDish, setSelectedDish] = useState(p.kind === "substitution" ? p.dishId : "");
   const selected: Proposal = p.kind === "substitution" ? { ...p, dishId: selectedDish } : p;
   const agent = AGENTS[p.agent];
   return (
-    <article className={cn("border-l-4 p-4", agent.border)}>
+    <article className={cn("rounded-lg border border-l-4 bg-card p-4 shadow-soft", agent.border)}>
       <div className="flex flex-wrap items-start gap-4">
         <AgentAvatar agent={p.agent} />
         <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-0">
           <div className="text-xs font-semibold text-muted-foreground">{agent.name} · {p.kind === "substitution" ? `${MEAL_LABEL[p.meal]} substitution` : "Purchase request"}</div>
           {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={setSelectedDish} /> : <PurchaseBody p={selected} />}
         </div>
-        <Actions p={selected} modified={p.kind === "substitution" && selectedDish !== p.dishId} onModify={() => setEditing(true)} />
+        <Actions p={selected} modified={p.kind === "substitution" && selectedDish !== p.dishId} onApprove={onApprove} onModify={() => setEditing(true)} />
       </div>
-      {editing && (p.kind === "substitution" ? <RejectSubDialog p={p} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}
+      {editing && (p.kind === "substitution" ? <RejectSubDialog p={p} onApprove={onApprove} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}
     </article>
   );
 }
@@ -211,7 +141,7 @@ function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (
   const late = !p.serviceDate || !canApproveMeal(p.serviceDate);
   return (
     <>
-      <div className="mt-2 flex flex-wrap gap-2"><Tag>{p.serviceDate}</Tag><Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag></div>
+      <div className="mt-2 flex flex-wrap gap-2">{p.approved ? <Tag tone="ok">Approved</Tag> : <Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag>}</div>
       <Select value={p.dishId} onValueChange={onDishChange} disabled={late}>
         <SelectTrigger aria-label={`Alternative dish for ${p.residentIds.map((id) => residentName(state, id)).join(", ")}`} className="mt-2 h-auto min-h-10 w-full max-w-lg whitespace-normal text-left text-base font-semibold [&>span]:line-clamp-none [&>span]:break-words"><SelectValue /></SelectTrigger>
         <SelectContent>{DISHES.filter((dish) => dish.meal === p.meal).map((dish) => <SelectItem key={dish.id} value={dish.id} disabled={residents.some((resident) => conflictReasons(resident, dish).length > 0)}>{dish.name}</SelectItem>)}</SelectContent>
@@ -254,13 +184,13 @@ function summarize(state: ReturnType<typeof useKitchen>["state"], p: Proposal, v
     : `${verb} ${p.vendor} order ($${p.total.toFixed(2)})`;
 }
 
-function Actions({ p, modified = false, onModify }: { p: Proposal; modified?: boolean; onModify: () => void }) {
+function Actions({ p, modified = false, onModify, onApprove }: { p: Proposal; modified?: boolean; onModify: () => void; onApprove: (p: SubstitutionProposal) => void }) {
   const { state, dispatch } = useKitchen();
   const late = p.kind === "substitution" && (!p.serviceDate || !canApproveMeal(p.serviceDate));
   const approve = () => {
     if (late) return;
     const summary = summarize(state, p, "Approved");
-    if (p.kind === "substitution") dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, serviceDate: p.serviceDate, modified, summary });
+    if (p.kind === "substitution") { onApprove(p); return; }
     else dispatch({ type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary, vendor: p.vendor, ...(p.deliveryDate ? { deliveryDate: p.deliveryDate } : {}) });
     toast.success(summary);
   };
@@ -274,41 +204,12 @@ function Actions({ p, modified = false, onModify }: { p: Proposal; modified?: bo
       {p.kind === "substitution"
         ? <Button variant="outline" size="sm" onClick={onModify}><X /> Reject</Button>
         : <><Button variant="outline" size="sm" onClick={reject}><X /> Reject</Button><Button variant="outline" size="sm" onClick={onModify}><Pencil /> Modify</Button></>}
-      <ApproveButton disabled={late} reason={late ? "Past the approval deadline" : undefined} onClick={approve} />
+      <ApproveButton disabled={late} reason={late ? "Past the approval deadline" : undefined} onClick={approve}>{p.kind === "substitution" && p.approved ? "Approve change" : "Approve"}</ApproveButton>
     </div>
   );
 }
 
-function RejectMealDialog({ review: r, onClose }: { review: MealReview; onClose: () => void }) {
-  const { state, dispatch } = useKitchen();
-  const options = DISHES.filter((d) => d.meal === r.meal && d.id !== r.mainDishId);
-  const [dishId, setDishId] = useState<string | null>(null);
-  const replace = () => {
-    if (!dishId) return;
-    if (!r.rejected) dispatch({ type: "rejectMeal", date: r.serviceDate, meal: r.meal });
-    dispatch({ type: "setMealPlan", date: r.serviceDate, meal: r.meal, dishId, overrides: {} });
-    toast(`${MEAL_LABEL[r.meal]} replaced with ${dishById(dishId).name} — review again`); onClose();
-  };
-  return <Dialog open onOpenChange={(o) => !o && onClose()}>
-    <DialogContent className="max-w-lg">
-      <DialogHeader><DialogTitle className="font-display text-2xl">Reject {dishById(r.mainDishId).name}?</DialogTitle></DialogHeader>
-      <p className="text-sm text-muted-foreground">{r.serviceDate} · {MEAL_LABEL[r.meal]}. Pick a replacement main dish:</p>
-      <div className="space-y-2">{options.map((d) => {
-        const bad = state.residents.filter((p) => conflictReasons(p, d).length).length;
-        return <button key={d.id} type="button" onClick={() => setDishId(d.id)} className={cn("flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm", dishId === d.id ? "border-primary bg-secondary" : "hover:border-primary")}>
-          <span><span className="font-medium">{d.name}</span><span className="block text-xs text-muted-foreground">{d.description}</span></span>
-          {bad ? <Tag tone="warn">{bad} need alternatives</Tag> : <Tag tone="ok">safe for all</Tag>}
-        </button>;
-      })}</div>
-      <DialogFooter>
-        <Button variant="outline" disabled={r.rejected} onClick={() => { dispatch({ type: "rejectMeal", date: r.serviceDate, meal: r.meal }); toast(`${MEAL_LABEL[r.meal]} rejected — replacement needed`); onClose(); }}>Reject without replacement</Button>
-        <Button disabled={!dishId} onClick={replace}>Reject & use selected</Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>;
-}
-
-function RejectSubDialog({ p, onClose }: { p: SubstitutionProposal; onClose: () => void }) {
+function RejectSubDialog({ p, onClose, onApprove }: { p: SubstitutionProposal; onClose: () => void; onApprove: (p: SubstitutionProposal) => void }) {
   const { state, dispatch } = useKitchen();
   const chosen = state.residents.filter((r) => p.residentIds.includes(r.id));
   const options = DISHES.filter((d) => d.meal === p.meal && d.id !== p.fromDishId && d.id !== p.dishId);
@@ -316,9 +217,7 @@ function RejectSubDialog({ p, onClose }: { p: SubstitutionProposal; onClose: () 
   const late = !p.serviceDate || !canApproveMeal(p.serviceDate);
   const choose = () => {
     if (!dishId) return;
-    const summary = `Rejected ${dishById(p.dishId).name}; approved ${dishById(dishId).name} for ${chosen.map((r) => r.name.split(" ")[0]).join(", ")} (${p.serviceDate} ${MEAL_LABEL[p.meal]})`;
-    dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId, residentIds: p.residentIds, serviceDate: p.serviceDate, modified: true, summary });
-    toast.success(summary); onClose();
+    onApprove({ ...p, dishId }); onClose();
   };
   const rejectOnly = () => {
     const summary = summarize(state, p, "Rejected");
