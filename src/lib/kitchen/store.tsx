@@ -31,7 +31,21 @@ type Action =
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
   | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string };
 
+/** Which parts of a resident's care information a staff edit touched. */
+export function profileChangeSummary(previous: Resident, next: Resident): string | null {
+  const parts: string[] = [];
+  if (previous.name !== next.name || previous.room !== next.room || previous.age !== next.age) parts.push("Basic information");
+  if (previous.allergens.join("|") !== next.allergens.join("|")) parts.push("Food allergies");
+  if (previous.diets.join("|") !== next.diets.join("|")) parts.push("Diet type");
+  if (previous.notes !== next.notes) parts.push("Clinical notes");
+  if (JSON.stringify(previous.careProfile ?? null) !== JSON.stringify(next.careProfile ?? null)) parts.push("Care profile");
+  if ((previous.mealInstructions ?? []).join("|") !== (next.mealInstructions ?? []).join("|")) parts.push("Meal instructions");
+  if (previous.photoUrl !== next.photoUrl) parts.push("Profile photo");
+  return parts.length ? parts.join(", ") : null;
+}
+
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
+  switch (a.type) {
     case "deleteResident": {
       if (!s.residents.some((r) => r.id === a.id)) return s;
       const clear = (meals: Partial<Record<Meal, Record<string, string>>>) => Object.fromEntries(Object.entries(meals).map(([meal, entries]) => [meal, Object.fromEntries(Object.entries(entries ?? {}).filter(([id]) => id !== a.id))]));
