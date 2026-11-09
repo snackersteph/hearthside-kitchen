@@ -279,10 +279,10 @@ export function seedDemo(base: KitchenState, reference = new Date()): KitchenSta
 function SEED_OBSERVATIONS(reference: Date): Observation[] {
   const hour = 3600000;
   return [
-    { id: "obs-seed-1", residentId: "R005", serviceDate: dateKey(dayAt(0, reference)), meal: "lunch", dishId: "l-lentil", reaction: "Refused most of the tray — soup came back nearly full", severity: "concern", status: "open", notedAt: reference.getTime() - 3 * hour },
-    { id: "obs-seed-2", residentId: "R011", serviceDate: dateKey(dayAt(-1, reference)), meal: "dinner", dishId: "d-salmon", reaction: "Coughing during the last few bites; temperature normal afterwards", severity: "concern", status: "open", notedAt: reference.getTime() - 20 * hour },
-    { id: "obs-seed-3", residentId: "R002", serviceDate: dateKey(dayAt(-1, reference)), meal: "breakfast", dishId: "b-oatmeal", reaction: "Reported nausea about 30 minutes after the meal", severity: "concern", status: "open", notedAt: reference.getTime() - 22 * hour },
-    { id: "obs-seed-4", residentId: "R008", serviceDate: dateKey(dayAt(-2, reference)), meal: "lunch", dishId: "l-club", reaction: "Finished the meal and asked for a second portion", severity: "note", status: "reviewed", notedAt: reference.getTime() - 3 * 86400000 },
+    { id: "obs-seed-1", residentId: "R005", serviceDate: dateKey(dayAt(0, reference)), meal: "lunch", dishId: currentDishId("l-lentil"), reaction: "Refused most of the tray — soup came back nearly full", severity: "concern", status: "open", notedAt: reference.getTime() - 3 * hour },
+    { id: "obs-seed-2", residentId: "R011", serviceDate: dateKey(dayAt(-1, reference)), meal: "dinner", dishId: currentDishId("d-salmon"), reaction: "Coughing during the last few bites; temperature normal afterwards", severity: "concern", status: "open", notedAt: reference.getTime() - 20 * hour },
+    { id: "obs-seed-3", residentId: "R002", serviceDate: dateKey(dayAt(-1, reference)), meal: "breakfast", dishId: currentDishId("b-oatmeal"), reaction: "Reported nausea about 30 minutes after the meal", severity: "concern", status: "open", notedAt: reference.getTime() - 22 * hour },
+    { id: "obs-seed-4", residentId: "R008", serviceDate: dateKey(dayAt(-2, reference)), meal: "lunch", dishId: currentDishId("l-club"), reaction: "Finished the meal and asked for a second portion", severity: "note", status: "reviewed", notedAt: reference.getTime() - 3 * 86400000 },
   ];
 }
 
@@ -301,6 +301,21 @@ export function migrateResidentProfiles(s: KitchenState): KitchenState {
 }
 
 const KEY = "kitchen-command-v1";
+/** Moves saved menus from the old sample dishes onto recipe-library dishes. */
+export function migrateMenuDishes(s: KitchenState): KitchenState {
+  const id = currentDishId;
+  const mapMeals = <T extends Partial<Record<string, string>>>(m: T) => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v ? id(v) : v])) as T;
+  const mapOverrides = (o: KitchenState["overrides"]) => Object.fromEntries(Object.entries(o).map(([meal, rs]) => [meal, mapMeals(rs)])) as KitchenState["overrides"];
+  return {
+    ...s,
+    plan: mapMeals(s.plan),
+    overrides: mapOverrides(s.overrides),
+    ...(s.scheduledPlans ? { scheduledPlans: Object.fromEntries(Object.entries(s.scheduledPlans).map(([d, p]) => [d, mapMeals(p)])) } : {}),
+    ...(s.scheduledOverrides ? { scheduledOverrides: Object.fromEntries(Object.entries(s.scheduledOverrides).map(([d, o]) => [d, mapOverrides(o as KitchenState["overrides"])])) as KitchenState["scheduledOverrides"] } : {}),
+    ...(s.alternativePreferences ? { alternativePreferences: s.alternativePreferences.map((p) => ({ ...p, dishId: id(p.dishId), fromDishId: id(p.fromDishId) })) } : {}),
+    ...(s.observations ? { observations: s.observations.map((o) => ({ ...o, dishId: id(o.dishId) })) } : {}),
+  };
+}
 /** Add illustrative orders once without replacing staff-created orders or available stock. */
 export function migrateOrderSnapshot(s: KitchenState, reference = new Date()): KitchenState {
   if (s.orderSnapshotVersion === 1) return s;
@@ -344,7 +359,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState()))) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
