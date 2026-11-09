@@ -160,7 +160,7 @@ function RecipeDetail({ recipe, servings, onClose, onDelete, onEdit }: { recipe:
   );
 }
 
-function AddRecipeDialog({ open, onClose, onSave, existing, initial }: { open: boolean; onClose: () => void; onSave: (r: Recipe) => void; existing: Recipe[]; initial?: Recipe }) {
+function AddRecipeDialog({ open, onClose, onSave, existing, initial }: { open: boolean; onClose: () => void; onSave: (r: Recipe) => void; existing: Recipe[]; initial?: Recipe | undefined }) {
   const { state } = useKitchen();
   const blank = initial ? { name: initial.name, meal: initial.meal, category: recipeCategory(initial), dietGroup: initial.dietGroup, texture: initial.texture, allergens: [...initial.allergens], halal: initial.halal, sodium: String(initial.sodiumMg), lines: initial.ingredients.map((l) => ({ ...l })) } : { name: "", meal: "lunch" as Meal, category: "main" as DishCategory, dietGroup: "regular" as DietGroup, texture: "regular" as Texture, allergens: [] as Allergen[], halal: false, sodium: "", lines: [] as RecipeIngredient[] };
   const [f, setF] = useState(blank);
