@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { initialState } from "@/lib/kitchen/data";
-import { reducer, seedDemo } from "@/lib/kitchen/store";
+import { reducer, seedDemo, migrateOrderSnapshot } from "@/lib/kitchen/store";
 import { analyze } from "@/lib/kitchen/engine";
-import { actionCards, openObservations, reviewedObservations } from "@/lib/kitchen/overview";
+import { actionCards, dailySnapshot, openObservations, reviewedObservations } from "@/lib/kitchen/overview";
+import { profileContentChanges } from "@/lib/kitchen/profile-changes";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
 import type { KitchenState, Observation } from "@/lib/kitchen/types";
 
@@ -23,9 +24,9 @@ describe("command center action cards", () => {
       ],
     };
     const cards = actionCards(state, analyze(state, REFERENCE), REFERENCE);
-    expect(cards.map((c) => c.label)).toEqual(["Awaiting approval", "Ingredient shortfalls", "Delivered orders", "Incoming ingredient orders", "Resident profile updates"]);
+    expect(cards.map((c) => c.label)).toEqual(["Awaiting approval", "Ingredient shortfalls", "Delivered orders", "Incoming orders", "Resident profile updates"]);
     expect(cards.map((c) => c.id)).toEqual(["approvals", "shortfalls", "delivered", "incoming", "profiles"]);
-    expect(cardValue(state, "incoming")).toBe(2);
+    expect(cardValue(state, "incoming")).toBe(1);
     expect(cardValue(state, "profiles")).toBe(1);
     expect(cardValue(state, "approvals")).toBeGreaterThan(0);
   });
@@ -60,6 +61,66 @@ describe("command center action cards", () => {
     expect((cleared.profileUpdates ?? []).filter((u) => u.review === "open")).toHaveLength(0);
     expect(cardValue(cleared, "profiles")).toBe(0);
     expect(actionCards(cleared, analyze(cleared, REFERENCE)).find((c) => c.id === "profiles")?.clearLabel).toBe("All profiles reviewed");
+  });
+});
+
+describe("snapshot and profile acknowledgment", () => {
+  it("starts with two due deliveries and three incoming orders without increasing stock", () => {
+    const base = initialState();
+    const next = migrateOrderSnapshot(base, REFERENCE);
+    expect(cardValue(next, "delivered")).toBe(2);
+    expect(cardValue(next, "incoming")).toBe(3);
+    expect(next.ingredients.map((i) => i.stock)).toEqual(base.ingredients.map((i) => i.stock));
+    expect(next.ingredients.find((i) => i.id === "carrots")?.onOrder).toBe(5);
+    expect(migrateOrderSnapshot(next, REFERENCE)).toBe(next);
+  });
+
+  it("preserves staff orders when initializing the demo", () => {
+    const base = reducer(initialState(), { type: "approvePurchase", proposalId: "staff", deliveryDate: "2026-11-12", lines: [{ ingredientId: "milk", qty: 2, shortage: 2 }], modified: false, summary: "Staff order" }, REFERENCE);
+    expect(migrateOrderSnapshot(base, REFERENCE).orders).toEqual(base.orders);
+  });
+
+  it("derives counts and cost from current data without mixing kg, L, and counts", () => {
+    const state = initialState();
+    const analysis = { ...analyze(state, REFERENCE), demand: { carrots: 0.08, milk: 0.2, eggs: 2 } };
+    const snapshot = dailySnapshot(state, analysis);
+    expect(snapshot.residents).toBe(20);
+    expect(snapshot.recipes).toBe(135);
+    expect(snapshot.meals).toBe(60);
+    expect(snapshot.quantities["kg"]).toBe(0.08);
+    expect(snapshot.quantities["L"]).toBe(0.2);
+    expect(snapshot.quantities["each"]).toBe(2);
+    expect(snapshot.cost).toBeCloseTo(0.08 * 1.8 + 0.2 * 1.4 + 2 * 0.35);
+  });
+
+  it("records previous and updated favorite foods and notes, then acknowledges just that record", () => {
+    const base = initialState();
+    const resident = base.residents[0];
+    if (!resident) throw new Error("Missing resident");
+    const edited = { ...resident, likes: ["Carrot soup"], notes: "Requires assistance at dinner" };
+    const next = reducer(base, { type: "updateResident", resident: edited }, REFERENCE);
+    expect(next.profileUpdates?.[0]?.changes).toContainEqual({ field: "Favorite foods", before: resident.likes.join(", "), after: "Carrot soup" });
+    expect(next.profileUpdates?.[0]?.changes).toContainEqual({ field: "Clinical notes", before: resident.notes, after: "Requires assistance at dinner" });
+    const second = reducer(next, { type: "updateResident", resident: { ...edited, notes: "Updated assistance" } }, new Date(REFERENCE.getTime() + 1000));
+    const id = next.profileUpdates?.[0]?.id;
+    if (!id) throw new Error("Missing update");
+    const acknowledged = reducer(second, { type: "acknowledgeProfileUpdate", id }, REFERENCE);
+    expect(acknowledged.profileUpdates?.find((u) => u.id === id)).toMatchObject({ review: "seen", acknowledgedAt: REFERENCE.getTime() });
+    expect(acknowledged.profileUpdates?.[0]?.review).toBe("open");
+    expect(reducer(acknowledged, { type: "acknowledgeProfileUpdate", id }, REFERENCE)).toBe(acknowledged);
+    expect(actionCards(next, analyze(next, REFERENCE), REFERENCE).find((c) => c.id === "profiles")?.to).toBe("/profile-updates");
+  });
+
+  it("captures added and removed care fields, instructions, photo and basic details", () => {
+    const resident = initialState().residents[0];
+    if (!resident) throw new Error("Missing resident");
+    const before = { ...resident, careProfile: { Mobility: "Independent", Extra: "Old" }, mealInstructions: ["Before"] };
+    const changes = profileContentChanges(before, { ...before, name: "New name", age: 80, room: "99", careProfile: { Mobility: "Assisted" }, mealInstructions: ["After"], photoUrl: "data:image/png;base64,new" });
+    expect(changes).toContainEqual({ field: "Care profile · Extra", before: "Old", after: "" });
+    expect(changes).toContainEqual({ field: "Care profile · Mobility", before: "Independent", after: "Assisted" });
+    expect(changes).toContainEqual({ field: "Meal instructions", before: "Before", after: "After" });
+    expect(changes.find((c) => c.field === "Profile photo")?.kind).toBe("photo");
+    expect(changes.find((c) => c.field === "Room")?.after).toBe("99");
   });
 });
 
