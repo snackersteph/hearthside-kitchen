@@ -25,3 +25,8 @@
 - [x] Show the two-week date picker with daily approval status.
 - [x] Open each date on a dedicated page with Breakfast, Lunch, and Dinner tabs.
 - [x] Verify date navigation, meal switching, editing, and exact approval links.
+
+# Dietary-focused approvals
+- [x] Limit meal reviews to menus affected by resident dietary requirements.
+- [x] Add dish dropdowns and remove the Service label while retaining dates.
+- [x] Test filtering and verify saved changes and safe substitution choices.
