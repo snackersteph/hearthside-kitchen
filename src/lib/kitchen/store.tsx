@@ -311,7 +311,7 @@ export function migrateMenuDishes(s: KitchenState): KitchenState {
     plan: mapMeals(s.plan),
     overrides: mapOverrides(s.overrides),
     ...(s.scheduledPlans ? { scheduledPlans: Object.fromEntries(Object.entries(s.scheduledPlans).map(([d, p]) => [d, mapMeals(p)])) } : {}),
-    ...(s.scheduledOverrides ? { scheduledOverrides: Object.fromEntries(Object.entries(s.scheduledOverrides).map(([d, o]) => [d, mapOverrides(o as KitchenState["overrides"])])) as KitchenState["scheduledOverrides"] } : {}),
+    ...(s.scheduledOverrides ? { scheduledOverrides: Object.fromEntries(Object.entries(s.scheduledOverrides).map(([d, o]) => [d, mapOverrides(o as KitchenState["overrides"])])) as NonNullable<KitchenState["scheduledOverrides"]> } : {}),
     ...(s.alternativePreferences ? { alternativePreferences: s.alternativePreferences.map((p) => ({ ...p, dishId: id(p.dishId), fromDishId: id(p.fromDishId) })) } : {}),
     ...(s.observations ? { observations: s.observations.map((o) => ({ ...o, dishId: id(o.dishId) })) } : {}),
   };
