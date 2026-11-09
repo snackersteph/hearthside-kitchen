@@ -13,6 +13,12 @@ describe("new kitchen entries", () => {
     expect(added.residents).toHaveLength(state.residents.length + 1);
     expect(analyze(added).conflicts.some((c) => c.residentId === resident.id)).toBe(true);
   });
+  it("retains an uploaded photo when a new resident is saved and restored", () => {
+    const photoUrl = "data:image/webp;base64,dGVzdA==";
+    const added = reducer(initialState(), { type: "addResident", resident: { ...resident, photoUrl } });
+    const restored = JSON.parse(JSON.stringify(added));
+    expect(restored.residents.find((r: Resident) => r.id === resident.id)?.photoUrl).toBe(photoUrl);
+  });
   it("adds an inventory row without changing existing rows or inventing incoming stock", () => {
     const state = initialState();
     const added = reducer(state, { type: "addIngredient", ingredient });

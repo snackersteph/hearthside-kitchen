@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { ResidentPhoto } from "@/components/kitchen/resident-photo";
+import { readResidentImage } from "@/lib/kitchen/resident-image";
 
 export function EditDialog({ resident, isNew = false, onClose }: { resident: Resident; isNew?: boolean; onClose: () => void }) {
   const { dispatch } = useKitchen();
   const [r, setR] = useState(resident);
+  const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
   const toggle = <K extends "allergens" | "diets">(k: K, v: Resident[K][number]) =>
     setR((p) => ({ ...p, [k]: (p[k] as string[]).includes(v) ? (p[k] as string[]).filter((x) => x !== v) : [...p[k], v] }));
   return (
@@ -18,6 +22,27 @@ export function EditDialog({ resident, isNew = false, onClose }: { resident: Res
         <DialogHeader><DialogTitle className="font-display text-2xl">{isNew ? "Add resident" : r.name}</DialogTitle></DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); dispatch(isNew ? { type: "addResident", resident: { ...r, id: crypto.randomUUID() } } : { type: "updateResident", resident: r }); toast.success(isNew ? "Resident added" : "Profile saved — meals rechecked"); onClose(); }} className="space-y-4">
           {isNew && <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2 flex items-center gap-4">
+              <ResidentPhoto resident={r} />
+              <div className="min-w-0 flex-1">
+                <label className="text-sm font-medium">Profile photo<Input type="file" aria-label="Profile photo" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file) return;
+                  setPhotoError("");
+                  setUploading(true);
+                  try {
+                    const photoUrl = await readResidentImage(file);
+                    setR((previous) => ({ ...previous, photoUrl }));
+                  } catch (error) {
+                    setPhotoError(error instanceof Error ? error.message : "Unable to upload photo.");
+                  } finally { setUploading(false); }
+                }} /></label>
+                {uploading && <p role="status" className="mt-1 text-sm text-muted-foreground">Preparing photo…</p>}
+                {photoError && <p role="alert" className="mt-1 text-sm text-destructive">{photoError}</p>}
+                {r.photoUrl && <Button type="button" variant="ghost" size="sm" onClick={() => setR((previous) => ({ ...previous, photoUrl: undefined }))}>Remove photo</Button>}
+              </div>
+            </div>
             <label className="col-span-2 text-sm font-medium">Name<Input required aria-label="Resident name" value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} /></label>
             <label className="text-sm font-medium">Room<Input required aria-label="Room" value={r.room} onChange={(e) => setR({ ...r, room: e.target.value })} /></label>
             <label className="text-sm font-medium">Age<Input required aria-label="Age" type="number" min={1} max={120} value={r.age} onChange={(e) => setR({ ...r, age: Number(e.target.value) })} /></label>
@@ -44,7 +69,7 @@ export function EditDialog({ resident, isNew = false, onClose }: { resident: Res
           </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={isNew && (!r.name.trim() || !r.room.trim())}>{isNew ? "Add resident" : "Save profile"}</Button>
+          <Button type="submit" disabled={uploading || (isNew && (!r.name.trim() || !r.room.trim()))}>{isNew ? "Add resident" : "Save profile"}</Button>
         </DialogFooter>
         </form>
       </DialogContent>
