@@ -110,6 +110,10 @@
 - [x] Rebuild /dashboard as a Weekly Agent Workspace per uploaded spec: weekly controls, summary cards, agent cards, meal matrix, collaboration flow with handoff details, manager decisions, final weekly approval.
 - [x] Simulated generation sequence; consistent state across all sections; verify in preview.
 
+## Profile update diff styling
+- [x] Remove the "Draft example" note and shorten labels to Previous/Updated.
+- [x] Show old vs new content in colored panels (soft red struck-through vs soft green highlighted) with an arrow between.
+
 ## Dashboard naming and service links
 - [x] Rename Command Center to "Kitchen Pulse" across sidebar, page title and back links.
 - [x] Link each "Today's service" bar to that date's menu page on its own meal tab (breakfast/lunch/dinner).
