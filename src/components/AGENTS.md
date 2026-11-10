@@ -1,0 +1,3 @@
+- Account UI uses Cloud Auth, participant-scoped messages and owner-scoped notifications; kitchen demo data stays unchanged to avoid an unrelated migration.
+- Account profile photos use private storage and owner-scoped uploads, while the messaging directory returns only IDs and display names to avoid exposing emails.
+- The header alone subscribes to account changes and shares queries with the greeting so account data stays consistent without duplicate subscriptions.

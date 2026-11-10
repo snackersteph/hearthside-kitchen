@@ -5,6 +5,7 @@ import { useKitchen } from "@/lib/kitchen/store";
 import { AGENTS, AgentAvatar } from "./agents";
 import type { AgentId } from "@/lib/kitchen/types";
 import logo from "@/assets/nutrisync-logo.png";
+import { AccountMenu } from "@/components/account-menu";
 
 const NAV = [
   { to: "/", label: "Kitchen Pulse", icon: LayoutDashboard },
@@ -76,7 +77,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }} className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium text-sidebar-foreground/75" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>{n.label}</Link>
           ))}
         </nav>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-8 md:px-10">{children}</main>
+        <div className="mx-auto flex w-full max-w-7xl justify-end px-5 pt-5 md:px-10"><AccountMenu /></div>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-5 pb-8 pt-3 md:px-10">{children}</main>
       </div>
     </div>
   );

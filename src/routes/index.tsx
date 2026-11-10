@@ -13,6 +13,7 @@ import { ActionCardTile } from "@/components/kitchen/action-card";
 import { ObservationDialog } from "@/components/kitchen/observation-dialog";
 import { ResidentPhoto } from "@/components/kitchen/resident-photo";
 import { cn } from "@/lib/utils";
+import { useAccountData } from "@/lib/account";
 
 const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: PackageX, delivered: PackageCheck, incoming: Truck, profiles: UserRound } as const;
 
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/")({
 });
 
 function CommandCenter() {
+  const account = useAccountData(false);
   const { state, analysis, dispatch } = useKitchen();
   const cards = actionCards(state, analysis);
   const snapshot = dailySnapshot(state, analysis);
@@ -53,14 +55,14 @@ function CommandCenter() {
 
   return (
     <>
-      <PageHeader eyebrow={today} title="Good evening, Chef." />
+      <PageHeader eyebrow={today} title={`Good evening, ${account.data?.profile?.display_name || "Chef"}.`} />
 
       <section className="mb-8 border-y py-5" aria-label="Daily snapshot">
-        <h2 className="mb-4 text-sm font-semibold text-muted-foreground">Today's snapshot</h2>
+        <h2 className="mb-4 text-xs font-semibold text-muted-foreground">Today's snapshot</h2>
         <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">{facts.map((fact) => <div key={fact.label} className="min-w-0">
-          <dt className="flex items-center gap-2 text-sm text-muted-foreground"><fact.icon className="h-4 w-4 shrink-0 text-primary" />{fact.label}</dt>
-          <dd className="mt-2 break-words font-display text-2xl font-semibold">{fact.value}</dd>
-          <dd className="mt-1 text-xs text-muted-foreground">{fact.detail}</dd>
+          <dt className="flex items-center gap-2 text-xs text-muted-foreground"><fact.icon className="h-3.5 w-3.5 shrink-0 text-primary" />{fact.label}</dt>
+          <dd className="mt-2 break-words font-display text-xl font-semibold">{fact.value}</dd>
+          <dd className="mt-1 text-[11px] text-muted-foreground">{fact.detail}</dd>
         </div>)}</dl>
       </section>
 

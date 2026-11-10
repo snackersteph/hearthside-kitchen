@@ -145,7 +145,13 @@
   --sidebar-ring: oklch(0.8 0.1 80);
   --shadow-soft: 0 1px 2px oklch(0.24 0.03 155 / 0.05), 0 8px 24px -12px oklch(0.24 0.03 155 / 0.18);
   --gradient-hero: linear-gradient(135deg, oklch(0.36 0.07 158), oklch(0.3 0.05 165));
+  --google-surface: #FFFFFF;
+  --google-border: #747775;
+  --google-text: #1F1F1F;
 }
+
+.google-auth-control { background: var(--google-surface); border: 1px solid var(--google-border); color: var(--google-text); font-weight: 500; gap: 10px; padding-inline: 12px; }
+.dark .google-auth-control { --google-surface: #131314; --google-border: #8E918F; --google-text: #E3E3E3; }
 
 @layer base {
   * {
