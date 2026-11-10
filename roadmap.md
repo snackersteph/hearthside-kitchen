@@ -106,5 +106,5 @@
 - [x] Simplify today's highlight to just the green circle around the date number (no cell border/fill).
 
 ## Agent Workspace redesign
-- [ ] Rebuild /dashboard as a Weekly Agent Workspace per uploaded spec: weekly controls, summary cards, agent cards, meal matrix, collaboration flow with handoff details, manager decisions, final weekly approval.
-- [ ] Simulated generation sequence; consistent state across all sections; verify in preview.
+- [x] Rebuild /dashboard as a Weekly Agent Workspace per uploaded spec: weekly controls, summary cards, agent cards, meal matrix, collaboration flow with handoff details, manager decisions, final weekly approval.
+- [x] Simulated generation sequence; consistent state across all sections; verify in preview.
