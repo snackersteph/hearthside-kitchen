@@ -476,7 +476,7 @@ function MealCellDetails({ ws, day, meal }: { ws: WorkspaceState; day: number; m
               <p className="rounded-lg bg-success-soft p-2 text-xs text-success">Approved by the kitchen manager as part of the weekly plan.</p>
             )}
             <Button size="sm" variant="outline" asChild>
-              <Link to="/menu/$date" params={{ date: sub?.date ?? "2026-11-16" }} search={{ meal: MEAL_ROWS[meal].toLowerCase() as "breakfast" | "lunch" | "dinner", focus: true }}>
+              <Link to="/menu/$date" params={{ date: sub?.date ?? "2026-11-16" }} search={{ meal: MEAL_ROWS[meal]!.toLowerCase() as "breakfast" | "lunch" | "dinner", focus: true }}>
                 Open in Daily Menu <ArrowRight className="size-3.5" />
               </Link>
             </Button>
