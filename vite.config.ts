@@ -18,6 +18,7 @@ export default defineConfig({
         "lucide-react",
         "react-day-picker",
         "date-fns",
+        "zod",
         "@radix-ui/react-accordion",
         "@radix-ui/react-alert-dialog",
         "@radix-ui/react-aspect-ratio",
