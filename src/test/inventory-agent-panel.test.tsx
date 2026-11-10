@@ -8,15 +8,19 @@ import {
   type DraftPurchaseRequest,
 } from "@/lib/kitchen/inventory-agent";
 import { reducer } from "@/lib/kitchen/store";
-
-const reference = new Date("2026-11-09T12:00:00");
+import type { KitchenState } from "@/lib/kitchen/types";
+import { agentScenario, reference } from "./agent-fixtures";
 
 afterEach(cleanup);
 
 const setup = async (
-  overrides: { decided?: Record<string, "approved" | "rejected">; open?: Set<string> } = {},
+  overrides: {
+    decided?: Record<string, "approved" | "rejected">;
+    open?: Set<string>;
+    state?: KitchenState;
+  } = {},
 ) => {
-  const state = initialState();
+  const state = overrides.state ?? initialState();
   const result = await runInventoryAgent(state, { reference });
   const onApprove = vi.fn();
   const onReject = vi.fn();
@@ -48,9 +52,18 @@ describe("Inventory Agent panel", () => {
   });
 
   it("surfaces shortages handed to the Menu Agent, including the compliance reason", async () => {
-    await setup();
+    const sc = agentScenario();
+    const { result } = await setup({ state: sc.state });
     expect(screen.getByText(/Handed to the Menu Agent/)).toBeTruthy();
-    expect(screen.getByText(/gluten-free facility certification not verified/)).toBeTruthy();
+    // The shortage whose only supplier has an unverified certificate is explained on screen.
+    const handoff = result.messages.find(
+      (m) => m.id === `inv-agent-handoff-${sc.unverified.ingredientId}`,
+    );
+    expect(handoff?.text).toContain("gluten-free facility certification not verified");
+    expect(screen.getByText(handoff!.text)).toBeTruthy();
+    // A shortage that is simply too slow is explained too.
+    const slow = result.messages.find((m) => m.id === `inv-agent-handoff-${sc.slow.ingredientId}`);
+    expect(screen.getByText(slow!.text)).toBeTruthy();
   });
 
   it("approving and rejecting call back with the exact draft", async () => {
