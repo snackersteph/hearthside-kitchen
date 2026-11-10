@@ -7,7 +7,7 @@ import { MEALS } from "@/lib/kitchen/types";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { MEAL_LABEL, MEAL_TIME } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
-import { scheduledState } from "@/lib/kitchen/schedule";
+import { dateKey, scheduledState } from "@/lib/kitchen/schedule";
 import { actionCards, dailySnapshot, openObservations, reviewedObservations } from "@/lib/kitchen/overview";
 import { ActionCardTile } from "@/components/kitchen/action-card";
 import { ObservationDialog } from "@/components/kitchen/observation-dialog";
@@ -19,9 +19,9 @@ const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: PackageX, delivered:
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Command Center · NutriSync" },
+      { title: "Kitchen Pulse · NutriSync" },
       { name: "description", content: "Today's meals, dietary issues and live agent activity at a glance." },
-      { property: "og:title", content: "Command Center · NutriSync" },
+      { property: "og:title", content: "Kitchen Pulse · NutriSync" },
       { property: "og:description", content: "Today's meals, dietary issues and live agent activity at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -44,6 +44,7 @@ function CommandCenter() {
     { label: "Estimated daily food cost", value: money(snapshot.cost), detail: `${money(snapshot.costPerResident)} / resident${snapshot.unpriced ? " · some prices missing" : " · ingredients only"}`, icon: DollarSign },
   ];
   const dayState = scheduledState(state, 0);
+  const todayKey = dateKey(new Date());
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const open = openObservations(state);
   const reviewed = reviewedObservations(state);
@@ -85,7 +86,7 @@ function CommandCenter() {
               const bad = analysis.conflicts.filter((c) => c.meal === meal && c.status === "needs-staff").length;
               const mainCount = Object.values(served).filter((d) => d === main.id).length;
               return (
-                <Link key={meal} to="/menu" className="flex items-center gap-5 rounded-xl border bg-card p-5 shadow-soft transition hover:border-primary">
+                <Link key={meal} to="/menu/$date" params={{ date: todayKey }} search={{ meal, focus: true }} className="flex items-center gap-5 rounded-xl border bg-card p-5 shadow-soft transition hover:border-primary">
                   <div className="w-20 shrink-0">
                     <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{MEAL_LABEL[meal]}</div>
                     <div className="text-sm text-muted-foreground">{MEAL_TIME[meal]}</div>
