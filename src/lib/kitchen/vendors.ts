@@ -25,9 +25,27 @@ export interface VendorOffer {
   leadTimeDays: number;
 }
 
+export interface VendorContact {
+  /** Person to call or email about orders. */
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+}
+
+export interface VendorAddress {
+  street: string;
+  city: string;
+  region: string;
+  postalCode: string;
+}
+
 export interface Vendor {
   id: string;
   name: string;
+  /** Sample contact details. Vendors not in the registry have none. */
+  contact?: VendorContact;
+  address?: VendorAddress;
   /** Missing license = cannot be verified. */
   licenseNumber?: string;
   /** ISO date (YYYY-MM-DD). */
@@ -52,6 +70,18 @@ export const VENDORS: Vendor[] = [
   {
     id: "sysco",
     name: "Sysco",
+    contact: {
+      name: "Dana Whitfield",
+      role: "Account manager",
+      phone: "(916) 555-0142",
+      email: "dana.whitfield@sysco.example",
+    },
+    address: {
+      street: "1200 Distribution Way",
+      city: "Sacramento",
+      region: "CA",
+      postalCode: "95828",
+    },
     licenseNumber: "FD-2291-CA",
     licenseExpires: "2027-06-30",
     certifications: [
@@ -63,6 +93,13 @@ export const VENDORS: Vendor[] = [
   {
     id: "valley-farms",
     name: "Valley Farms",
+    contact: {
+      name: "Miguel Alvarez",
+      role: "Farm sales lead",
+      phone: "(209) 555-0178",
+      email: "miguel.alvarez@valleyfarms.example",
+    },
+    address: { street: "48 Orchard Road", city: "Modesto", region: "CA", postalCode: "95350" },
     licenseNumber: "FD-1187-CA",
     licenseExpires: "2027-03-31",
     // Food-safety certificate lapses soon: eligible, but with a renewal warning.
@@ -72,6 +109,13 @@ export const VENDORS: Vendor[] = [
   {
     id: "pacific-seafood",
     name: "Pacific Seafood",
+    contact: {
+      name: "Hana Kobayashi",
+      role: "Seafood accounts",
+      phone: "(510) 555-0119",
+      email: "hana.kobayashi@pacificseafood.example",
+    },
+    address: { street: "22 Wharf Street", city: "Oakland", region: "CA", postalCode: "94607" },
     licenseNumber: "FD-3340-CA",
     licenseExpires: "2027-01-15",
     certifications: [
@@ -83,6 +127,13 @@ export const VENDORS: Vendor[] = [
   {
     id: "hearth-bakery",
     name: "Hearth Bakery",
+    contact: {
+      name: "Tom Bennett",
+      role: "Wholesale manager",
+      phone: "(415) 555-0163",
+      email: "tom.bennett@hearthbakery.example",
+    },
+    address: { street: "305 Baker Lane", city: "San Francisco", region: "CA", postalCode: "94110" },
     licenseNumber: "FD-4410-CA",
     licenseExpires: "2027-05-20",
     // GF facility certificate is on file but staff have not verified the document.
@@ -95,6 +146,13 @@ export const VENDORS: Vendor[] = [
   {
     id: "harbor-fresh",
     name: "Harbor Fresh Seafood",
+    contact: {
+      name: "Luis Ortega",
+      role: "Sales representative",
+      phone: "(831) 555-0127",
+      email: "orders@harborfresh.example",
+    },
+    address: { street: "9 Pier Avenue", city: "Monterey", region: "CA", postalCode: "93940" },
     licenseNumber: "FD-5502-CA",
     // Expired license: cheapest seafood, but must be blocked.
     licenseExpires: "2026-09-30",
@@ -111,6 +169,13 @@ export const VENDORS: Vendor[] = [
   {
     id: "sunrise-coop",
     name: "Sunrise Produce Co-op",
+    contact: {
+      name: "Priya Nair",
+      role: "Co-op coordinator",
+      phone: "(530) 555-0154",
+      email: "priya.nair@sunrisecoop.example",
+    },
+    address: { street: "77 Market Hall Road", city: "Davis", region: "CA", postalCode: "95616" },
     // No license number on file and an unverified certificate: cannot be verified.
     certifications: [cert("food-safety", "Self-reported (sample)", "2027-01-31", false)],
     offers: {
@@ -123,6 +188,13 @@ export const VENDORS: Vendor[] = [
   {
     id: "farmstead-poultry",
     name: "Farmstead Poultry",
+    contact: {
+      name: "Grace Holloway",
+      role: "Customer accounts",
+      phone: "(707) 555-0188",
+      email: "grace.holloway@farmsteadpoultry.example",
+    },
+    address: { street: "640 Ridge Road", city: "Petaluma", region: "CA", postalCode: "94952" },
     licenseNumber: "FD-6120-CA",
     licenseExpires: "2027-08-31",
     certifications: [
