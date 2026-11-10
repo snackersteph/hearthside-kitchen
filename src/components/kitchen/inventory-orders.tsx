@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Eye, PackageCheck, Truck } from "lucide-react";
+import { ExternalLink, Eye, PackageCheck, Truck, MessageSquareWarning, RefreshCw, PackageX } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { dateKey } from "@/lib/kitchen/schedule";
 import { groupIncomingOrders, vendorDestination, type VendorOrder } from "@/lib/kitchen/order-display";
@@ -20,6 +20,7 @@ const deliveryLabel = (order: VendorOrder) => {
 export function InventoryOrders({ mode }: { mode: "delivered" | "incoming" }) {
   const { state, dispatch } = useKitchen();
   const [viewing, setViewing] = useState<VendorOrder | null>(null);
+  const [vendorAction, setVendorAction] = useState<string | null>(null);
   const [receiving, setReceiving] = useState<PurchaseOrder | null>(null);
   const orders: VendorOrder[] = mode === "incoming"
     ? groupIncomingOrders(state.orders ?? [])
@@ -34,19 +35,19 @@ export function InventoryOrders({ mode }: { mode: "delivered" | "incoming" }) {
         <p className="mt-1 text-sm text-muted-foreground">Expected {deliveryLabel(order)}{order.receivedAt ? ` · Confirmed ${new Date(order.receivedAt).toLocaleDateString()}` : ""}</p>
         <p className="mt-2 text-sm">{order.lines.map((line) => { const ingredient = state.ingredients.find((item) => item.id === line.ingredientId); return `${ingredient?.name ?? line.ingredientId}: ${line.qty} ${ingredient?.unit ?? ""}`; }).join(" · ")}</p>
       </div>
-      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setViewing(order)}><Eye />View</Button>{mode === "delivered" && order.status === "incoming" && <Button onClick={() => setReceiving(order)}><PackageCheck />Confirm delivery</Button>}</div>
+      <div className="flex flex-wrap gap-2 sm:max-w-lg"><Button variant="outline" onClick={() => { setVendorAction(null); setViewing(order); }}><Eye />View</Button>{mode === "delivered" && <><Button variant="outline" onClick={() => { setVendorAction("Report issue"); setViewing(order); }}><MessageSquareWarning />Report issue</Button><Button variant="outline" onClick={() => { setVendorAction("Request replacement"); setViewing(order); }}><RefreshCw />Request replacement</Button><Button variant="outline" className="text-destructive" onClick={() => { setVendorAction("Reject delivery"); setViewing(order); }}><PackageX />Reject delivery</Button></>}{mode === "delivered" && order.status === "incoming" && <Button onClick={() => setReceiving(order)}><PackageCheck />Confirm delivery</Button>}</div>
     </div>)}</div>}
-    {viewing && <OrderDetails order={viewing} onClose={() => setViewing(null)} />}
+    {viewing && <OrderDetails order={viewing} action={vendorAction} onClose={() => { setViewing(null); setVendorAction(null); }} />}
     <AlertDialog open={Boolean(receiving)} onOpenChange={(open) => !open && setReceiving(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Confirm delivery from {receiving?.vendor}?</AlertDialogTitle><AlertDialogDescription>Confirm only after these ingredients have arrived. The quantities below will be added to food stock and removed from incoming quantities.</AlertDialogDescription></AlertDialogHeader><ul className="space-y-2 text-sm">{receiving?.lines.map((line) => { const ingredient = state.ingredients.find((item) => item.id === line.ingredientId); return <li key={line.ingredientId}>{ingredient?.name ?? line.ingredientId} · {line.qty} {ingredient?.unit}</li>; })}</ul><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction asChild><Button onClick={() => { if (!receiving) return; dispatch({ type: "receiveOrder", id: receiving.id }); toast.success("Delivery confirmed — food stock updated"); setReceiving(null); }}>Confirm delivery</Button></AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </section>;
 }
 
-function OrderDetails({ order, onClose }: { order: VendorOrder; onClose: () => void }) {
+function OrderDetails({ order, action, onClose }: { order: VendorOrder; action: string | null; onClose: () => void }) {
   const { state } = useKitchen();
   const destination = vendorDestination(order.vendor);
   const total = order.lines.reduce((sum, line) => sum + line.qty * (state.ingredients.find((item) => item.id === line.ingredientId)?.unitCost ?? 0), 0);
   return <Dialog open onOpenChange={(open) => !open && onClose()}><DialogContent className="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-2xl">
-    <DialogHeader><DialogTitle>Order details</DialogTitle><DialogDescription>{order.vendor} · {order.status === "incoming" ? "Incoming" : "Delivered"}</DialogDescription></DialogHeader>
+    <DialogHeader><DialogTitle>{action ?? "Order details"}</DialogTitle><DialogDescription>{order.vendor} · {order.status === "incoming" ? "Incoming" : "Delivered"}{action ? " · Not sent to vendor" : ""}</DialogDescription></DialogHeader>
     <div className="space-y-5">
       <dl className="grid gap-4 sm:grid-cols-2"><div><dt className="text-sm text-muted-foreground">Vendor</dt><dd className="font-semibold">{order.vendor}</dd></div><div><dt className="text-sm text-muted-foreground">Expected delivery</dt><dd className="text-sm font-medium">{deliveryLabel(order)}</dd></div></dl>
       <div className="overflow-x-auto border-y"><table className="w-full text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="py-3 pr-4">Ingredient</th><th className="py-3 pr-4 text-right">Quantity</th><th className="py-3 pr-4">Expected</th><th className="py-3 text-right">Est. cost</th></tr></thead><tbody className="divide-y">{order.lines.map((line) => {
@@ -55,7 +56,7 @@ function OrderDetails({ order, onClose }: { order: VendorOrder; onClose: () => v
         return <tr key={line.ingredientId}><td className="py-3 pr-4 font-medium">{ingredient?.name ?? line.ingredientId}</td><td className="whitespace-nowrap py-3 pr-4 text-right">{line.qty} {ingredient?.unit}</td><td className="py-3 pr-4 text-muted-foreground">{dates.map(dateLabel).join(" · ")}</td><td className="py-3 text-right">${(line.qty * (ingredient?.unitCost ?? 0)).toFixed(2)}</td></tr>;
       })}</tbody></table></div>
       <p className="text-right text-sm font-semibold">Estimated total: ${total.toFixed(2)}</p>
-      <div className="border-t pt-4"><p className="mb-3 text-sm text-muted-foreground">Contact the vendor for order changes or delivery issues.{destination.label === "Find vendor website" ? " A verified website has not been added for this vendor." : ""}</p><Button asChild variant="outline"><a href={destination.url} target="_blank" rel="noopener noreferrer"><ExternalLink />{destination.label}</a></Button></div>
+      <div className="border-t pt-4"><p className="mb-3 text-sm text-muted-foreground">{action === "Report issue" ? `Report damaged, missing, or incorrect ingredients to ${order.vendor}.` : action === "Request replacement" ? `Request replacement ingredients from ${order.vendor}.` : action === "Reject delivery" ? `Arrange delivery rejection or return with ${order.vendor}. Stock remains unchanged until delivery is confirmed.` : "Contact the vendor for order changes or delivery issues."}{destination.label === "Find vendor website" ? " A verified website has not been added for this vendor; this link opens a website search." : ""}</p><Button asChild variant="outline"><a href={destination.url} target="_blank" rel="noopener noreferrer"><ExternalLink />Contact vendor</a></Button></div>
     </div>
     <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
   </DialogContent></Dialog>;
