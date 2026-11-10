@@ -38,6 +38,7 @@ type Action =
   | { type: "acknowledgeProfileUpdate"; id: string }
   | { type: "setStock"; id: string; stock: number }
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
+  | { type: "rejectSub"; proposalId: string; meal: Meal; dishId: string; fromDishId: string; residentIds: string[]; serviceDate?: string | undefined; summary: string }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
   | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string };
 
@@ -227,6 +228,20 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         mealRejections: { ...s.mealRejections, [a.date]: { ...s.mealRejections?.[a.date], [a.meal]: undefined } },
         history: [{ proposalId: `meal-${a.date}-${a.meal}-${reference.getTime()}`, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: a.date, summary: `Approved ${a.meal} menu for ${a.date}`, modified: false }, ...s.history] };
     }
+    case "rejectSub": {
+      if (!a.serviceDate || !canApproveMeal(a.serviceDate, reference) || !a.residentIds.length) return s;
+      const residentSignatures = Object.fromEntries(s.residents.filter((r) => a.residentIds.includes(r.id)).map((r) => [r.id, dietarySignature(r)]));
+      if (Object.keys(residentSignatures).length !== a.residentIds.length) return s;
+      const date = a.serviceDate;
+      const overrides = { ...s.scheduledOverrides?.[date]?.[a.meal] };
+      for (const id of a.residentIds) delete overrides[id];
+      return { ...s,
+        alternativePreferences: (s.alternativePreferences ?? []).filter((p) => !(p.meal === a.meal && p.fromDishId === a.fromDishId && a.residentIds.includes(p.residentId))),
+        scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: overrides } },
+        mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } },
+        history: [{ proposalId: `${a.proposalId}-decision-${s.history.length}`, kind: "substitution", status: "rejected", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: false, alternativeScope: { meal: a.meal, fromDishId: a.fromDishId, dishId: a.dishId, residentSignatures } }, ...s.history],
+      };
+    }
     case "approveSub": {
       if (!a.serviceDate || !canApproveMeal(a.serviceDate, reference)) return s;
       if (!a.residentIds.length || dishById(a.dishId).meal !== a.meal || a.residentIds.some((id) => {
@@ -247,7 +262,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
           ...(preferences ? { alternativePreferences: preferences } : {}),
           scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: o } },
           mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } },
-          history: [{ proposalId: a.proposalId, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: a.modified }, ...s.history] };
+          history: [{ proposalId: `${a.proposalId}-decision-${s.history.length}`, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: a.modified, alternativeScope: { meal: a.meal, fromDishId, dishId: a.dishId, residentSignatures: Object.fromEntries(s.residents.filter((r) => a.residentIds.includes(r.id)).map((r) => [r.id, dietarySignature(r)])) } }, ...s.history] };
       }
       const o = { ...s.overrides[a.meal] };
       for (const id of a.residentIds) o[id] = a.dishId;

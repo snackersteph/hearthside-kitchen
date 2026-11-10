@@ -1,4 +1,5 @@
 # Inventory operations
+- [x] Add individual resident and whole-card alternative approvals/rejections; test persistence and verify the page.
 - [x] Move delivered-order View below ingredients, keep Confirm delivery visible, fold other actions and confirmed deletion into three dots; test and verify.
 - [x] Rename vendor contact link and add delivered-order issue, replacement and rejection options that open vendor contact details; verify.
 - [x] Combine incoming orders by vendor, remove incoming delivery confirmation and editing, and provide vendor links in read-only details; verify.
