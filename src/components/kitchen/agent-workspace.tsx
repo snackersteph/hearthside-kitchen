@@ -73,7 +73,7 @@ export function AgentWorkspace({
   const planned = ws.status !== "not-started" && scenarioWeek;
   const counts = summaryCounts(ws);
   const activities = agentActivity(ws.genStep, ws.status);
-  const handoff = HANDOFFS.find((h) => h.id === selectedHandoff) ?? HANDOFFS[0];
+  const handoff = HANDOFFS.find((h) => h.id === selectedHandoff) ?? HANDOFFS[2]!;
   const pendingDecisions = SUBSTITUTIONS.filter((s) => ws.decisions[s.id].state !== "approved");
   const allDecided = pendingDecisions.length === 0;
   const currentStep = ws.status === "not-started" ? 0 : ws.status === "generating" ? 1 : ws.status === "needs-review" ? 2 : 4;
@@ -191,7 +191,7 @@ export function AgentWorkspace({
           ) : (
             <ol className="space-y-4">
               {STAGES.map((stage, i) => {
-                const revealed = ws.genStep >= STAGE_REVEAL_STEP[i];
+                const revealed = ws.genStep >= (STAGE_REVEAL_STEP[i] ?? 99);
                 if (!revealed) return null;
                 const style = HANDOFF_STYLE[stage.status];
                 return (
@@ -443,11 +443,11 @@ function MealCellDetails({ ws, day, meal }: { ws: WorkspaceState; day: number; m
   const status = cellStatus(ws, day, meal);
   const isWed = day === 2 && meal === 1;
   const isFri = day === 4 && meal === 1;
-  const sub = isWed ? SUBSTITUTIONS[0] : isFri ? SUBSTITUTIONS[1] : null;
+  const sub = isWed ? SUBSTITUTIONS[0]! : isFri ? SUBSTITUTIONS[1]! : null;
   const decision = sub ? ws.decisions[sub.id] : null;
   const name = sub && decision && (decision.state === "approved")
     ? sub.proposals[decision.proposalIndex]
-    : MEAL_NAMES[meal][day];
+    : (MEAL_NAMES[meal]?.[day] ?? "Planned meal");
   return (
     <>
       <DialogHeader>
