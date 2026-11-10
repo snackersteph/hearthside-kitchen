@@ -140,10 +140,12 @@ function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: Substituti
       <div className="flex flex-wrap items-start gap-4">
         <AgentAvatar agent={p.agent} />
         <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-0">
-          <div className="text-xs font-semibold text-muted-foreground">{agent.name} · {p.kind === "substitution" ? `${MEAL_LABEL[p.meal]} substitution` : "Purchase request"}</div>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="text-xs font-semibold text-muted-foreground">{agent.name} · {p.kind === "substitution" ? `${MEAL_LABEL[p.meal]} substitution` : "Purchase request"}</div>
+            <Actions p={selected} onApprove={onApprove} onModify={() => setEditing(true)} />
+          </div>
           {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={setSelectedDish} onApprove={onApprove} onReject={setRejectionRequest} /> : <PurchaseBody p={selected} />}
         </div>
-        <Actions p={selected} onApprove={onApprove} onModify={() => setEditing(true)} />
       </div>
       {editing && (p.kind === "substitution" ? <RejectSubDialog p={p} onApprove={onApprove} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}
       {rejectionRequest && <RejectSubDialog p={rejectionRequest} onApprove={onApprove} onClose={() => setRejectionRequest(null)} />}
