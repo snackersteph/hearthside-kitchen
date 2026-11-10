@@ -7,7 +7,7 @@ import type { AgentId } from "@/lib/kitchen/types";
 import logo from "@/assets/nutrisync-logo.png";
 
 const NAV = [
-  { to: "/", label: "Command Center", icon: LayoutDashboard },
+  { to: "/", label: "Kitchen Pulse", icon: LayoutDashboard },
   { to: "/menu", label: "Daily Menu", icon: UtensilsCrossed },
   { to: "/recipes", label: "Recipes", icon: BookOpen },
   { to: "/residents", label: "Residents", icon: Users },
