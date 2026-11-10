@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { ExternalLink, Eye, PackageCheck, Truck, MessageSquareWarning, RefreshCw, PackageX } from "lucide-react";
+import { ExternalLink, Eye, PackageCheck, Truck, MessageSquareWarning, RefreshCw, PackageX, MoreHorizontal, Trash2 } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { dateKey } from "@/lib/kitchen/schedule";
 import { groupIncomingOrders, vendorDestination, type VendorOrder } from "@/lib/kitchen/order-display";
 import type { PurchaseOrder } from "@/lib/kitchen/types";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ export function InventoryOrders({ mode }: { mode: "delivered" | "incoming" }) {
   const [viewing, setViewing] = useState<VendorOrder | null>(null);
   const [vendorAction, setVendorAction] = useState<string | null>(null);
   const [receiving, setReceiving] = useState<PurchaseOrder | null>(null);
+  const [deleting, setDeleting] = useState<PurchaseOrder | null>(null);
   const orders: VendorOrder[] = mode === "incoming"
     ? groupIncomingOrders(state.orders ?? [])
     : (state.orders ?? []).filter((order) => order.status === "received" || order.deliveryDate <= dateKey(new Date()))
@@ -34,10 +36,12 @@ export function InventoryOrders({ mode }: { mode: "delivered" | "incoming" }) {
         <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{order.vendor}</h3><span className={order.status === "received" ? "text-xs text-success" : "text-xs text-warning"}>{order.status === "received" ? "Delivery confirmed" : mode === "delivered" ? "Awaiting delivery confirmation" : "Incoming"}</span></div>
         <p className="mt-1 text-sm text-muted-foreground">Expected {deliveryLabel(order)}{order.receivedAt ? ` · Confirmed ${new Date(order.receivedAt).toLocaleDateString()}` : ""}</p>
         <p className="mt-2 text-sm">{order.lines.map((line) => { const ingredient = state.ingredients.find((item) => item.id === line.ingredientId); return `${ingredient?.name ?? line.ingredientId}: ${line.qty} ${ingredient?.unit ?? ""}`; }).join(" · ")}</p>
+        {mode === "delivered" && <Button variant="outline" className="mt-3" onClick={() => { setVendorAction(null); setViewing(order); }}><Eye />View</Button>}
       </div>
-      <div className="flex flex-wrap gap-2 sm:max-w-lg"><Button variant="outline" onClick={() => { setVendorAction(null); setViewing(order); }}><Eye />View</Button>{mode === "delivered" && <><Button variant="outline" onClick={() => { setVendorAction("Report issue"); setViewing(order); }}><MessageSquareWarning />Report issue</Button><Button variant="outline" onClick={() => { setVendorAction("Request replacement"); setViewing(order); }}><RefreshCw />Request replacement</Button><Button variant="outline" className="text-destructive" onClick={() => { setVendorAction("Reject delivery"); setViewing(order); }}><PackageX />Reject delivery</Button></>}{mode === "delivered" && order.status === "incoming" && <Button onClick={() => setReceiving(order)}><PackageCheck />Confirm delivery</Button>}</div>
+      <div className="flex items-center gap-2">{mode === "incoming" && <Button variant="outline" onClick={() => { setVendorAction(null); setViewing(order); }}><Eye />View</Button>}{mode === "delivered" && <>{order.status === "incoming" && <Button onClick={() => setReceiving(order)}><PackageCheck />Confirm delivery</Button>}<DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label={`More options for ${order.vendor}`} title="More options"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setVendorAction("Report issue"); setViewing(order); }}><MessageSquareWarning />Report issue</DropdownMenuItem><DropdownMenuItem onSelect={() => { setVendorAction("Request replacement"); setViewing(order); }}><RefreshCw />Request replacement</DropdownMenuItem><DropdownMenuItem onSelect={() => { setVendorAction("Reject delivery"); setViewing(order); }}><PackageX />Reject delivery</DropdownMenuItem><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleting(order)}><Trash2 />Delete</DropdownMenuItem></DropdownMenuContent></DropdownMenu></>}</div>
     </div>)}</div>}
     {viewing && <OrderDetails order={viewing} action={vendorAction} onClose={() => { setViewing(null); setVendorAction(null); }} />}
+    <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete order from {deleting?.vendor}?</AlertDialogTitle><AlertDialogDescription>This removes the order from your list, but does not cancel it with the vendor. Food stock will not change.{deleting?.status === "incoming" ? " Its quantities will be removed from incoming stock." : ""}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction asChild><Button variant="destructive" onClick={() => { if (!deleting) return; dispatch({ type: "deleteOrder", id: deleting.id }); setDeleting(null); toast.success("Order deleted"); }}>Delete order</Button></AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <AlertDialog open={Boolean(receiving)} onOpenChange={(open) => !open && setReceiving(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Confirm delivery from {receiving?.vendor}?</AlertDialogTitle><AlertDialogDescription>Confirm only after these ingredients have arrived. The quantities below will be added to food stock and removed from incoming quantities.</AlertDialogDescription></AlertDialogHeader><ul className="space-y-2 text-sm">{receiving?.lines.map((line) => { const ingredient = state.ingredients.find((item) => item.id === line.ingredientId); return <li key={line.ingredientId}>{ingredient?.name ?? line.ingredientId} · {line.qty} {ingredient?.unit}</li>; })}</ul><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction asChild><Button onClick={() => { if (!receiving) return; dispatch({ type: "receiveOrder", id: receiving.id }); toast.success("Delivery confirmed — food stock updated"); setReceiving(null); }}>Confirm delivery</Button></AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </section>;
 }

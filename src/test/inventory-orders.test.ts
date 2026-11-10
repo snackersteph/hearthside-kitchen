@@ -9,6 +9,21 @@ function ordered() {
 function orderId(s: ReturnType<typeof ordered>) { const id = s.orders?.[0]?.id; if (!id) throw new Error("Missing order"); return id; }
 
 describe("inventory order management", () => {
+  it("deletes an unconfirmed order without changing stock and removes its incoming quantities", () => {
+    const s = ordered();
+    const next = reducer(s, { type: "deleteOrder", id: orderId(s) }, reference);
+    expect(next.orders).toEqual([]);
+    expect(next.ingredients.find((i) => i.id === "chicken")?.stock).toBe(6);
+    expect(next.ingredients.find((i) => i.id === "chicken")?.onOrder).toBe(0);
+  });
+  it("deletes a confirmed order without reversing received stock", () => {
+    const s = ordered(); const id = orderId(s);
+    const received = reducer(s, { type: "receiveOrder", id }, reference);
+    const next = reducer(received, { type: "deleteOrder", id }, reference);
+    expect(next.orders).toEqual([]);
+    expect(next.ingredients.find((i) => i.id === "chicken")?.stock).toBe(14);
+    expect(next.ingredients.find((i) => i.id === "chicken")?.onOrder).toBe(0);
+  });
   it("edits incoming quantities, vendor and delivery without adding to stock", () => {
     const s = ordered();
     const next = reducer(s, { type: "updateOrder", id: orderId(s), vendor: "Valley Farms", deliveryDate: "2026-11-12", lines: [{ ingredientId: "chicken", qty: 4, shortage: 8 }] }, reference);

@@ -24,6 +24,7 @@ type Action =
   | { type: "setHorizon"; days: 7 | 14 }
   | { type: "setLeadTime"; days: number }
   | { type: "receiveOrder"; id: string }
+  | { type: "deleteOrder"; id: string }
   | { type: "placeStockOrder"; ingredientId: string; vendor: string; qty: number }
   | { type: "updateOrder"; id: string; vendor: string; deliveryDate: string; lines: PurchaseLine[] }
   | { type: "load"; state: KitchenState }
@@ -123,6 +124,14 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         }),
         history: [{ proposalId: order.id, kind: "purchase", status: "approved", at: reference.getTime(), summary: `Updated ${a.vendor.trim()} order · expected ${a.deliveryDate}`, modified: true }, ...s.history],
       };
+    }
+    case "deleteOrder": {
+      const order = s.orders?.find((o) => o.id === a.id);
+      if (!order) return s;
+      return { ...s, orders: (s.orders ?? []).filter((o) => o.id !== a.id), ingredients: s.ingredients.map((i) => {
+        const qty = order.status === "incoming" ? order.lines.filter((line) => line.ingredientId === i.id).reduce((sum, line) => sum + line.qty, 0) : 0;
+        return { ...i, onOrder: Math.max(0, i.onOrder - qty) };
+      }) };
     }
     case "receiveOrder": {
       const order = s.orders?.find((o) => o.id === a.id && o.status === "incoming");
