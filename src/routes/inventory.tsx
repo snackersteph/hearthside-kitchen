@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useKitchen } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AgentAvatar, Tag } from "@/components/kitchen/agents";
+import { InventoryAgentPanel } from "@/components/kitchen/inventory-agent-panel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -81,6 +82,8 @@ function InventoryPage() {
       </div>
       {Object.keys(forecast?.todayShortage ?? {}).length > 0 && <div className="mb-5 border-l-4 border-destructive bg-danger-soft p-4 text-sm"><div className="font-semibold text-destructive">Today's service needs attention</div><div className="mt-1">{Object.entries(forecast?.todayShortage ?? {}).map(([id, qty]) => { const i = state.ingredients.find((i) => i.id === id); return i ? `${i.name}: short ${qty} ${i.unit}` : `${id}: missing from inventory`; }).join(" · ")}</div><div className="mt-2 text-muted-foreground">Use an available-stock alternative or arrange an emergency transfer. New orders will not arrive in time for today's meals.</div></div>}
       {(forecast?.unresolved ?? 0) > 0 && <div className="mb-5 border-l-4 border-warning bg-warning-soft p-4 text-sm">{forecast?.unresolved} resident-meal conflicts have no safe alternative on file in this period. Forecast is provisional until staff resolve them.</div>}
+
+      <InventoryAgentPanel />
 
       {purchases.length > 0 && (
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-agent-inventory bg-agent-inventory-soft p-4">
