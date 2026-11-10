@@ -236,7 +236,7 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       const overrides = { ...s.scheduledOverrides?.[date]?.[a.meal] };
       for (const id of a.residentIds) delete overrides[id];
       return { ...s,
-        alternativePreferences: s.alternativePreferences?.filter((p) => !(p.meal === a.meal && p.fromDishId === a.fromDishId && a.residentIds.includes(p.residentId))),
+        alternativePreferences: (s.alternativePreferences ?? []).filter((p) => !(p.meal === a.meal && p.fromDishId === a.fromDishId && a.residentIds.includes(p.residentId))),
         scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: overrides } },
         mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } },
         history: [{ proposalId: `${a.proposalId}-decision-${s.history.length}`, kind: "substitution", status: "rejected", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: false, alternativeScope: { meal: a.meal, fromDishId: a.fromDishId, dishId: a.dishId, residentSignatures } }, ...s.history],

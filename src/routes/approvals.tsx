@@ -250,7 +250,7 @@ function RejectSubDialog({ p, onClose, onApprove }: { p: SubstitutionProposal; o
     toast(summary); onClose();
   };
   return <Dialog open onOpenChange={(o) => !o && onClose()}>
-    <DialogContent className="max-w-lg">
+    <DialogContent className="max-h-[85dvh] max-w-lg overflow-y-auto">
       <DialogHeader><DialogTitle className="font-display text-2xl">Reject {dishById(p.dishId).name}?</DialogTitle></DialogHeader>
       <p className="text-sm text-muted-foreground">Choose another alternative for {chosen.map((r) => r.name).join(", ")}:</p>
       <div className="space-y-2">{options.map((d) => {
