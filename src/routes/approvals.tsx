@@ -158,7 +158,6 @@ function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (
       <div className="mt-2 text-xl font-semibold tracking-tight">Serve date: {p.serviceDate}</div>
       <p className="mt-1 text-sm text-muted-foreground">
         Replaces the main menu dish <span className="font-medium text-foreground">{dishById(p.fromDishId).name}</span> for these residents
-        <span className="block text-xs">The main dish itself is served to everyone else and needs no approval.</span>
       </p>
       <div className="mt-2 flex flex-wrap gap-2">{p.approved ? <Tag tone="ok">Approved</Tag> : <Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag>}</div>
       <Select value={p.dishId} onValueChange={onDishChange} disabled={locked}>
