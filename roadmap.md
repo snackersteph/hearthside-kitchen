@@ -1,4 +1,5 @@
 # Inventory operations
+- [ ] Close completed approval cards with success feedback, align menu calendar/status counts with alternatives, and return to the originating meal; test and verify.
 - [x] Add individual resident and whole-card alternative approvals/rejections; test persistence and verify the page.
 - [x] Move delivered-order View below ingredients, keep Confirm delivery visible, fold other actions and confirmed deletion into three dots; test and verify.
 - [x] Rename vendor contact link and add delivered-order issue, replacement and rejection options that open vendor contact details; verify.
