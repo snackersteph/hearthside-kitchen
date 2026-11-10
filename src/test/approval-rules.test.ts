@@ -1,7 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { needsDietaryReview } from "@/components/kitchen/approval-rules";
+import { alternativeOverview, needsDietaryReview } from "@/components/kitchen/approval-rules";
 import { analyze, mealSignature } from "@/lib/kitchen/engine";
 import { initialState } from "@/lib/kitchen/data";
+import { reducer } from "@/lib/kitchen/store";
+
+describe("matching calendar and Approval Center alternatives", () => {
+  const reference = new Date("2026-11-10T12:00:00");
+  it("counts alternative cards rather than three main-meal sign-offs", () => {
+    const state = initialState();
+    const day = alternativeOverview(state, reference, ["2026-11-13"])[0];
+    if (!day) throw new Error("Missing day");
+    expect(day.pending.map((p) => p.id)).toEqual(analyze(state, reference).proposals.filter((p) => p.kind === "substitution" && p.serviceDate === "2026-11-13").map((p) => p.id));
+    let next = state;
+    for (const p of day.pending) next = reducer(next, { type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, serviceDate: p.serviceDate, modified: false, summary: "Approve all" }, reference);
+    const updated = alternativeOverview(next, reference, ["2026-11-13"])[0];
+    expect(updated?.pending.length).toBe(0);
+    expect(updated?.approved.length).toBe(day.pending.length);
+  });
+  it("covers dates beyond the old eight-day window without false approved labels", () => {
+    const state = initialState();
+    const day = alternativeOverview(state, reference).find((d) => d.date === "2026-12-10");
+    expect(day?.pending.length).toBeGreaterThan(0);
+    expect(day?.approved.length).toBe(0);
+  });
+  it("keeps today's alternatives out of the future approval queue", () => {
+    expect(alternativeOverview(initialState(), reference, ["2026-11-10"])[0]?.pending).toEqual([]);
+  });
+});
 
 describe("dietary-focused approval visibility", () => {
   const reference = new Date("2026-11-09T12:00:00");

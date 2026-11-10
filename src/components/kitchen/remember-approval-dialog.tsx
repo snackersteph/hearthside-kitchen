@@ -1,18 +1,19 @@
 import { toast } from "sonner";
-import { useKitchen } from "@/lib/kitchen/store";
+import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { dishById } from "@/lib/kitchen/data";
 import { canApproveMeal } from "@/lib/kitchen/schedule";
 import type { SubstitutionProposal } from "@/lib/kitchen/types";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export function RememberApprovalDialog({ p, onClose }: { p: SubstitutionProposal; onClose: () => void }) {
-  const { dispatch } = useKitchen();
+export function RememberApprovalDialog({ p, onClose, onApproved }: { p: SubstitutionProposal; onClose: () => void; onApproved?: () => void }) {
+  const { state, dispatch } = useKitchen();
   const late = !p.serviceDate || !canApproveMeal(p.serviceDate);
   function approve(remember: boolean) {
     if (!p.serviceDate || !canApproveMeal(p.serviceDate)) { toast.error("The approval deadline has passed"); onClose(); return; }
-    dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, serviceDate: p.serviceDate, modified: true, remember, summary: `Approved ${p.serviceDate} ${p.meal} alternative: ${dishById(p.dishId).name}` });
+    dispatch({ type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, serviceDate: p.serviceDate, modified: true, remember, summary: `Approved ${p.serviceDate} ${p.meal} alternative: ${dishById(p.dishId).name} for ${p.residentIds.map((id) => residentName(state, id)).join(", ")}` });
     toast.success(remember ? "Approved — future matching meals will auto-approve" : "Approved for this date only");
+    onApproved?.();
     onClose();
   }
   return <Dialog open onOpenChange={(open) => !open && onClose()}>

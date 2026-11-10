@@ -1,7 +1,22 @@
 import { dishById } from "@/lib/kitchen/data";
-import { conflictReasons, resolveMenuState, type MealReview } from "@/lib/kitchen/engine";
-import type { KitchenState, SubstitutionProposal } from "@/lib/kitchen/types";
-import { differenceInCalendarDays, parseISO } from "date-fns";
+import { analyzeMenuDay, conflictReasons, resolveMenuState, type MealReview } from "@/lib/kitchen/engine";
+import { MEALS, type KitchenState, type SubstitutionProposal } from "@/lib/kitchen/types";
+import { addMonths, differenceInCalendarDays, parseISO } from "date-fns";
+import { approvalDueDate, dateKey, dayAt } from "@/lib/kitchen/schedule";
+
+/** Calendar and Approval Center count the same dated alternative cards, not main-meal sign-offs. */
+export function alternativeOverview(state: KitchenState, reference: Date, dates?: string[]) {
+  const today = dateKey(reference);
+  const serviceDates = dates ?? Array.from({ length: differenceInCalendarDays(addMonths(reference, 2), reference) }, (_, i) => dateKey(dayAt(i + 1, reference)));
+  return serviceDates.map((date) => {
+    const offset = differenceInCalendarDays(parseISO(date), reference);
+    const result = analyzeMenuDay(state, offset, reference);
+    const day = resolveMenuState(state, offset, reference);
+    const pending = date > today ? result.proposals.filter((p): p is SubstitutionProposal => p.kind === "substitution") : [];
+    const reviews = MEALS.map((meal): MealReview => ({ serviceDate: date, meal, mainDishId: day.plan[meal], approvalDueDate: approvalDueDate(date), signature: "", approved: false, rejected: false, pending: 0, unresolved: 0 }));
+    return { date, pending, approved: approvedAlternatives(state, reviews, reference), unresolved: result.conflicts.filter((c) => c.status === "needs-staff") };
+  });
+}
 
 /** Keep accommodation reviews visible even after their alternatives are approved. */
 export function needsDietaryReview(state: KitchenState, review: MealReview) {

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
 import { useKitchen } from "@/lib/kitchen/store";
 import { MEALS } from "@/lib/kitchen/types";
+import { alternativeOverview } from "@/components/kitchen/approval-rules";
 
 export const Route = createFileRoute("/menu_/$date")({
   head: ({ params }) => ({ meta: [
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/menu_/$date")({
 
 function DatedMenuPage() {
   const { date } = Route.useParams();
-  const { analysis } = useKitchen();
+  const { state } = useKitchen();
   const { meal: focusMeal, focus } = Route.useSearch();
   const [reference, setReference] = useState<Date | null>(null);
   useEffect(() => {
@@ -55,6 +56,7 @@ function DatedMenuPage() {
     <PageHeader eyebrow="Daily Menu" title="Date outside the current menu" />
     <Button asChild variant="outline"><Link to="/menu"><ArrowLeft />Back to dates</Link></Button>
   </>;
+  const status = alternativeOverview(state, reference, [date])[0];
   return <>
     <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu"><ArrowLeft />All dates</Link></Button>
     <PageHeader eyebrow="Daily Menu" title={selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}>
@@ -67,9 +69,11 @@ function DatedMenuPage() {
     <Tabs key={date} defaultValue={focusMeal ?? "breakfast"}>
       <TabsList className="mb-5 grid h-auto w-full grid-cols-3 gap-1 bg-transparent p-0">
         {MEALS.map((meal) => {
-          const review = analysis.mealReviews?.find((r) => r.serviceDate === date && r.meal === meal);
+          const pending = status?.pending.filter((p) => p.meal === meal).length ?? 0;
+          const approved = status?.approved.some((p) => p.meal === meal);
+          const unresolved = status?.unresolved.some((c) => c.meal === meal);
           return <TabsTrigger key={meal} value={meal} className="min-h-16 flex-col gap-1 border border-transparent text-base data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            {MEAL_LABEL[meal]}<span className="text-[11px] font-normal">{offset < 0 ? "Past menu" : review?.approved ? "Approved" : "Needs approval"}</span>
+            {MEAL_LABEL[meal]}<span className="text-[11px] font-normal">{offset < 0 ? "Past menu" : pending ? `${pending} to approve` : unresolved ? "Needs attention" : approved ? "Approved" : "No approvals needed"}</span>
           </TabsTrigger>;
         })}
       </TabsList>

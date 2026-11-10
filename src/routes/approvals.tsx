@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
-import { Check, Pencil, X } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { ArrowLeft, Check, ChevronDown, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { DISHES, dishById } from "@/lib/kitchen/data";
@@ -15,15 +15,15 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { canApproveMeal, dateKey } from "@/lib/kitchen/schedule";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { approvedAlternatives } from "@/components/kitchen/approval-rules";
+import { alternativeOverview } from "@/components/kitchen/approval-rules";
 import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-dialog";
 
 export const Route = createFileRoute("/approvals")({
-  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal } => {
+  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; fromMenu?: boolean } => {
     const kind = search["kind"];
     const date = typeof search["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search["date"]) ? search["date"] : undefined;
     const meal = MEALS.find((m) => m === search["meal"]);
-    return { ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}) };
+    return { ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}) };
   },
   head: () => ({
     meta: [
@@ -40,14 +40,16 @@ export const Route = createFileRoute("/approvals")({
 
 function ApprovalsPage() {
   const { state, analysis } = useKitchen();
-  const { kind, date, meal } = Route.useSearch();
+  const { kind, date, meal, fromMenu } = Route.useSearch();
+  const [origin] = useState(() => fromMenu && date && meal ? { date, meal } : null);
   const navigate = Route.useNavigate();
   const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
   const today = dateKey(new Date());
-  const reviews = proposals.filter((p): p is SubstitutionProposal => p.kind === "substitution" && (p.serviceDate ?? "") > today).sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
-  const approved = kind === "purchase" ? [] : approvedAlternatives(state, analysis.mealReviews ?? []).filter((p) => (!date || p.serviceDate === date) && (!meal || p.meal === meal));
+  const overview = useMemo(() => alternativeOverview(state, new Date(), date ? [date] : undefined), [state, date, today]);
+  const reviews = kind === "purchase" ? [] : overview.flatMap((day) => day.pending).filter((p) => !meal || p.meal === meal).sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
+  const approved = kind === "purchase" ? [] : overview.flatMap((day) => day.approved).filter((p) => !meal || p.meal === meal);
   const purchases = proposals.filter((p) => p.kind === "purchase");
-  const defaultTab = kind === "purchase" ? "orders" : date && meal && approved.length ? "approved" : "pending";
+  const defaultTab = kind === "purchase" ? "orders" : "pending";
   const [tab, setTab] = useState(defaultTab);
   useEffect(() => { setTab(defaultTab); }, [defaultTab]);
   useEffect(() => {
@@ -68,6 +70,7 @@ function ApprovalsPage() {
   const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000).sort((x, y) => y.at - x.at);
   return (
     <>
+      {origin && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu/$date" params={{ date: origin.date }} search={{ meal: origin.meal, focus: true }}><ArrowLeft />Back to {MEAL_LABEL[origin.meal].toLowerCase()} menu</Link></Button>}
       <PageHeader eyebrow="Human in the loop" title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Proposal type">
         <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: {} })}>All proposals</Button>
@@ -112,7 +115,7 @@ function ApprovalsPage() {
           )}
         </TabsContent>
       </Tabs>
-      {approvalRequest && <RememberApprovalDialog p={approvalRequest} onClose={() => setApprovalRequest(null)} />}
+      {approvalRequest && <RememberApprovalDialog p={approvalRequest} onApproved={() => setTab("pending")} onClose={() => setApprovalRequest(null)} />}
     </>
   );
 }
@@ -130,11 +133,16 @@ function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boo
 }
 
 function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: SubstitutionProposal) => void }) {
+  const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [rejectionRequest, setRejectionRequest] = useState<SubstitutionProposal | null>(null);
   const [selectedDish, setSelectedDish] = useState(p.kind === "substitution" ? p.dishId : "");
   const selected: Proposal = p.kind === "substitution" ? { ...p, dishId: selectedDish } : p;
   const agent = AGENTS[p.agent];
+  if (p.kind === "substitution" && p.approved && !expanded) return <article id={`proposal-${p.id}`} className={cn("flex flex-wrap items-center justify-between gap-3 rounded-lg border border-l-4 bg-card p-4", agent.border)}>
+    <div><Tag tone="ok">Approved</Tag><div className="mt-2 font-semibold">{p.serviceDate} · {MEAL_LABEL[p.meal]} · {dishById(p.dishId).name}</div><div className="mt-1 text-sm text-muted-foreground">{p.residentIds.length} residents</div></div>
+    <Button variant="outline" size="sm" onClick={() => setExpanded(true)}><ChevronDown />View</Button>
+  </article>;
   return (
     <article id={`proposal-${p.id}`} className={cn("scroll-mt-24 transition-shadow", "rounded-lg border border-l-4 bg-card p-4 shadow-soft", agent.border)}>
       <div className="flex flex-wrap items-start gap-4">
