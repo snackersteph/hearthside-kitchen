@@ -22,7 +22,7 @@ function ProfileUpdates() {
   const [view, setView] = useState<"open" | "seen">("open");
   const updates = (state.profileUpdates ?? []).filter((u) => u.review === view).sort((a, b) => b.at - a.at);
   return <>
-    <Button asChild variant="ghost" className="mb-5"><Link to="/"><ArrowLeft />Command Center</Link></Button>
+    <Button asChild variant="ghost" className="mb-5"><Link to="/"><ArrowLeft />Kitchen Pulse</Link></Button>
     <PageHeader eyebrow="Resident care" title="Profile updates" />
     <div className="mb-6 flex gap-2 border-b pb-4">
       <Button variant={view === "open" ? "default" : "outline"} onClick={() => setView("open")}>Needs acknowledgment ({(state.profileUpdates ?? []).filter((u) => u.review === "open").length})</Button>
