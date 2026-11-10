@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
 import { Button } from "@/components/ui/button";
 import { analyzeMenuDay, resolveMenuState } from "@/lib/kitchen/engine";
-import { alternativeOverview } from "@/components/kitchen/approval-rules";
+import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 
 const MEAL_BG: Record<Meal, string> = { breakfast: "bg-meal-breakfast", lunch: "bg-meal-lunch", dinner: "bg-meal-dinner" };
 
@@ -29,6 +29,7 @@ export function MealSection({ meal, offset, reference }: { meal: Meal; offset: n
   const mainCount = Object.values(analysis.served[meal]).filter((d) => d === main.id).length;
   const status = alternativeOverview(kitchen, reference, [date])[0];
   const approvedCount = status?.approved.filter((p) => p.meal === meal).length ?? 0;
+  const pendingCount = residentApprovalCount(status?.pending.filter((p) => p.meal === meal) ?? []);
 
   return (
     <section className={cn("overflow-hidden rounded-2xl border shadow-soft", MEAL_BG[meal])}>
@@ -53,7 +54,7 @@ export function MealSection({ meal, offset, reference }: { meal: Meal; offset: n
             <SelectContent>{DISHES.filter((d) => d.meal === meal).map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
           </Select>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Tag tone={pending.length ? timely ? "warn" : "danger" : unresolved.length ? "danger" : "ok"}>{pending.length ? `${pending.length} to approve` : unresolved.length ? "Needs attention" : approvedCount ? "Approved" : "No approvals needed"}</Tag>
+            <Tag tone={pendingCount ? timely ? "warn" : "danger" : unresolved.length ? "danger" : "ok"}>{pendingCount ? `${pendingCount} to approve` : unresolved.length ? "Needs attention" : approvedCount ? "Approved" : "No approvals needed"}</Tag>
           </div>
           <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/approvals" search={{ kind: "substitution", date, meal, fromMenu: true }}>Review {MEAL_LABEL[meal].toLowerCase()} <ChevronRight /></Link></Button>
         </div>

@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { alternativeOverview, needsDietaryReview } from "@/components/kitchen/approval-rules";
+import { alternativeOverview, needsDietaryReview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 import { analyze, mealSignature } from "@/lib/kitchen/engine";
 import { initialState } from "@/lib/kitchen/data";
 import { reducer } from "@/lib/kitchen/store";
 
 describe("matching calendar and Approval Center alternatives", () => {
   const reference = new Date("2026-11-10T12:00:00");
+  it("counts residents instead of cards and decreases by one after an individual approval", () => {
+    const state = initialState();
+    const day = alternativeOverview(state, reference, ["2026-11-11"])[0];
+    const p = day?.pending.find((p) => p.residentIds.length > 1);
+    if (!day || !p) throw new Error("Missing grouped alternative");
+    const group = { ...p, residentIds: ["resident-1", "resident-2", "resident-3"] };
+    expect(residentApprovalCount([group])).toBe(3);
+    expect(residentApprovalCount([group, group])).toBe(3);
+    const before = residentApprovalCount(day.pending);
+    expect(before).toBeGreaterThan(day.pending.length);
+    const next = reducer(state, { type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds.slice(0, 1), serviceDate: p.serviceDate, modified: false, summary: "Individual approval" }, reference);
+    expect(residentApprovalCount(alternativeOverview(next, reference, ["2026-11-11"])[0]?.pending ?? [])).toBe(before - 1);
+  });
   it("counts alternative cards rather than three main-meal sign-offs", () => {
     const state = initialState();
     const day = alternativeOverview(state, reference, ["2026-11-13"])[0];

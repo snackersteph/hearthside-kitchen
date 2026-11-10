@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/kitchen/app-shell";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Tag } from "@/components/kitchen/agents";
 import { cn } from "@/lib/utils";
-import { alternativeOverview } from "@/components/kitchen/approval-rules";
+import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({ meta: [
@@ -42,7 +42,7 @@ function MenuPage() {
   function MenuDay(props: React.ComponentProps<typeof DayButton>) {
     const key = dateKey(props.day.date);
     const day = overview.find((day) => day.date === key);
-    const pending = day?.pending.length ?? 0;
+    const pending = residentApprovalCount(day?.pending ?? []);
     const status = pending ? `${pending} to approve` : day?.unresolved.length ? "Needs attention" : day?.approved.length ? "Approved" : "No approvals";
     const past = key < today;
     const isToday = key === today;

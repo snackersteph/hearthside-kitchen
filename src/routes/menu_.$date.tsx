@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
 import { useKitchen } from "@/lib/kitchen/store";
 import { MEALS } from "@/lib/kitchen/types";
-import { alternativeOverview } from "@/components/kitchen/approval-rules";
+import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 
 export const Route = createFileRoute("/menu_/$date")({
   head: ({ params }) => ({ meta: [
@@ -69,7 +69,7 @@ function DatedMenuPage() {
     <Tabs key={date} defaultValue={focusMeal ?? "breakfast"}>
       <TabsList className="mb-5 grid h-auto w-full grid-cols-3 gap-1 bg-transparent p-0">
         {MEALS.map((meal) => {
-          const pending = status?.pending.filter((p) => p.meal === meal).length ?? 0;
+          const pending = residentApprovalCount(status?.pending.filter((p) => p.meal === meal) ?? []);
           const approved = status?.approved.some((p) => p.meal === meal);
           const unresolved = status?.unresolved.some((c) => c.meal === meal);
           return <TabsTrigger key={meal} value={meal} className="min-h-16 flex-col gap-1 border border-transparent text-base data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
