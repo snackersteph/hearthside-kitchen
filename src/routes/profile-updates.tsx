@@ -4,6 +4,7 @@ import { ArrowLeft, Check, CircleCheck } from "lucide-react";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { Button } from "@/components/ui/button";
+import { draftProfileChanges } from "@/lib/kitchen/profile-changes";
 
 export const Route = createFileRoute("/profile-updates")({
   head: () => ({ meta: [
@@ -20,7 +21,11 @@ export const Route = createFileRoute("/profile-updates")({
 function ProfileUpdates() {
   const { state, dispatch } = useKitchen();
   const [view, setView] = useState<"open" | "seen">("open");
-  const updates = (state.profileUpdates ?? []).filter((u) => u.review === view).sort((a, b) => b.at - a.at);
+  const updates = (state.profileUpdates ?? []).filter((u) => u.review === view).sort((a, b) => b.at - a.at).map((u) => ({
+    ...u,
+    isDraft: !u.changes?.length,
+    changes: u.changes?.length ? u.changes : draftProfileChanges(u.residentId),
+  }));
   return <>
     <Button asChild variant="ghost" className="mb-5"><Link to="/"><ArrowLeft />Kitchen Pulse</Link></Button>
     <PageHeader eyebrow="Resident care" title="Profile updates" />
@@ -34,13 +39,14 @@ function ProfileUpdates() {
         <div><h2 className="text-lg font-semibold">{state.residents.some((r) => r.id === u.residentId) ? <Link to="/residents/$residentId" params={{ residentId: u.residentId }} className="text-primary hover:underline">{residentName(state, u.residentId)}</Link> : u.residentName ?? u.residentId}</h2><p className="text-sm text-muted-foreground">{new Date(u.at).toLocaleString()} · {u.summary}</p></div>
         {u.review === "open" ? <Button onClick={() => dispatch({ type: "acknowledgeProfileUpdate", id: u.id })}><Check />Acknowledge update</Button> : <span className="text-sm text-success">Acknowledged{u.acknowledgedAt ? ` · ${new Date(u.acknowledgedAt).toLocaleString()}` : ""}</span>}
       </header>
-      {u.changes?.length ? <div className="divide-y">{u.changes.map((c) => <div key={c.field} className="py-4 first:pt-0">
+      {u.isDraft && <p className="mb-4 text-xs font-medium text-muted-foreground">Draft example · Not a recorded care change</p>}
+      <div className="divide-y">{u.changes.map((c) => <div key={c.field} className="py-4 first:pt-0">
         <h3 className="mb-2 text-sm font-semibold">{c.field}</h3>
         <div className="grid gap-4 sm:grid-cols-2">{([{ label: "Previous content", value: c.before }, { label: "Updated content", value: c.after }]).map((entry) => <div key={entry.label} className="min-w-0 border-l-2 pl-3">
           <div className="mb-1 text-xs font-semibold text-muted-foreground">{entry.label}</div>
-          {c.kind === "photo" && entry.value ? <img src={entry.value} alt={entry.label} className="h-24 w-24 rounded-lg object-cover" /> : <p className="whitespace-pre-wrap break-words text-sm">{entry.value || "Not specified"}</p>}
+          {c.kind === "photo" && entry.value ? <img src={entry.value} alt={entry.label} className="h-24 w-24 rounded-lg object-cover" /> : <p className="whitespace-pre-wrap break-words text-sm">{entry.label === "Previous content" ? <del className="text-muted-foreground">{entry.value || "Not specified"}</del> : entry.value || "Not specified"}</p>}
         </div>)}</div>
-      </div>)}</div> : <p className="text-sm text-muted-foreground">Previous and updated content was not recorded for this older update.</p>}
+      </div>)}</div>
     </article>)}</div>
   </>;
 }

@@ -2,6 +2,17 @@ import type { Resident } from "./types";
 
 export interface ProfileContentChange { field: string; before: string; after: string; kind?: "photo" }
 
+/** Illustrative comparisons only; never overwrite a resident's care record. */
+export function draftProfileChanges(residentId: string): ProfileContentChange[] {
+  return residentId === "R012" ? [
+    { field: "Favorite foods", before: "Chicken soup and mashed potatoes", after: "Chicken soup, mashed potatoes and steamed carrots" },
+    { field: "Meal instructions", before: "Prefers meals served in the dining room.", after: "Prefers meals served in the dining room. Offer smaller portions and a second helping if requested." },
+  ] : [
+    { field: "Meal instructions", before: "Independent at mealtimes.", after: "Provide assistance with cutting food and check that the resident is comfortably seated before serving." },
+    { field: "Clinical notes", before: "Appetite is good; usually finishes meals.", after: "Appetite has decreased this week. Record how much is eaten and offer an afternoon snack." },
+  ];
+}
+
 /** Store content at edit time, never reconstruct the old profile from the current one. */
 export function profileContentChanges(previous: Resident, next: Resident): ProfileContentChange[] {
   const changes: ProfileContentChange[] = [];
