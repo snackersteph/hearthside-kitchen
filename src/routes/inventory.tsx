@@ -5,7 +5,9 @@ import { AgentAvatar, Tag } from "@/components/kitchen/agents";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, ShoppingCart } from "lucide-react";
+import { StockOrderDialog } from "@/components/kitchen/stock-order-dialog";
+import { stockOrderEstimate } from "@/lib/kitchen/stock-orders";
 import { InventoryOrders } from "@/components/kitchen/inventory-orders";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
 import { useState } from "react";
@@ -39,6 +41,7 @@ function InventoryPage() {
   const navigate = Route.useNavigate();
   const setView = (view: "stock" | "delivered" | "incoming") => navigate({ search: { view } });
   const [editing, setEditing] = useState<Ingredient | null>(null);
+  const [ordering, setOrdering] = useState<Ingredient | null>(null);
   const [deleting, setDeleting] = useState<Ingredient | null>(null);
   const [query, setQuery] = useState("");
   const purchases = analysis.proposals.filter((p) => p.kind === "purchase");
@@ -51,6 +54,8 @@ function InventoryPage() {
     const r = (i: typeof a) => (forecast?.demand[i.id] ?? 0) / Math.max(0.01, i.stock + i.onOrder);
     return r(b) - r(a);
   });
+
+  const alertRows = rows.filter((i) => Boolean(forecast?.firstShortDate[i.id]) || (stockOrderEstimate(state, i.id, forecast?.demand[i.id] ?? 0)?.qty ?? 0) > 0);
 
   return (
     <>
@@ -74,12 +79,6 @@ function InventoryPage() {
         </label>
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <div className="border-l-2 border-destructive pl-4"><div className="text-xs text-muted-foreground">Short for today's service</div><div className="mt-1 text-2xl font-semibold">{Object.keys(forecast?.todayShortage ?? {}).length} ingredients</div></div>
-        <div className="border-l-2 border-agent-inventory pl-4"><div className="text-xs text-muted-foreground">Purchases to review</div><div className="mt-1 text-2xl font-semibold">${purchases.reduce((sum, p) => sum + p.total, 0).toFixed(2)}</div></div>
-        <div className="border-l-2 border-success pl-4"><div className="text-xs text-muted-foreground">Incoming deliveries</div><div className="mt-1 text-2xl font-semibold">{incoming.length} orders</div></div>
-      </div>
-      {Object.keys(forecast?.todayShortage ?? {}).length > 0 && <div className="mb-5 border-l-4 border-destructive bg-danger-soft p-4 text-sm"><div className="font-semibold text-destructive">Today's service needs attention</div><div className="mt-1">{Object.entries(forecast?.todayShortage ?? {}).map(([id, qty]) => { const i = state.ingredients.find((i) => i.id === id); return i ? `${i.name}: short ${qty} ${i.unit}` : `${id}: missing from inventory`; }).join(" · ")}</div><div className="mt-2 text-muted-foreground">Use an available-stock alternative or arrange an emergency transfer. New orders will not arrive in time for today's meals.</div></div>}
       {(forecast?.unresolved ?? 0) > 0 && <div className="mb-5 border-l-4 border-warning bg-warning-soft p-4 text-sm">{forecast?.unresolved} resident-meal conflicts have no safe alternative on file in this period. Forecast is provisional until staff resolve them.</div>}
 
       {purchases.length > 0 && (
@@ -94,9 +93,9 @@ function InventoryPage() {
       )}
 
       <div role="tablist" aria-label="Ingredient sections" className="sticky top-0 z-10 -mx-1 mb-6 flex flex-wrap gap-2 bg-background/95 px-1 py-3 backdrop-blur">
-        {["All", ...FOOD_CATEGORIES].map((c) => { const n = c === "All" ? rows.length : rows.filter((i) => ingredientCategory(i) === c).length; if (c !== "All" && !n) return null; return <Button key={c} role="tab" aria-selected={tab === c} onClick={() => setTab(c)} variant={tab === c ? "default" : "outline"}>{c} <span className="ml-1 opacity-70">{n}</span></Button>; })}
+        {["All", "Stock alert", ...FOOD_CATEGORIES].map((c) => { const n = c === "All" ? rows.length : c === "Stock alert" ? alertRows.length : rows.filter((i) => ingredientCategory(i) === c).length; if (c !== "All" && c !== "Stock alert" && !n) return null; return <Button key={c} role="tab" aria-selected={tab === c} onClick={() => setTab(c)} variant={tab === c ? "default" : "outline"}>{c} <span className="ml-1 opacity-70">{n}</span></Button>; })}
       </div>
-      {FOOD_CATEGORIES.filter((c) => tab === "All" || c === tab).map((category) => { const categoryRows = rows.filter((i) => ingredientCategory(i) === category); if (!categoryRows.length) return null; return <section key={category} aria-label={category} className="mb-8"><h2 className="mb-3 font-display text-xl font-semibold">{category} <span className="ml-2 text-sm font-normal text-muted-foreground">{categoryRows.length}</span></h2><div className="overflow-x-auto rounded-lg border bg-card">
+      {FOOD_CATEGORIES.filter((c) => tab === "All" || tab === "Stock alert" || c === tab).map((category) => { const categoryRows = (tab === "Stock alert" ? alertRows : rows).filter((i) => ingredientCategory(i) === category); if (!categoryRows.length) return null; return <section key={category} aria-label={category} className="mb-8"><h2 className="mb-3 font-display text-xl font-semibold">{category} <span className="ml-2 text-sm font-normal text-muted-foreground">{categoryRows.length}</span></h2><div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
             <tr><th className="px-4 py-3">Ingredient</th><th className="px-4 py-3">In stock</th><th className="px-4 py-3">On order</th><th className="px-4 py-3">Today</th><th className="px-4 py-3">{horizon}-day consumption</th><th className="w-44 px-4 py-3">First shortage</th><th className="px-4 py-3">Vendor</th><th className="px-4 py-3"><span className="sr-only">Actions</span></th></tr>
@@ -121,16 +120,18 @@ function InventoryPage() {
                   <td className="px-4 py-3">
                     {shortageDate ? <div className={cn("text-xs font-semibold", shortageDate <= dateKey(dayAt(state.leadTimeDays ?? 2)) ? "text-destructive" : "text-warning")}><div>{shortageDate === today ? "Today" : dateLabel(shortageDate)}</div><div className="mt-1 font-normal">{shortageDate <= dateKey(dayAt(state.leadTimeDays ?? 2)) ? "Inside lead time" : "Order ahead"}</div></div> : <Tag tone="ok">Covered</Tag>}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{i.vendor}</td><td className="px-3 py-3"><div className="flex gap-1"><Button size="icon" variant="ghost" aria-label={`Edit ${i.name}`} title={`Edit ${i.name}`} onClick={() => setEditing(i)}><Pencil /></Button><Button size="icon" variant="ghost" className="text-destructive" aria-label={`Delete ${i.name}`} title={`Delete ${i.name}`} onClick={() => setDeleting(i)}><Trash2 /></Button></div></td>
+                  <td className="px-4 py-3 text-muted-foreground">{i.vendor}</td><td className="px-3 py-3"><div className="flex gap-1">{tab === "Stock alert" && <Button size="sm" variant="outline" onClick={() => setOrdering(i)}><ShoppingCart />Order</Button>}<Button size="icon" variant="ghost" aria-label={`Edit ${i.name}`} title={`Edit ${i.name}`} onClick={() => setEditing(i)}><Pencil /></Button><Button size="icon" variant="ghost" className="text-destructive" aria-label={`Delete ${i.name}`} title={`Delete ${i.name}`} onClick={() => setDeleting(i)}><Trash2 /></Button></div></td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div></section>; })}
+      {tab === "Stock alert" && !alertRows.length && <p className="border-y py-8 text-center text-muted-foreground">No stock alerts for this forecast period.</p>}
       {!rows.length && <p className="border-y py-8 text-center text-muted-foreground">No ingredients found.</p>}
       <p className="mt-3 text-xs text-muted-foreground">Estimate from the sample rotating menu, including dietary alternatives. Today's consumption is included. Incoming stock counts only from its expected delivery date; available stock changes when a delivery is received.</p>
       </>}
+      {ordering && <StockOrderDialog ingredient={ordering} demand={forecast?.demand[ordering.id] ?? 0} shortageDate={forecast?.firstShortDate[ordering.id]} onClose={() => setOrdering(null)} />}
       {(adding || editing) && <IngredientEditDialog {...(editing ? { ingredient: editing } : {})} onClose={() => { setAdding(false); setEditing(null); }} />}
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}><AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg"><AlertDialogHeader><AlertDialogTitle>Delete {deleting?.name}?</AlertDialogTitle><AlertDialogDescription>This removes this inventory item and its order lines. This cannot be undone.{deleting && DISHES.some((d) => d.ingredients.some((i) => i.id === deleting.id)) && " Meals still require this ingredient; it will be flagged as missing until you add it again or change the menu."}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction asChild><Button variant="destructive" onClick={() => { if (!deleting) return; dispatch({ type: "deleteIngredient", id: deleting.id }); setDeleting(null); }}>Confirm delete</Button></AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </>

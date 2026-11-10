@@ -1,4 +1,5 @@
 # Inventory operations
+- [x] Remove pictured summary/warning; add Stock alert with vendor, estimated pricing, suggested quantities and delivery-aware ordering; verify persistence.
 - [x] Forecast ingredient consumption over 7 or 14 days from the shared menu schedule.
 - [x] Separate available stock from incoming deliveries and track approved orders.
 - [x] Open order-only reviews from Inventory.

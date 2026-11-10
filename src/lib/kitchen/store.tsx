@@ -7,6 +7,7 @@ import { ADDITIONAL_RESIDENTS } from "./additional-residents";
 import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
 import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 import { profileContentChanges } from "./profile-changes";
+import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orders";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -23,6 +24,7 @@ type Action =
   | { type: "setHorizon"; days: 7 | 14 }
   | { type: "setLeadTime"; days: number }
   | { type: "receiveOrder"; id: string }
+  | { type: "placeStockOrder"; ingredientId: string; vendor: string; qty: number }
   | { type: "updateOrder"; id: string; vendor: string; deliveryDate: string; lines: PurchaseLine[] }
   | { type: "load"; state: KitchenState }
   | { type: "reset" }
@@ -241,6 +243,20 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       const o = { ...s.overrides[a.meal] };
       for (const id of a.residentIds) o[id] = a.dishId;
       return { ...s, overrides: { ...s.overrides, [a.meal]: o }, history: [{ proposalId: a.proposalId, kind: "substitution", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified }, ...s.history] };
+    }
+    case "placeStockOrder": {
+      const parsed = stockOrderSchema.safeParse(a);
+      if (!parsed.success || !stockVendors(s).includes(parsed.data.vendor)) return s;
+      const { ingredientId, vendor, qty } = parsed.data;
+      const estimate = stockOrderEstimate(s, ingredientId, 0, reference);
+      const ingredient = s.ingredients.find((i) => i.id === ingredientId);
+      if (!estimate || !ingredient) return s;
+      const id = `stock-${reference.getTime()}-${s.history.length}`;
+      return { ...s,
+        orders: [...(s.orders ?? []), { id, vendor, deliveryDate: estimate.deliveryDate, status: "incoming", lines: [{ ingredientId, qty, shortage: 0 }] }],
+        ingredients: s.ingredients.map((i) => i.id === ingredientId ? { ...i, onOrder: i.onOrder + qty } : i),
+        history: [{ proposalId: id, kind: "purchase", status: "approved", at: reference.getTime(), modified: true, summary: `Ordered ${qty} ${ingredient.unit} ${ingredient.name} from ${vendor} · Estimated $${(qty * ingredient.unitCost).toFixed(2)}` }, ...s.history],
+      };
     }
     case "approvePurchase":
       return {
