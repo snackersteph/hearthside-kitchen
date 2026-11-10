@@ -156,6 +156,10 @@ function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (
   return (
     <>
       <div className="mt-2 text-xl font-semibold tracking-tight">Serve date: {p.serviceDate}</div>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Replaces the main menu dish <span className="font-medium text-foreground">{dishById(p.fromDishId).name}</span> for these residents
+        <span className="block text-xs">The main dish itself is served to everyone else and needs no approval.</span>
+      </p>
       <div className="mt-2 flex flex-wrap gap-2">{p.approved ? <Tag tone="ok">Approved</Tag> : <Tag tone={p.serviceDate && canApproveMeal(p.serviceDate) ? "warn" : "danger"}>Approval due {p.approvalDueDate}</Tag>}</div>
       <Select value={p.dishId} onValueChange={onDishChange} disabled={locked}>
         <SelectTrigger aria-label={`Alternative dish for ${p.residentIds.map((id) => residentName(state, id)).join(", ")}`} className="mt-2 h-auto min-h-10 w-full max-w-lg whitespace-normal text-left text-base font-semibold [&>span]:line-clamp-none [&>span]:break-words"><SelectValue /></SelectTrigger>
