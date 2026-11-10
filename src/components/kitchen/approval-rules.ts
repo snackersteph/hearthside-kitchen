@@ -4,7 +4,12 @@ import { MEALS, type KitchenState, type SubstitutionProposal } from "@/lib/kitch
 import { addMonths, differenceInCalendarDays, parseISO } from "date-fns";
 import { approvalDueDate, dateKey, dayAt } from "@/lib/kitchen/schedule";
 
-/** Calendar and Approval Center count the same dated alternative cards, not main-meal sign-offs. */
+/** Count resident meal decisions, deduplicating duplicate suggestions for the same service. */
+export function residentApprovalCount(proposals: SubstitutionProposal[]) {
+  return new Set(proposals.flatMap((p) => p.residentIds.map((id) => `${p.serviceDate}-${p.meal}-${id}`))).size;
+}
+
+/** Calendar and Approval Center share the same dated resident alternative decisions. */
 export function alternativeOverview(state: KitchenState, reference: Date, dates?: string[]) {
   const today = dateKey(reference);
   const serviceDates = dates ?? Array.from({ length: differenceInCalendarDays(addMonths(reference, 2), reference) }, (_, i) => dateKey(dayAt(i + 1, reference)));
