@@ -131,6 +131,7 @@ function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boo
 
 function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: SubstitutionProposal) => void }) {
   const [editing, setEditing] = useState(false);
+  const [rejectionRequest, setRejectionRequest] = useState<SubstitutionProposal | null>(null);
   const [selectedDish, setSelectedDish] = useState(p.kind === "substitution" ? p.dishId : "");
   const selected: Proposal = p.kind === "substitution" ? { ...p, dishId: selectedDish } : p;
   const agent = AGENTS[p.agent];
@@ -140,16 +141,17 @@ function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: Substituti
         <AgentAvatar agent={p.agent} />
         <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-0">
           <div className="text-xs font-semibold text-muted-foreground">{agent.name} · {p.kind === "substitution" ? `${MEAL_LABEL[p.meal]} substitution` : "Purchase request"}</div>
-          {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={setSelectedDish} /> : <PurchaseBody p={selected} />}
+          {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={setSelectedDish} onApprove={onApprove} onReject={setRejectionRequest} /> : <PurchaseBody p={selected} />}
         </div>
         <Actions p={selected} onApprove={onApprove} onModify={() => setEditing(true)} />
       </div>
       {editing && (p.kind === "substitution" ? <RejectSubDialog p={p} onApprove={onApprove} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}
+      {rejectionRequest && <RejectSubDialog p={rejectionRequest} onApprove={onApprove} onClose={() => setRejectionRequest(null)} />}
     </article>
   );
 }
 
-function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (id: string) => void }) {
+function SubBody({ p, onDishChange, onApprove, onReject }: { p: SubstitutionProposal; onDishChange: (id: string) => void; onApprove: (p: SubstitutionProposal) => void; onReject: (p: SubstitutionProposal) => void }) {
   const { state } = useKitchen();
   const residents = state.residents.filter((resident) => p.residentIds.includes(resident.id));
   const locked = Boolean(p.approved && (!p.serviceDate || p.serviceDate <= dateKey(new Date())));
@@ -165,13 +167,17 @@ function SubBody({ p, onDishChange }: { p: SubstitutionProposal; onDishChange: (
         <SelectContent>{DISHES.filter((dish) => dish.meal === p.meal).map((dish) => <SelectItem key={dish.id} value={dish.id} disabled={residents.some((resident) => conflictReasons(resident, dish).length > 0)}>{dish.name}</SelectItem>)}</SelectContent>
       </Select>
       <div className="mt-1 text-xs text-muted-foreground">{p.residentIds.length} resident{p.residentIds.length > 1 ? "s" : ""}</div>
-      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+      <ul className="mt-4 grid gap-2 xl:grid-cols-2">
         {p.residentIds.map((id) => (
-          <li key={id}>
-            <Link to="/residents/$residentId" params={{ residentId: id }} search={{ approval: p.id }} className="block rounded-lg bg-muted/60 px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <li key={id} className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/60 px-3 py-2" aria-label={`Decision for ${residentName(state, id)}`}>
+            <Link to="/residents/$residentId" params={{ residentId: id }} search={{ approval: p.id }} className="min-w-0 flex-1 basis-40 text-sm transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span className="font-medium underline-offset-2 hover:underline">{residentName(state, id)}</span>
               <span className="text-muted-foreground"> — {p.reasons[id]?.join(", ")}</span>
             </Link>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={locked} aria-label={`Reject for ${residentName(state, id)}`} onClick={() => onReject({ ...p, residentIds: [id] })}><X />Reject</Button>
+              <ApproveButton disabled={locked} onClick={() => onApprove({ ...p, residentIds: [id] })}>Approve</ApproveButton>
+            </div>
           </li>
         ))}
       </ul>
@@ -221,9 +227,9 @@ function Actions({ p, onModify, onApprove }: { p: Proposal; onModify: () => void
   return (
     <div className="flex gap-2">
       {p.kind === "substitution"
-        ? <Button variant="outline" size="sm" onClick={onModify}><X /> Reject</Button>
+        ? <Button variant="outline" size="sm" disabled={late} onClick={onModify}><X /> Reject all</Button>
         : <><Button variant="outline" size="sm" onClick={reject}><X /> Reject</Button><Button variant="outline" size="sm" onClick={onModify}><Pencil /> Modify</Button></>}
-      <ApproveButton reason={late ? "Past the approval deadline" : undefined} onClick={approve}>{p.kind === "substitution" && p.approved ? "Approve change" : "Approve"}</ApproveButton>
+      <ApproveButton disabled={late} reason={late ? "Past the approval deadline" : undefined} onClick={approve}>{p.kind === "substitution" ? "Approve all" : "Approve"}</ApproveButton>
     </div>
   );
 }
@@ -240,7 +246,7 @@ function RejectSubDialog({ p, onClose, onApprove }: { p: SubstitutionProposal; o
   };
   const rejectOnly = () => {
     const summary = summarize(state, p, "Rejected");
-    dispatch({ type: "reject", proposalId: p.id, kind: "substitution", summary, serviceDate: p.serviceDate });
+    dispatch({ type: "rejectSub", proposalId: p.id, meal: p.meal, fromDishId: p.fromDishId, dishId: p.dishId, residentIds: p.residentIds, summary, serviceDate: p.serviceDate });
     toast(summary); onClose();
   };
   return <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -249,12 +255,12 @@ function RejectSubDialog({ p, onClose, onApprove }: { p: SubstitutionProposal; o
       <p className="text-sm text-muted-foreground">Choose another alternative for {chosen.map((r) => r.name).join(", ")}:</p>
       <div className="space-y-2">{options.map((d) => {
         const bad = chosen.filter((r) => conflictReasons(r, d).length).length;
-        return <button key={d.id} type="button" disabled={bad > 0} onClick={() => setDishId(d.id)} className={cn("flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm disabled:opacity-50", dishId === d.id ? "border-primary bg-secondary" : "hover:border-primary")}>
+        return <Button variant="outline" key={d.id} type="button" disabled={bad > 0} onClick={() => setDishId(d.id)} className={cn("flex h-auto w-full items-center justify-between whitespace-normal rounded-lg border px-3 py-2 text-left text-sm disabled:opacity-50", dishId === d.id ? "border-primary bg-secondary" : "hover:border-primary")}>
           <span className="font-medium">{d.name}</span>{bad ? <Tag tone="danger">unsafe for {bad}</Tag> : <Tag tone="ok">safe</Tag>}
-        </button>;
+        </Button>;
       })}</div>
       <DialogFooter>
-        <Button variant="outline" onClick={rejectOnly}>Reject without replacement</Button>
+        <Button variant="outline" disabled={late} onClick={rejectOnly}>Reject without replacement</Button>
         <ApproveButton disabled={!dishId || late} reason={late ? "Past the approval deadline" : !dishId ? "Select a dish above" : undefined} onClick={choose}>Reject & use selected</ApproveButton>
       </DialogFooter>
     </DialogContent>

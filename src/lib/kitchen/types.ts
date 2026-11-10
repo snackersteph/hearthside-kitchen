@@ -57,6 +57,7 @@ export interface Decision {
   modified: boolean;
   serviceDate?: string;
   note?: string;
+  alternativeScope?: { meal: Meal; fromDishId: string; dishId: string; residentSignatures: Record<string, string> };
 }
 
 /** A staff-visible record that a resident's care information was changed. */

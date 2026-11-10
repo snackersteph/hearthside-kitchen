@@ -107,7 +107,7 @@ export function analyzeMenuDay(state: KitchenState, offset = 0, reference = new 
 }
 
 function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
-  const decided = new Set(state.history.filter((h) => h.status === "rejected").map((h) => h.proposalId));
+  const decided = new Set(state.history.filter((h) => h.status === "rejected" && !h.alternativeScope).map((h) => h.proposalId));
   const conflicts: Conflict[] = [];
   const proposals: Proposal[] = [];
   const messages: AgentMessage[] = [];
@@ -145,7 +145,12 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
     });
 
     // Menu Agent: greedy cover of conflicted residents with safe alternatives.
-    let remaining = [...conflicted];
+    let remaining = conflicted.filter((c) => {
+      const decision = state.history.find((h) => h.serviceDate === serviceDate && h.alternativeScope?.meal === meal && h.alternativeScope.fromDishId === main.id && h.alternativeScope.residentSignatures[c.r.id] === dietarySignature(c.r));
+      if (decision?.status !== "rejected") return true;
+      conflicts.push({ meal, residentId: c.r.id, dishId: c.dishId, reasons: c.reasons, status: "needs-staff" });
+      return false;
+    });
     const remembered = new Map<string, typeof remaining>();
     for (const c of remaining) {
       const preference = state.alternativePreferences?.find((p) => p.residentId === c.r.id && p.meal === meal && p.fromDishId === main.id);
