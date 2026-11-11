@@ -1,5 +1,4 @@
 # Visual refresh
-- [x] Try a crisp, modern interface with refined navigation, flatter surfaces and recipe cards; preserve green, red/yellow indicators and all workflows.
 - [x] Refresh shared colors, navigation, typography and controls to complement the logo without changing behavior; verify pages and existing workflows.
 
 # Inventory operations

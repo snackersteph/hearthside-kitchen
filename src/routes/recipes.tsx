@@ -60,7 +60,7 @@ function RecipesPage() {
         </div>
       </PageHeader>
 
-      <div className="recipe-filters mb-6 flex flex-wrap gap-3 border-b pb-5">
+      <div className="mb-6 flex flex-wrap gap-3 border-b pb-5">
         <Filter label="Meal" value={meal} onChange={setMeal} options={MEALS} />
         <Filter label="Category" value={category} onChange={setCategory} options={DISH_CATEGORIES} />
         <Filter label="Recipe type" value={type} onChange={setType} options={RECIPE_TYPES} />
@@ -79,17 +79,17 @@ function RecipesPage() {
       {rows.length === 0 ? <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">No recipes match these filters.</div> :
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((r) => (
-            <Button key={r.id} variant="ghost" onClick={() => setOpen(r)} className={cn("recipe-card flex h-auto flex-col items-stretch justify-start gap-0 whitespace-normal overflow-hidden border p-0 text-left", r.meal === "breakfast" ? "bg-meal-breakfast hover:bg-meal-breakfast" : r.meal === "lunch" ? "bg-meal-lunch hover:bg-meal-lunch" : "bg-meal-dinner hover:bg-meal-dinner")}>
-              <img src={recipePhoto(r.id, r.name)} alt={r.name} loading="lazy" width={992} height={672} className="recipe-card-image w-full object-cover" />
-              <div className="recipe-card-body">
-              <div className="flex flex-wrap items-start justify-between gap-2"><div className="recipe-card-meta text-xs text-muted-foreground">{MEAL_LABEL[r.meal]} · {recipeCategory(r)}</div><StockBadge recipe={r} servings={servings} compact /></div>
-              <div className="recipe-card-title font-semibold leading-snug">{r.name}</div>
+            <button key={r.id} onClick={() => setOpen(r)} className={cn("overflow-hidden rounded-xl border text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
+              <img src={recipePhoto(r.id, r.name)} alt={r.name} loading="lazy" width={992} height={672} className="aspect-[16/9] w-full object-cover" />
+              <div className="p-5">
+              <div className="flex items-start justify-between gap-2"><div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[r.meal]} · {recipeCategory(r)}</div><StockBadge recipe={r} servings={servings} compact /></div>
+              <div className="mt-1 text-lg font-semibold leading-snug">{r.name}</div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Tag>{label(recipeType(r))}</Tag><Tag>{r.dietGroup}</Tag><Tag>{r.texture} texture</Tag>
                 {r.allergens.map((a) => <Tag key={a} tone="danger">{a}</Tag>)}
               </div>
               </div>
-            </Button>
+            </button>
           ))}
         </div>}
 
