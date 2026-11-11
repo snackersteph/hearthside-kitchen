@@ -1,4 +1,5 @@
 # Visual refresh
+- [x] Try a light sage navigation, new typography and a split dashboard layout; preserve all actions and red/yellow warnings and verify.
 - [x] Try an editorial font pairing, forest-green navigation and cool secondary neutrals; preserve warning colors and behavior and verify layouts.
 - [x] Refresh shared colors, navigation, typography and controls to complement the logo without changing behavior; verify pages and existing workflows.
 

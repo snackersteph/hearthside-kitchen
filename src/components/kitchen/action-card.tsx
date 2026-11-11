@@ -10,7 +10,7 @@ export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { ca
   const clear = card.value === 0;
   return (
     <div className={cn(
-      "flex flex-col rounded-xl border p-5 shadow-soft transition-colors",
+      "pulse-action flex flex-col rounded-xl border p-5 shadow-soft transition-colors",
       clear ? "border-success/25 bg-action-complete" : "border-destructive/20 bg-action-needed",
     )}>
       <div className="flex h-16 items-start justify-between gap-2 text-sm font-medium">
