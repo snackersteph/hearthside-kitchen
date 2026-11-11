@@ -1,5 +1,4 @@
 # Visual refresh
-- [x] Try graphite navigation, vivid green selection, silver surfaces and a new font pairing without changing warnings or workflows; verify pages.
 - [x] Try an editorial font pairing, forest-green navigation and cool secondary neutrals; preserve warning colors and behavior and verify layouts.
 - [x] Refresh shared colors, navigation, typography and controls to complement the logo without changing behavior; verify pages and existing workflows.
 
