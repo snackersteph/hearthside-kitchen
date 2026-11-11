@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentRoomRouteImport } from './routes/agent-room'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as InventoryRouteImport } from './routes/inventory'
@@ -26,6 +27,11 @@ import { Route as VendorsVendorIdRouteImport } from './routes/vendors_.$vendorId
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentRoomRoute = AgentRoomRouteImport.update({
+  id: '/agent-room',
+  path: '/agent-room',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApprovalsRoute = ApprovalsRouteImport.update({
@@ -91,6 +97,7 @@ const VendorsVendorIdRoute = VendorsVendorIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
@@ -122,6 +130,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agent-room'
     | '/approvals'
     | '/dashboard'
     | '/inventory'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agent-room'
     | '/approvals'
     | '/dashboard'
     | '/inventory'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agent-room'
     | '/approvals'
     | '/dashboard'
     | '/inventory'
@@ -185,6 +197,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentRoomRoute: typeof AgentRoomRoute
   ApprovalsRoute: typeof ApprovalsRoute
   DashboardRoute: typeof DashboardRoute
   InventoryRoute: typeof InventoryRoute
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agent-room': {
+      id: '/agent-room'
+      path: '/agent-room'
+      fullPath: '/agent-room'
+      preLoaderRoute: typeof AgentRoomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/approvals': {
@@ -297,6 +317,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentRoomRoute: AgentRoomRoute,
   ApprovalsRoute: ApprovalsRoute,
   DashboardRoute: DashboardRoute,
   InventoryRoute: InventoryRoute,

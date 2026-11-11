@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, Store } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, Store, MessagesSquare } from "lucide-react";
 import type { ReactNode } from "react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { AGENTS, AgentAvatar } from "./agents";
@@ -8,6 +8,7 @@ import logo from "@/assets/nutrisync-logo.png";
 
 const NAV = [
   { to: "/", label: "Command Center", icon: LayoutDashboard },
+  { to: "/agent-room", label: "Agent Room", icon: MessagesSquare },
   { to: "/menu", label: "Daily Menu", icon: UtensilsCrossed },
   { to: "/recipes", label: "Recipes", icon: BookOpen },
   { to: "/residents", label: "Residents", icon: Users },
