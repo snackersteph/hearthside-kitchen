@@ -20,7 +20,8 @@ export function rotatedDish(meal: Meal, offset: number, todayId: string) {
 
 export function scheduledState(state: KitchenState, offset: number, reference = new Date()): KitchenState {
   const date = dateKey(dayAt(offset, reference));
-  const saved = offset >= 0 ? state.scheduledPlans?.[date] : undefined;
+  // Past dates show the menu that was saved for them (what was approved and served), not the sample rotation.
+  const saved = state.scheduledPlans?.[date];
   return {
     ...state,
     plan: {

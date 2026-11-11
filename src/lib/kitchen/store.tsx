@@ -101,6 +101,16 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
   return next === s ? s : flagApprovedWeekChanges(next, editedService(a, reference), reference);
 }
 
+/**
+ * Guards against double approval (e.g. a double click): a weekly request is decided once, and a
+ * rolling request cannot be decided again while the order it created is still on its way.
+ */
+function purchaseAlreadyDecided(s: KitchenState, proposalId: string, serviceWeekId: string | undefined) {
+  const decided = s.history.some((h) => h.kind === "purchase" && h.proposalId === proposalId);
+  if (!decided) return false;
+  return Boolean(serviceWeekId) || (s.orders ?? []).some((o) => o.status === "incoming" && o.id.startsWith(`${proposalId}-`));
+}
+
 function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState {
   switch (a.type) {
     case "deleteResident": {
@@ -320,6 +330,7 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
       };
     }
     case "approvePurchase": {
+      if (purchaseAlreadyDecided(s, a.proposalId, a.serviceWeekId)) return s;
       // Approval places a (simulated) order that stays incoming until received; stock is unchanged.
       const week = a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {};
       const next: KitchenState = {
@@ -331,6 +342,7 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
       return a.serviceWeekId ? settleWeeklyPurchasing(next, a.serviceWeekId, reference) : next;
     }
     case "reject": {
+      if (a.kind === "purchase" && purchaseAlreadyDecided(s, a.proposalId, a.serviceWeekId)) return s;
       const next: KitchenState = { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}), ...(a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {}) }, ...s.history] };
       return a.kind === "purchase" && a.serviceWeekId ? settleWeeklyPurchasing(next, a.serviceWeekId, reference) : next;
     }
