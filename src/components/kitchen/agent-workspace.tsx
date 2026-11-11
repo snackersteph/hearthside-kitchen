@@ -5,6 +5,8 @@ import {
   ClipboardCheck, Clock, Minus, Sparkles, TriangleAlert, UserCheck, type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/kitchen/app-shell";
+import { AgentAvatar } from "@/components/kitchen/agents";
+import { useKitchen } from "@/lib/kitchen/store";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -68,6 +70,15 @@ export function AgentWorkspace({
 }) {
   const [selectedHandoff, setSelectedHandoff] = useState<string>("h3");
   const [selectedCell, setSelectedCell] = useState<{ day: number; meal: number } | null>(null);
+  const { analysis } = useKitchen();
+  const dietaryResidentCount = new Set(analysis.conflicts.map((conflict) => conflict.residentId)).size;
+  const menuOpenItemCount = analysis.proposals.filter((proposal) => proposal.kind === "substitution").length + (analysis.mealReviews ?? []).filter((review) => !review.approved).length;
+  const inventoryOpenItemCount = analysis.proposals.filter((proposal) => proposal.kind === "purchase").length;
+  const agentSummaries: Record<AgentId, string> = {
+    dietary: `Found ${dietaryResidentCount} residents with meal dietary conflicts in today’s menu`,
+    menu: `Found ${menuOpenItemCount} open items across upcoming meal plans and substitutions`,
+    inventory: `Found ${inventoryOpenItemCount} open purchase requests for upcoming ingredients`,
+  };
 
   const scenarioWeek = ws.weekOffset === 0;
   const planned = ws.status !== "not-started" && scenarioWeek;
@@ -130,7 +141,7 @@ export function AgentWorkspace({
       {/* Agent overview */}
       <section aria-label="AI team overview" className="mb-8 grid gap-3 md:grid-cols-3">
         {AGENT_ORDER.map((id) => (
-          <AgentCard key={id} id={id} activity={activities[id]} started={planned || ws.status === "generating"} />
+          <AgentCard key={id} id={id} activity={activities[id]} started={planned || ws.status === "generating"} summary={agentSummaries[id]} />
         ))}
       </section>
 
@@ -365,22 +376,25 @@ function SummaryCard({ label, value, sub, tone }: { label: string; value: string
   );
 }
 
-function AgentCard({ id, activity, started }: { id: AgentId; activity: AgentActivity; started: boolean }) {
+function AgentCard({ id, activity, started, summary }: { id: AgentId; activity: AgentActivity; started: boolean; summary: string }) {
   const info = AGENT_INFO[id];
-  const Icon = info.icon;
   const a = ACTIVITY_LABEL[activity];
   return (
-    <article className="rounded-xl border bg-card p-5 shadow-soft">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <Link
+      to="/agents/$agentId"
+      params={{ agentId: id }}
+      aria-label={`View ${info.name} profile`}
+      className="group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <article className="h-full rounded-xl border bg-card p-5 shadow-soft transition-colors group-hover:border-primary">
+        <div className="mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-2 font-semibold">
-          <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon className="size-4.5" /></span>
+          <AgentAvatar agent={id} />
           {info.name}
         </span>
         <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", a.badge)}>{a.label}</span>
       </div>
-      <ul className="mb-3 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
-        {info.responsibilities.map((r) => <li key={r}>{r}</li>)}
-      </ul>
+      <p className="mb-3 text-sm text-muted-foreground">{summary}</p>
       {started ? (
         <div className="rounded-lg bg-muted/60 p-3">
           <p className="text-sm font-medium">{activity === "idle" ? "Waiting to start" : info.statusTitle}</p>
@@ -389,7 +403,8 @@ function AgentCard({ id, activity, started }: { id: AgentId; activity: AgentActi
       ) : (
         <p className="text-xs text-muted-foreground">Idle until the weekly plan is generated.</p>
       )}
-    </article>
+      </article>
+    </Link>
   );
 }
 

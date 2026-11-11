@@ -1,9 +1,21 @@
+# Agents navigation
+- [x] Link each Agent Workspace card to its agent profile and verify mouse and keyboard navigation.
+- [x] Replace Menu and Inventory dashboard responsibility lists with live open-item summaries matching their sidebar counts; verify all three cards.
+- [x] Show the number of residents with dietary conflicts in today’s menu on the Dietary Agent dashboard card and verify the count.
+- [x] Reuse the shared sidebar agent avatars on the Agent Workspace cards and verify their appearance.
+- [x] Add a Chat tab under Agents that opens its own page; verify navigation and page metadata.
+
 # Visual refresh
+- [x] Match the Kitchen Pulse attention-card sketch with three compact cards across on wide screens; verify responsive layouts.
+- [x] Compact Kitchen Pulse attention cards into single-line rows where space allows; preserve actions and status colors and verify layouts.
 - [x] Try a light sage navigation, new typography and a split dashboard layout; preserve all actions and red/yellow warnings and verify.
 - [x] Try an editorial font pairing, forest-green navigation and cool secondary neutrals; preserve warning colors and behavior and verify layouts.
 - [x] Refresh shared colors, navigation, typography and controls to complement the logo without changing behavior; verify pages and existing workflows.
 
 # Inventory operations
+- [x] Combine the 7- and 14-day forecast periods with their exact date ranges in larger tabs and verify period switching.
+- [x] Remove the Today column and resident/meal summary, emphasize forecast dates, and verify every filtered ingredient row remains accessible with matching counts.
+- [x] Move Stock alert out of the food-category tabs into a clearer main inventory view and verify its counts and ordering actions.
 - [x] Populate profile updates and the observation board with persistent demo examples, preserving existing staff work; test and verify.
 - [x] Add user account icon, login, editable name/avatar, private messages and notifications; personalize the greeting.
 - [x] Reduce snapshot fonts and fit resident portraits proportionally; verify account flow and display.

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, Store, MessagesSquare, Radio } from "lucide-react";
-import type { ReactNode } from "react";
+import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, Store, MessagesSquare, MessageSquare, Radio } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import { alternativeOverview, residentApprovalCount } from "./approval-rules";
 import { useKitchen } from "@/lib/kitchen/store";
 import { AGENTS, AgentAvatar } from "./agents";
 import type { AgentId } from "@/lib/kitchen/types";
@@ -22,9 +23,10 @@ const NAV = [
 const MOBILE_NAV = [...NAV, { to: "/dashboard", label: "Dashboard", icon: Gauge }] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { analysis, dispatch } = useKitchen();
+  const { state, analysis, dispatch } = useKitchen();
   const mealPending = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
-  const pending = analysis.proposals.length + mealPending;
+  const residentsToApprove = useMemo(() => residentApprovalCount(alternativeOverview(state, new Date()).flatMap((d) => d.pending)), [state]);
+  const pending = residentsToApprove + analysis.proposals.filter((p) => p.kind === "purchase").length;
   const busy: Record<AgentId, number> = {
     dietary: analysis.conflicts.length,
     menu: analysis.proposals.filter((p) => p.kind === "substitution").length + mealPending,
@@ -59,6 +61,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="text-[11px] font-semibold uppercase tracking-normal text-muted-foreground">Agents</div>
           <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 -mx-3 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>
             <Gauge className="h-4 w-4" /><span className="flex-1">Dashboard</span>
+          </Link>
+          <Link to="/chat" className="app-nav-link -mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>
+            <MessageSquare className="h-4 w-4" /><span className="flex-1">Chat</span>
           </Link>
           {(Object.keys(AGENTS) as AgentId[]).map((id) => (
             <Link key={id} to="/agents/$agentId" params={{ agentId: id }} className="-mx-3 flex items-center gap-3 rounded-lg px-3 py-1.5 transition-colors hover:bg-sidebar-accent" activeProps={{ className: "bg-sidebar-accent" }}>

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgentRoomRouteImport } from './routes/agent-room'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as LiveAgentsRouteImport } from './routes/live-agents'
@@ -45,6 +46,11 @@ const ApprovalsRoute = ApprovalsRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
   '/live-agents': typeof LiveAgentsRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
   '/live-agents': typeof LiveAgentsRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
   '/live-agents': typeof LiveAgentsRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/agent-room'
     | '/approvals'
     | '/auth'
+    | '/chat'
     | '/dashboard'
     | '/inventory'
     | '/live-agents'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/agent-room'
     | '/approvals'
     | '/auth'
+    | '/chat'
     | '/dashboard'
     | '/inventory'
     | '/live-agents'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/agent-room'
     | '/approvals'
     | '/auth'
+    | '/chat'
     | '/dashboard'
     | '/inventory'
     | '/live-agents'
@@ -236,6 +248,7 @@ export interface RootRouteChildren {
   AgentRoomRoute: typeof AgentRoomRoute
   ApprovalsRoute: typeof ApprovalsRoute
   AuthRoute: typeof AuthRoute
+  ChatRoute: typeof ChatRoute
   DashboardRoute: typeof DashboardRoute
   InventoryRoute: typeof InventoryRoute
   LiveAgentsRoute: typeof LiveAgentsRoute
@@ -279,6 +292,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -380,6 +400,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgentRoomRoute: AgentRoomRoute,
   ApprovalsRoute: ApprovalsRoute,
   AuthRoute: AuthRoute,
+  ChatRoute: ChatRoute,
   DashboardRoute: DashboardRoute,
   InventoryRoute: InventoryRoute,
   LiveAgentsRoute: LiveAgentsRoute,
