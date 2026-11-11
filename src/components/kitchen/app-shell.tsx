@@ -34,7 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             <img src={logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-md bg-card p-1" />
             <div className="min-w-0">
-              <div className="font-display text-2xl font-semibold leading-none text-primary">NutriSync</div>
+              <div className="font-display text-2xl font-semibold leading-none text-sidebar-foreground">NutriSync</div>
               <div className="mt-1.5 text-[9px] font-medium uppercase tracking-normal text-muted-foreground">SMART NUTRITION, CONNECTED CARE</div>
             </div>
           </div>
