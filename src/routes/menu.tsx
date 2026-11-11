@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({ meta: [
-    { title: "Menu Calendar · NutriSync" },
+    { title: "Calendar · NutriSync" },
     { name: "description", content: "Browse daily menus and see which service dates still need staff approval." },
-    { property: "og:title", content: "Menu Calendar · NutriSync" },
+    { property: "og:title", content: "Calendar · NutriSync" },
     { property: "og:description", content: "Browse daily menus and see which service dates still need staff approval." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
@@ -89,7 +89,7 @@ function MenuPage() {
   }
 
   return <>
-    <PageHeader title="Daily Menu">
+    <PageHeader title="Calendar">
       <Tag tone={daysPending ? "warn" : "ok"}>{daysPending} days need approval</Tag>
     </PageHeader>
     <section aria-label="Choose a menu date" className="border-y py-6">

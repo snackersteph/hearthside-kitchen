@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 const NAV = [
   { to: "/", label: "Kitchen Pulse", icon: LayoutDashboard },
-  { to: "/menu", label: "Daily Menu", icon: UtensilsCrossed },
+  { to: "/menu", label: "Calendar", icon: UtensilsCrossed },
   { to: "/recipes", label: "Recipes", icon: BookOpen },
   { to: "/residents", label: "Residents", icon: Users },
   { to: "/inventory", label: "Inventory", icon: Boxes },
