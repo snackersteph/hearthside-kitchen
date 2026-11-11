@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, MessageSquare } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, Store, MessagesSquare, MessageSquare, Radio } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 import { alternativeOverview, residentApprovalCount } from "./approval-rules";
 import { useKitchen } from "@/lib/kitchen/store";
@@ -11,10 +11,13 @@ import { Button } from "@/components/ui/button";
 
 const NAV = [
   { to: "/", label: "Kitchen Pulse", icon: LayoutDashboard },
+  { to: "/live-agents", label: "Live Agents", icon: Radio },
+  { to: "/agent-room", label: "Agent Room", icon: MessagesSquare },
   { to: "/menu", label: "Daily Menu", icon: UtensilsCrossed },
   { to: "/recipes", label: "Recipes", icon: BookOpen },
   { to: "/residents", label: "Residents", icon: Users },
   { to: "/inventory", label: "Inventory", icon: Boxes },
+  { to: "/vendors", label: "Vendors", icon: Store },
   { to: "/approvals", label: "Approval Center", icon: ClipboardCheck },
 ] as const;
 const MOBILE_NAV = [...NAV, { to: "/dashboard", label: "Dashboard", icon: Gauge }] as const;
