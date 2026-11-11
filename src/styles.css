@@ -94,8 +94,8 @@
 
 :root {
   --radius: 0.5rem;
-  --background: oklch(0.982 0.003 165);
-  --foreground: oklch(0.25 0.018 160);
+  --background: oklch(0.995 0 0);
+  --foreground: oklch(0.245 0.006 160);
   --card: oklch(1 0 0);
   --card-foreground: var(--foreground);
   --popover: oklch(1 0 0);
@@ -104,14 +104,14 @@
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.95 0.012 155);
   --secondary-foreground: oklch(0.32 0.058 153);
-  --muted: oklch(0.955 0.004 165);
-  --muted-foreground: oklch(0.49 0.013 160);
+  --muted: oklch(0.965 0.002 160);
+  --muted-foreground: oklch(0.49 0.008 160);
   --accent: oklch(0.947 0.026 153);
   --accent-foreground: oklch(0.35 0.085 153);
   --destructive: oklch(0.55 0.19 28);
   --destructive-foreground: oklch(0.98 0.01 85);
-  --border: oklch(0.91 0.006 165);
-  --input: oklch(0.865 0.009 165);
+  --border: oklch(0.915 0.003 160);
+  --input: oklch(0.885 0.004 160);
   --ring: var(--primary);
   --success: oklch(0.55 0.12 150);
   --success-foreground: oklch(0.98 0.01 85);
@@ -135,7 +135,7 @@
   --chart-3: oklch(0.62 0.12 85);
   --chart-4: oklch(0.38 0.07 155);
   --chart-5: oklch(0.55 0.19 28);
-  --sidebar: oklch(1 0 0);
+  --sidebar: oklch(0.975 0.003 160);
   --sidebar-foreground: oklch(0.32 0.023 160);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
@@ -143,7 +143,7 @@
   --sidebar-accent-foreground: var(--primary);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
-  --elevation-soft: 0 2px 3px oklch(0.25 0.018 160 / 0.025), 0 6px 18px -8px oklch(0.25 0.018 160 / 0.08);
+  --elevation-soft: 0 1px 2px oklch(0.25 0.018 160 / 0.04);
   --gradient-hero: linear-gradient(135deg, oklch(0.36 0.07 158), oklch(0.3 0.05 165));
   --google-surface: #FFFFFF;
   --google-border: #747775;
@@ -208,24 +208,42 @@
 
 .app-shell { letter-spacing: 0; }
 .app-sidebar { border-right: 1px solid var(--sidebar-border); }
-.app-nav-link { position: relative; min-height: 44px; }
-.app-nav-link[data-status="active"] { font-weight: 600; }
-.app-nav-link[data-status="active"]::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--primary);
+.app-nav-link { position: relative; min-height: 44px; border-radius: 6px; }
+.app-nav-link[data-status="active"] {
+  font-weight: 600;
+  background: var(--sidebar-primary);
+  color: var(--sidebar-primary-foreground);
 }
+.app-nav-link[data-status="active"] > span:last-child:not(:first-of-type) {
+  background: var(--sidebar-primary-foreground);
+  color: var(--sidebar-primary);
+}
+.app-sidebar nav { gap: 6px; }
+.app-sidebar > div:first-child { border-bottom: 1px solid var(--sidebar-border); margin-bottom: 24px; }
 .page-header { padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+.page-header h1 { font-size: 32px; font-weight: 650; }
+.page-header > div:first-child > div { text-transform: none; letter-spacing: 0; font-size: 12px; }
+.app-main :where(.rounded-xl, .rounded-2xl) { border-radius: 8px; }
 .app-main :where(table) { font-variant-numeric: tabular-nums; }
 .app-main :where(thead) { background: var(--muted); }
 .app-main :where(th) { font-weight: 600; letter-spacing: 0; }
+.app-main :where(th, td) { padding-block: 16px; }
 .app-main :where(tbody tr) { transition: background-color 140ms ease; }
 .app-main :where(tbody tr:hover) { background: color-mix(in oklch, var(--accent) 45%, var(--card)); }
+.recipe-filters { gap: 16px; }
+.recipe-filters > label { flex: 1 1 140px; color: var(--muted-foreground); font-size: 12px; }
+.recipe-filters [role="combobox"] { width: 100%; background: var(--card); color: var(--foreground); }
+.recipe-card { border-radius: 8px; box-shadow: none; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.recipe-card:hover { border-color: var(--primary); box-shadow: var(--elevation-soft); }
+.recipe-card-image { aspect-ratio: 3 / 2; border-bottom: 1px solid var(--border); }
+.recipe-card-body { padding: 18px; }
+.recipe-card-meta { letter-spacing: 0; text-transform: none; font-weight: 500; }
+.recipe-card-title { margin-top: 10px; font-size: 17px; }
+@media (max-width: 767px) {
+  .page-header h1 { font-size: 28px; }
+  .recipe-filters { gap: 12px; }
+  .recipe-filters > label { flex-basis: 130px; }
+}
 .inventory-view-tabs { gap: 24px; padding-bottom: 0; }
 .inventory-view-tabs [role="tab"] {
   height: 44px;
