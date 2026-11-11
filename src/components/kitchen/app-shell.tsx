@@ -91,12 +91,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
+export function PageHeader({ eyebrow, title, children }: { eyebrow?: string; title: string; children?: ReactNode }) {
   return (
     <div className="page-header mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{eyebrow}</div>
-        <h1 className="mt-2 text-3xl font-semibold leading-tight text-foreground">{title}</h1>
+        {eyebrow && <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{eyebrow}</div>}
+        <h1 className={`${eyebrow ? "mt-2 " : ""}text-3xl font-semibold leading-tight text-foreground`}>{title}</h1>
       </div>
       {children}
     </div>
