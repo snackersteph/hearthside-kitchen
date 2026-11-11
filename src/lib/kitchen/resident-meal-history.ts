@@ -25,7 +25,7 @@ export function residentMealHistory(state: KitchenState, residentId: string, day
     }
   }
   for (const observation of state.observations ?? []) {
-    if (observation.residentId !== residentId || observation.serviceDate < start || observation.serviceDate > end || !validDish(observation.dishId, observation.meal)) continue;
+    if (observation.demo || observation.residentId !== residentId || observation.serviceDate < start || observation.serviceDate > end || !validDish(observation.dishId, observation.meal)) continue;
     const key = `${observation.serviceDate}-${observation.meal}-${observation.dishId}`;
     const record = records.get(key) ?? { date: observation.serviceDate, meal: observation.meal, dishId: observation.dishId, source: "reported", reactions: [] };
     records.set(key, { ...record, source: "reported", reactions: [...record.reactions, observation.reaction] });

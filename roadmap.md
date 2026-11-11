@@ -1,4 +1,5 @@
 # Inventory operations
+- [x] Populate profile updates and the observation board with persistent demo examples, preserving existing staff work; test and verify.
 - [x] Add user account icon, login, editable name/avatar, private messages and notifications; personalize the greeting.
 - [x] Reduce snapshot fonts and fit resident portraits proportionally; verify account flow and display.
 - [x] Close completed approval cards with success feedback, align menu calendar/status counts with alternatives, and return to the originating meal; test and verify.

@@ -8,6 +8,7 @@ import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
 import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 import { profileContentChanges } from "./profile-changes";
 import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orders";
+import { migrateDemoContent } from "./demo-content";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -312,26 +313,7 @@ export function seedDemo(base: KitchenState, reference = new Date()): KitchenSta
       ? { proposalId: `seed-${ago}`, kind: "purchase", status: "approved", at: reference.getTime() - ago * day, summary: `Approved Sysco produce order ($${(80 + ago * 7).toFixed(2)})`, modified: false }
       : { proposalId: `seed-${ago}`, kind: "substitution", status: i % 5 === 4 ? "rejected" : "approved", at: reference.getTime() - (ago + 1) * day, serviceDate: date, summary: `${i % 5 === 4 ? "Rejected" : "Approved"} ${meal} menu for ${date}`, modified: i % 3 === 1 };
   });
-  return { ...s, observations: SEED_OBSERVATIONS(reference), profileUpdates: SEED_PROFILE_UPDATES(reference), history: [...s.history.map((h, i) => ({ ...h, at: reference.getTime() - (i % 3 + 1) * 3600000 })), ...past] };
-}
-
-/** Demo reactions and profile changes so the Command Center board starts with real work visible. */
-function SEED_OBSERVATIONS(reference: Date): Observation[] {
-  const hour = 3600000;
-  return [
-    { id: "obs-seed-1", residentId: "R005", serviceDate: dateKey(dayAt(0, reference)), meal: "lunch", dishId: currentDishId("l-lentil"), reaction: "Refused most of the tray — soup came back nearly full", severity: "concern", status: "open", notedAt: reference.getTime() - 3 * hour },
-    { id: "obs-seed-2", residentId: "R011", serviceDate: dateKey(dayAt(-1, reference)), meal: "dinner", dishId: currentDishId("d-salmon"), reaction: "Coughing during the last few bites; temperature normal afterwards", severity: "concern", status: "open", notedAt: reference.getTime() - 20 * hour },
-    { id: "obs-seed-3", residentId: "R002", serviceDate: dateKey(dayAt(-1, reference)), meal: "breakfast", dishId: currentDishId("b-oatmeal"), reaction: "Reported nausea about 30 minutes after the meal", severity: "concern", status: "open", notedAt: reference.getTime() - 22 * hour },
-    { id: "obs-seed-4", residentId: "R008", serviceDate: dateKey(dayAt(-2, reference)), meal: "lunch", dishId: currentDishId("l-club"), reaction: "Finished the meal and asked for a second portion", severity: "note", status: "reviewed", notedAt: reference.getTime() - 3 * 86400000 },
-  ];
-}
-
-function SEED_PROFILE_UPDATES(reference: Date): ProfileUpdate[] {
-  const hour = 3600000;
-  return [
-    { id: "profile-seed-1", residentId: "R003", at: reference.getTime() - 5 * hour, summary: "Care information updated", review: "open" },
-    { id: "profile-seed-2", residentId: "R012", at: reference.getTime() - 26 * hour, summary: "Care information updated", review: "open" },
-  ];
+  return migrateDemoContent({ ...s, history: [...s.history.map((h, i) => ({ ...h, at: reference.getTime() - (i % 3 + 1) * 3600000 })), ...past] }, reference);
 }
 
 /** Replaces outdated resident records and clears decisions tied to the previous residents. */
@@ -399,7 +381,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState()))) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
