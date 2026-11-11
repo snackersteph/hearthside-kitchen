@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { addMonths } from "date-fns";
-import { ArrowRight, CheckCircle2, ClipboardCheck, CalendarDays, History } from "lucide-react";
+import { ArrowRight, CheckCircle2, CheckCheck, ClipboardCheck, CalendarDays } from "lucide-react";
 import { type DayButton, type WeekProps } from "react-day-picker";
 import { useKitchen } from "@/lib/kitchen/store";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
@@ -50,11 +50,11 @@ function MenuPage() {
     const isToday = key === today;
     const inRange = props.day.date >= start && props.day.date <= end;
     return <CalendarDayButton {...props}
-      aria-label={`${props.day.date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}, ${isToday ? "today, " : ""}${past ? "past menu" : status}`}
+      aria-label={`${props.day.date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}, ${isToday ? "today, " : ""}${past ? "Completed" : status}`}
       className={cn("[&>span]:opacity-100 h-24 gap-2 rounded-lg border border-transparent text-base md:h-28", !inRange && "opacity-35")}>
       <span className={cn("font-semibold", isToday && "flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground")}>{props.day.date.getDate()}</span>
       {inRange && <div className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold md:text-xs", past ? "bg-muted text-muted-foreground" : pending ? "bg-danger-soft text-destructive" : "bg-success-soft text-primary")}>
-        {past ? <><History className="size-3 shrink-0" /><span>Past</span></> : pending ? <><ClipboardCheck className="size-3 shrink-0" /><span>{pending}<span className="hidden sm:inline"> to approve</span></span></> : <><CheckCircle2 className="size-3 shrink-0" /><span className="hidden sm:inline">{status}</span></>}
+        {past ? <><CheckCheck className="size-3 shrink-0" /><span>Completed</span></> : pending ? <><ClipboardCheck className="size-3 shrink-0" /><span>{pending}<span className="hidden sm:inline"> to approve</span></span></> : <><CheckCircle2 className="size-3 shrink-0" /><span className="hidden sm:inline">{status}</span></>}
       </div>}
     </CalendarDayButton>;
   }
@@ -66,7 +66,7 @@ function MenuPage() {
     const sunday = week.days[6]?.date ?? monday;
     const inRange = sunday >= start && monday <= end;
     const info = inRange ? calendarWeekApproval(overview, dateKey(monday), dateKey(sunday), reference) : null;
-    const label = info?.status === "pending" ? `${info.pending} to approve` : info?.status === "unresolved" ? "Needs attention" : info?.status === "approved" ? "Approved" : info?.status === "past" ? "Past" : "No approvals";
+    const label = info?.status === "pending" ? `${info.pending} to approve` : info?.status === "unresolved" ? "Needs attention" : info?.status === "approved" ? "Approved" : info?.status === "past" ? "Completed" : "No approvals";
     const range = weekRange(dateKey(monday), dateKey(sunday));
     return <tr {...props}>
       {info && <td className="col-span-7">
@@ -74,7 +74,7 @@ function MenuPage() {
           <span className="flex min-w-0 items-center gap-2">
             <span className="hidden whitespace-nowrap font-medium text-muted-foreground sm:inline">Week of {range}</span>
             <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold", info.status === "pending" || info.status === "unresolved" ? "bg-danger-soft text-destructive" : info.status === "past" ? "bg-muted text-muted-foreground" : "bg-success-soft text-success")}>
-              {info.status === "pending" || info.status === "unresolved" ? <ClipboardCheck className="size-3 shrink-0" /> : info.status === "past" ? <History className="size-3 shrink-0" /> : <CheckCircle2 className="size-3 shrink-0" />}{label}
+              {info.status === "pending" || info.status === "unresolved" ? <ClipboardCheck className="size-3 shrink-0" /> : info.status === "past" ? <CheckCheck className="size-3 shrink-0" /> : <CheckCircle2 className="size-3 shrink-0" />}{label}
             </span>
           </span>
           <Button type="button" variant="outline" size="sm" className="h-7 shrink-0 gap-1.5 text-xs"
