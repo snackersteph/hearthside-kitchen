@@ -151,5 +151,5 @@
 - [x] Add a back link from Purchase Orders to the inventory tab the user came from; verify both review buttons and the sidebar route.
 
 ## Agent profile back and edit
-- [ ] Add a back button returning to the previous screen on each agent profile.
-- [ ] Add an edit button for "What it does" and "Configuration" on each agent profile.
+- [x] Add a back button returning to the previous screen on each agent profile.
+- [x] Add an edit button for "What it does" and "Configuration" on each agent profile.

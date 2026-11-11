@@ -91,6 +91,13 @@ export interface Observation {
   notedAt: number;
 }
 
+/** Staff edits to an agent's own description and configuration values. */
+export interface AgentProfileEdit {
+  summary?: string;
+  duties?: string[];
+  config?: Record<string, string>;
+}
+
 export interface KitchenState {
   demoContentVersion?: number;
   orderSnapshotVersion?: number;
@@ -113,6 +120,8 @@ export interface KitchenState {
   /** Weekly agent orchestration runs and the structured handoffs they produced. */
   workflowRuns?: import("./agent-workflow").WorkflowRun[];
   agentEvents?: import("./agent-workflow").AgentEvent[];
+  /** Staff-authored overrides for each agent's "what it does" and configuration. */
+  agentEdits?: Partial<Record<AgentId, AgentProfileEdit>>;
   plan: Record<Meal, string>;
   scheduledPlans?: Record<string, Partial<Record<Meal, string>>>;
   scheduledOverrides?: Record<string, Partial<Record<Meal, Record<string, string>>>>;

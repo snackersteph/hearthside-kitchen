@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Context, type ReactNode } from "react";
 import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
-import type { Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
+import type { AgentId, Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 import { ADDITIONAL_RESIDENTS } from "./additional-residents";
 import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
@@ -31,6 +31,7 @@ type Action =
   | { type: "setMealPlan"; date: string; meal: Meal; dishId: string; overrides: Record<string, string> }
   | { type: "setHorizon"; days: 7 | 14 }
   | { type: "setLeadTime"; days: number }
+  | { type: "editAgentProfile"; agent: AgentId; summary?: string; duties?: string[]; config?: Record<string, string> }
   | { type: "receiveOrder"; id: string }
   | { type: "deleteOrder"; id: string }
   | { type: "placeStockOrder"; ingredientId: string; vendor: string; qty: number }
@@ -159,6 +160,10 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
     }
     case "setHorizon": return { ...s, purchaseHorizonDays: a.days };
     case "setLeadTime": return { ...s, leadTimeDays: Math.max(1, Math.min(14, Math.round(a.days) || 2)) };
+    case "editAgentProfile": {
+      const prev = s.agentEdits?.[a.agent] ?? {};
+      return { ...s, agentEdits: { ...s.agentEdits, [a.agent]: { summary: a.summary ?? prev.summary, duties: a.duties ?? prev.duties, config: { ...prev.config, ...a.config } } } };
+    }
     case "updateOrder": {
       const order = s.orders?.find((o) => o.id === a.id && o.status === "incoming");
       const parsedDate = new Date(`${a.deliveryDate}T12:00:00`);
