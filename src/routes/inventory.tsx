@@ -3,7 +3,6 @@ import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AgentAvatar, Tag } from "@/components/kitchen/agents";
 import { WeeklyPurchasingPanel } from "@/components/kitchen/weekly-purchasing";
-import { InventoryAgentPanel } from "@/components/kitchen/inventory-agent-panel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -93,8 +92,6 @@ function InventoryPage() {
       </div>
 
       {(forecast?.unresolved ?? 0) > 0 && <div className="mb-5 border-l-4 border-warning bg-warning-soft p-4 text-sm">{forecast?.unresolved} resident-meal conflicts have no safe alternative on file in this period. Forecast is provisional until staff resolve them.</div>}
-
-      <InventoryAgentPanel />
 
       {weekly.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
         {w.proposals.length > 0 && <Button asChild size="sm"><Link to="/approvals" search={{ kind: "purchase", fromInventory: view }}>Review weekly purchasing</Link></Button>}
