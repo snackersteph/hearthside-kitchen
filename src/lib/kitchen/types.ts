@@ -106,6 +106,9 @@ export interface KitchenState {
   weeklyPlans?: import("./weekly-schedule").WeeklyPlan[];
   /** The service week staff are currently focused on; must match a weeklyPlans id. */
   selectedWeekId?: string;
+  /** Weekly agent orchestration runs and the structured handoffs they produced. */
+  workflowRuns?: import("./agent-workflow").WorkflowRun[];
+  agentEvents?: import("./agent-workflow").AgentEvent[];
   plan: Record<Meal, string>;
   scheduledPlans?: Record<string, Partial<Record<Meal, string>>>;
   scheduledOverrides?: Record<string, Partial<Record<Meal, Record<string, string>>>>;

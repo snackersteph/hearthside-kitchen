@@ -188,6 +188,22 @@ export function generateWeeklyMenu(s: KitchenState, planId: string, reference = 
   return next === s ? s : markDrafted(next, plan.id, reference);
 }
 
+/** Puts a specific catalog dish in one unlocked slot (e.g. a manager-approved agent revision). */
+export function setWeeklySlotDish(s: KitchenState, planId: string, date: string, meal: Meal, dishId: string, reference = new Date()): KitchenState {
+  const plan = s.weeklyPlans?.find((p) => p.id === planId);
+  const dish = DISHES.find((d) => d.id === dishId);
+  if (!plan || !dish || dish.meal !== meal || !isDateKey(date) || weekStartFor(date) !== plan.startDate) return s;
+  const slot = weeklyMenu(s, plan.id, reference).slots.find((x) => x.date === date && x.meal === meal);
+  if (!slot || slot.lock || slot.dishId === dishId) return s;
+  return markDrafted(assignSlot(s, date, meal, dishId, reference), plan.id, reference);
+}
+
+/** Dish usage across a week, optionally skipping some slots (used to avoid repeats). */
+export function weekDishUsage(menu: WeeklyMenu, skip: (slot: WeeklyMenuSlot) => boolean = () => false) {
+  return usedDishes(menu, skip);
+}
+export const slotRotation = rotationFor;
+
 /** Replaces one unlocked slot with a different catalog dish; the other 20 slots are untouched. */
 export function regenerateWeeklyMeal(s: KitchenState, planId: string, date: string, meal: Meal, reference = new Date()): KitchenState {
   const plan = s.weeklyPlans?.find((p) => p.id === planId);

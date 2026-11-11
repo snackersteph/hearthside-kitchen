@@ -11,6 +11,7 @@ import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orde
 import { migrateDemoContent } from "./demo-content";
 import { applyWeeklyStatus, createWeeklyPlan, isDateKey, migrateWeeklyPlans, sortWeeklyPlans, weeklyPlanId, weekStartFor, type WeeklyMenuStatus, type WeeklyPurchasingStatus } from "./weekly-schedule";
 import { generateWeeklyMenu, regenerateWeeklyMeal, reopenApprovedWeekFor, reviseWeeklyMenu, weeklyMenu, type WeeklyMenu } from "./weekly-menu";
+import { advanceWeeklyWorkflow, approveWeeklyMenu, decideRevision, migrateAgentWorkflow, requestAnotherRevision, startWeeklyWorkflow } from "./agent-workflow";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -49,7 +50,12 @@ type Action =
   | { type: "selectServiceWeek"; id: string | null }
   | { type: "generateWeeklyMenu"; id: string }
   | { type: "regenerateWeeklyMeal"; id: string; date: string; meal: Meal }
-  | { type: "reviseWeeklyMenu"; id: string; date?: string; meal?: Meal };
+  | { type: "reviseWeeklyMenu"; id: string; date?: string; meal?: Meal }
+  | { type: "startWeeklyWorkflow"; date: string }
+  | { type: "advanceWeeklyWorkflow"; runId: string }
+  | { type: "decideWeeklyRevision"; eventId: string; decision: "approve" | "decline" }
+  | { type: "requestAnotherWeeklyRevision"; eventId: string }
+  | { type: "approveWeeklyMenu"; id: string };
 
 /** Which parts of a resident's care information a staff edit touched. */
 export function profileChangeSummary(previous: Resident, next: Resident): string | null {
@@ -342,6 +348,11 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
       if ((a.date === undefined) !== (a.meal === undefined)) return s;
       return reviseWeeklyMenu(s, a.id, a.date && a.meal ? { date: a.date, meal: a.meal } : undefined, reference);
     }
+    case "startWeeklyWorkflow": return startWeeklyWorkflow(s, a.date, reference);
+    case "advanceWeeklyWorkflow": return advanceWeeklyWorkflow(s, a.runId, reference);
+    case "decideWeeklyRevision": return decideRevision(s, a.eventId, a.decision, reference);
+    case "requestAnotherWeeklyRevision": return requestAnotherRevision(s, a.eventId, reference);
+    case "approveWeeklyMenu": return approveWeeklyMenu(s, a.id, reference);
   }
 }
 
@@ -373,6 +384,8 @@ export function migrateResidentProfiles(s: KitchenState): KitchenState {
 }
 
 const KEY = "kitchen-command-v1";
+/** Pause between orchestration steps so staff can follow the handoffs as they happen. */
+const WORKFLOW_STEP_DELAY_MS = 900;
 /** Moves saved menus from the old sample dishes onto recipe-library dishes. */
 export function migrateMenuDishes(s: KitchenState): KitchenState {
   const id = currentDishId;
@@ -431,10 +444,18 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState()))))) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
+  // Weekly agent workflows advance one persisted step at a time, so a run keeps going
+  // across page navigation and resumes from its last saved step after a refresh.
+  const runningRun = state.workflowRuns?.find((r) => r.status === "running");
+  useEffect(() => {
+    if (!runningRun) return;
+    const timer = window.setTimeout(() => dispatch({ type: "advanceWeeklyWorkflow", runId: runningRun.workflowRunId }), WORKFLOW_STEP_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [runningRun?.workflowRunId, runningRun?.step]); // eslint-disable-line react-hooks/exhaustive-deps
   const analysis = useMemo(() => analyze(state, reference ?? new Date("2026-01-01T12:00:00Z")), [state, reference]);
   if (!reference) return <div className="min-h-screen bg-background" aria-busy="true" />;
   return <Ctx.Provider value={{ state, analysis, dispatch, reference }}>{children}</Ctx.Provider>;
