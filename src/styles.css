@@ -273,11 +273,17 @@
   .pulse-actions { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .pulse-action-label { white-space: normal; line-height: 1.25; }
 }
-.pulse-service-link { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 16px; padding: 16px; border-radius: 8px; box-shadow: none; }
-.pulse-service-photo { width: 76px; height: 96px; object-fit: cover; border-radius: 5px; grid-row: 1 / 4; }
-.pulse-service-time { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pulse-service-link { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 4px 12px; padding: 8px 12px; border-radius: 8px; box-shadow: none; }
+.pulse-service-photo { width: 48px; height: 48px; object-fit: cover; border-radius: 5px; grid-row: 1 / 4; flex-shrink: 0; }
+.pulse-service-time { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .pulse-service-status { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; font-weight: 600; }
-.pulse-observations { padding-top: 24px; border-top: 1px solid var(--border); min-width: 0; }
+@media (min-width: 700px) {
+  .pulse-service-link { grid-template-columns: 48px 108px minmax(0, 1fr) auto; gap: 12px; }
+  .pulse-service-photo { grid-row: auto; }
+  .pulse-service-time { display: grid; gap: 2px; }
+  .pulse-service-status { justify-content: flex-end; }
+}
+.pulse-observations { padding-top: 12px; border-top: 1px solid var(--border); min-width: 0; }
 .pulse-observations :where(ul, details) { border-radius: 8px; box-shadow: none; }
 .pulse-weeks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: stretch; }
 .pulse-weeks-heading { grid-column: 1 / -1; }

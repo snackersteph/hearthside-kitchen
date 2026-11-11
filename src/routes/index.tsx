@@ -89,7 +89,7 @@ function CommandCenter() {
         <div className="pulse-content-inner">
         <section className="pulse-service">
           <h2 className="mb-3 text-xl font-semibold">Today's service</h2>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {MEALS.map((meal) => {
               const main = dishById(dayState.plan[meal]);
               const served = analysis.served[meal];
@@ -104,8 +104,8 @@ function CommandCenter() {
                     <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{MEAL_LABEL[meal]}</div>
                     <div className="text-sm text-muted-foreground">{MEAL_TIME[meal]}</div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-display text-lg font-semibold">{main.name}</div>
+                  <div className="pulse-service-dish min-w-0">
+                    <div className="font-display text-base font-semibold">{main.name}</div>
                     <div className="text-sm text-muted-foreground">{mainCount} on main · {alt} on approved alternatives</div>
                   </div>
                   <div className="pulse-service-status">
