@@ -232,12 +232,21 @@
 @media (min-width: 1024px) {
   .page-header h1 { font-size: 42px; }
 }
-.kitchen-pulse { display: grid; gap: 28px; }
-.kitchen-pulse > .page-header { margin-bottom: 0; }
-.pulse-snapshot { padding-block: 4px 24px; border-bottom: 1px solid var(--border); }
-.pulse-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
-.pulse-facts > div { padding-left: 14px; border-left: 2px solid var(--border); }
-.pulse-facts > div:first-child { border-left-color: var(--primary); }
+.kitchen-pulse { display: grid; gap: 22px; }
+.kitchen-pulse > .page-header { margin-bottom: 0; padding-bottom: 6px; border-bottom: 0; }
+.pulse-snapshot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; padding: 10px 16px; border-radius: 10px; background: color-mix(in oklch, var(--muted) 55%, var(--card)); }
+.pulse-snapshot > h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted-foreground); }
+.pulse-facts { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 8px 24px; margin: 0; min-width: 0; }
+.pulse-fact { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.pulse-fact dd { order: 1; margin: 0; font-size: 15px; }
+.pulse-fact dt { order: 2; font-size: 12px; }
+@media (max-width: 699px) {
+  .pulse-snapshot { gap: 6px 18px; padding: 10px 12px; }
+  .pulse-facts { flex-direction: column; align-items: stretch; gap: 0; }
+  .pulse-fact { justify-content: space-between; gap: 12px; padding-block: 1px; }
+  .pulse-fact dt { order: 1; flex: 1 1 auto; }
+  .pulse-fact dd { order: 2; text-align: right; font-size: 14px; }
+}
 .pulse-content, .pulse-content-inner { display: contents; }
 .pulse-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-content: start; }
 .pulse-actions > h2 { grid-column: 1 / -1; }
@@ -282,7 +291,6 @@
 @media (min-width: 1100px) {
   .kitchen-pulse { grid-template-columns: minmax(0, 1fr); }
   .kitchen-pulse > .page-header, .pulse-snapshot, .pulse-observations { grid-column: 1 / -1; }
-  .pulse-facts { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
 }
 .app-main :where(table) { font-variant-numeric: tabular-nums; }
 .app-main :where(thead) { background: var(--muted); }

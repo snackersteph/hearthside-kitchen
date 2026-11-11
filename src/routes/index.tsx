@@ -48,11 +48,11 @@ function CommandCenter() {
   const money = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
   const quantity = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 1 });
   const facts = [
-    { label: "Residents served", value: snapshot.residents, detail: "Today's residents", icon: Users },
-    { label: "Recipe library", value: snapshot.recipes, detail: "Recipes on file", icon: BookOpen },
-    { label: "Daily meals", value: snapshot.meals, detail: "Breakfast, lunch & dinner", icon: Utensils },
-    { label: "Planned daily consumption", value: `${quantity(snapshot.quantities["kg"] ?? 0)} kg · ${quantity(snapshot.quantities["L"] ?? 0)} L`, detail: Object.entries(snapshot.quantities).filter(([unit, qty]) => unit !== "kg" && unit !== "L" && qty > 0).map(([unit, qty]) => `${quantity(qty)} ${unit}`).join(" · ") || "Today's menu estimate", icon: Scale },
-    { label: "Estimated daily food cost", value: money(snapshot.cost), detail: `${money(snapshot.costPerResident)} / resident${snapshot.unpriced ? " · some prices missing" : " · ingredients only"}`, icon: DollarSign },
+    { label: "Residents", value: snapshot.residents, detail: "Residents served today", icon: Users },
+    { label: "Recipes", value: snapshot.recipes, detail: "Recipes on file", icon: BookOpen },
+    { label: "Meals", value: snapshot.meals, detail: "Breakfast, lunch & dinner", icon: Utensils },
+    { label: "Planned consumption", value: `${quantity(snapshot.quantities["kg"] ?? 0)} kg · ${quantity(snapshot.quantities["L"] ?? 0)} L`, detail: Object.entries(snapshot.quantities).filter(([unit, qty]) => unit !== "kg" && unit !== "L" && qty > 0).map(([unit, qty]) => `${quantity(qty)} ${unit}`).join(" · ") || "Today's menu estimate", icon: Scale },
+    { label: "Food cost", value: money(snapshot.cost), detail: `${money(snapshot.costPerResident)} / resident${snapshot.unpriced ? " · some prices missing" : " · ingredients only"}`, icon: DollarSign },
   ];
   const dayState = scheduledState(state, 0);
   const todayKey = dateKey(new Date());
@@ -67,11 +67,11 @@ function CommandCenter() {
       <PageHeader eyebrow={today} title={`Good evening, ${account.data?.profile?.display_name || "Chef"}.`} />
 
       <section className="pulse-snapshot" aria-label="Daily snapshot">
-        <h2 className="mb-4 text-xs font-semibold text-muted-foreground">Today's snapshot</h2>
-        <dl className="pulse-facts">{facts.map((fact) => <div key={fact.label} className="min-w-0">
-          <dt className="flex items-center gap-2 text-xs text-muted-foreground"><fact.icon className="h-3.5 w-3.5 shrink-0 text-primary" />{fact.label}</dt>
-          <dd className="mt-2 break-words font-display text-xl font-semibold">{fact.value}</dd>
-          <dd className="mt-1 text-[11px] text-muted-foreground">{fact.detail}</dd>
+        <h2>Today's snapshot</h2>
+        <dl className="pulse-facts">{facts.map((fact) => <div key={fact.label} className="pulse-fact" title={fact.detail}>
+          <fact.icon className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <dt className="text-muted-foreground">{fact.label}</dt>
+          <dd className="font-display text-[15px] font-semibold">{fact.value}</dd>
         </div>)}</dl>
       </section>
 
