@@ -17,9 +17,11 @@ import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ProfileUpdatesRouteImport } from './routes/profile-updates'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as ResidentsRouteImport } from './routes/residents'
+import { Route as VendorsRouteImport } from './routes/vendors'
 import { Route as AgentsAgentIdRouteImport } from './routes/agents.$agentId'
 import { Route as MenuDateRouteImport } from './routes/menu_.$date'
 import { Route as ResidentsResidentIdRouteImport } from './routes/residents_.$residentId'
+import { Route as VendorsVendorIdRouteImport } from './routes/vendors_.$vendorId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,6 +63,11 @@ const ResidentsRoute = ResidentsRouteImport.update({
   path: '/residents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendorsRoute = VendorsRouteImport.update({
+  id: '/vendors',
+  path: '/vendors',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgentsAgentIdRoute = AgentsAgentIdRouteImport.update({
   id: '/agents/$agentId',
   path: '/agents/$agentId',
@@ -76,6 +83,11 @@ const ResidentsResidentIdRoute = ResidentsResidentIdRouteImport.update({
   path: '/residents/$residentId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendorsVendorIdRoute = VendorsVendorIdRouteImport.update({
+  id: '/vendors_/$vendorId',
+  path: '/vendors/$vendorId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,9 +98,11 @@ export interface FileRoutesByFullPath {
   '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
+  '/vendors': typeof VendorsRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu/$date': typeof MenuDateRoute
   '/residents/$residentId': typeof ResidentsResidentIdRoute
+  '/vendors/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,9 +113,11 @@ export interface FileRoutesByTo {
   '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
+  '/vendors': typeof VendorsRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu/$date': typeof MenuDateRoute
   '/residents/$residentId': typeof ResidentsResidentIdRoute
+  '/vendors/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,9 +129,11 @@ export interface FileRoutesById {
   '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
   '/residents': typeof ResidentsRoute
+  '/vendors': typeof VendorsRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu_/$date': typeof MenuDateRoute
   '/residents_/$residentId': typeof ResidentsResidentIdRoute
+  '/vendors_/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,9 +146,11 @@ export interface FileRouteTypes {
     | '/profile-updates'
     | '/recipes'
     | '/residents'
+    | '/vendors'
     | '/agents/$agentId'
     | '/menu/$date'
     | '/residents/$residentId'
+    | '/vendors/$vendorId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -141,9 +161,11 @@ export interface FileRouteTypes {
     | '/profile-updates'
     | '/recipes'
     | '/residents'
+    | '/vendors'
     | '/agents/$agentId'
     | '/menu/$date'
     | '/residents/$residentId'
+    | '/vendors/$vendorId'
   id:
     | '__root__'
     | '/'
@@ -154,9 +176,11 @@ export interface FileRouteTypes {
     | '/profile-updates'
     | '/recipes'
     | '/residents'
+    | '/vendors'
     | '/agents/$agentId'
     | '/menu_/$date'
     | '/residents_/$residentId'
+    | '/vendors_/$vendorId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -168,9 +192,11 @@ export interface RootRouteChildren {
   ProfileUpdatesRoute: typeof ProfileUpdatesRoute
   RecipesRoute: typeof RecipesRoute
   ResidentsRoute: typeof ResidentsRoute
+  VendorsRoute: typeof VendorsRoute
   AgentsAgentIdRoute: typeof AgentsAgentIdRoute
   MenuDateRoute: typeof MenuDateRoute
   ResidentsResidentIdRoute: typeof ResidentsResidentIdRoute
+  VendorsVendorIdRoute: typeof VendorsVendorIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -231,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendors': {
+      id: '/vendors'
+      path: '/vendors'
+      fullPath: '/vendors'
+      preLoaderRoute: typeof VendorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agents/$agentId': {
       id: '/agents/$agentId'
       path: '/agents/$agentId'
@@ -252,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResidentsResidentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendors_/$vendorId': {
+      id: '/vendors_/$vendorId'
+      path: '/vendors/$vendorId'
+      fullPath: '/vendors/$vendorId'
+      preLoaderRoute: typeof VendorsVendorIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -264,9 +304,11 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileUpdatesRoute: ProfileUpdatesRoute,
   RecipesRoute: RecipesRoute,
   ResidentsRoute: ResidentsRoute,
+  VendorsRoute: VendorsRoute,
   AgentsAgentIdRoute: AgentsAgentIdRoute,
   MenuDateRoute: MenuDateRoute,
   ResidentsResidentIdRoute: ResidentsResidentIdRoute,
+  VendorsVendorIdRoute: VendorsVendorIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
