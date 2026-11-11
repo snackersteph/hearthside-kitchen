@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { canApproveMeal, dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
+import { dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
 import { Button } from "@/components/ui/button";
 import { analyzeMenuDay, resolveMenuState } from "@/lib/kitchen/engine";
 import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
@@ -20,7 +20,6 @@ export function MealSection({ meal, offset, reference }: { meal: Meal; offset: n
   const analysis = analyzeMenuDay(kitchen, offset, reference);
   const date = dateKey(dayAt(offset, reference));
   const review = allAnalysis.mealReviews?.find((r) => r.serviceDate === date && r.meal === meal);
-  const timely = canApproveMeal(date, reference);
   const main = dishById(state.plan[meal]);
   const approved = new Map<string, string[]>();
   for (const [rid, did] of Object.entries(state.overrides[meal])) approved.set(did, [...(approved.get(did) ?? []), rid]);
@@ -54,7 +53,7 @@ export function MealSection({ meal, offset, reference }: { meal: Meal; offset: n
             <SelectContent>{DISHES.filter((d) => d.meal === meal).map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
           </Select>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Tag tone={pendingCount ? timely ? "warn" : "danger" : unresolved.length ? "danger" : "ok"}>{pendingCount ? `${pendingCount} to approve` : unresolved.length ? "Needs attention" : approvedCount ? "Approved" : "No approvals needed"}</Tag>
+            <Tag tone={pendingCount || unresolved.length ? "danger" : "ok"}>{pendingCount ? `${pendingCount} to approve` : unresolved.length ? "Needs attention" : approvedCount ? "Approved" : "No approvals needed"}</Tag>
           </div>
           <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/approvals" search={{ kind: "substitution", date, meal, fromMenu: true }}>Review {MEAL_LABEL[meal].toLowerCase()} <ChevronRight /></Link></Button>
         </div>

@@ -51,7 +51,7 @@ function MenuPage() {
       aria-label={`${props.day.date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}, ${isToday ? "today, " : ""}${past ? "past menu" : status}`}
       className={cn("[&>span]:opacity-100 h-24 gap-2 rounded-lg border border-transparent text-base md:h-28", !inRange && "opacity-35")}>
       <span className={cn("font-semibold", isToday && "flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground")}>{props.day.date.getDate()}</span>
-      {inRange && <div className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold md:text-xs", past ? "bg-muted text-muted-foreground" : pending ? "bg-accent text-accent-foreground" : "bg-success-soft text-primary")}>
+      {inRange && <div className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold md:text-xs", past ? "bg-muted text-muted-foreground" : pending ? "bg-danger-soft text-destructive" : "bg-success-soft text-primary")}>
         {past ? <><History className="size-3 shrink-0" /><span>Past</span></> : pending ? <><ClipboardCheck className="size-3 shrink-0" /><span>{pending}<span className="hidden sm:inline"> to approve</span></span></> : <><CheckCircle2 className="size-3 shrink-0" /><span className="hidden sm:inline">{status}</span></>}
       </div>}
     </CalendarDayButton>;
@@ -65,7 +65,7 @@ function MenuPage() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-lg font-semibold"><CalendarDays className="size-5" />Choose a date</h2>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5"><ClipboardCheck className="size-4 text-accent-foreground" />Needs approval</span>
+          <span className="flex items-center gap-1.5"><ClipboardCheck className="size-4 text-destructive" />Needs approval</span>
           <span className="flex items-center gap-1.5"><CheckCircle2 className="size-4 text-success" />Approved</span>
         </div>
       </div>
