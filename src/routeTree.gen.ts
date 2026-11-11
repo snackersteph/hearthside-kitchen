@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentRoomRouteImport } from './routes/agent-room'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -19,13 +20,20 @@ import { Route as ProfileUpdatesRouteImport } from './routes/profile-updates'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ResidentsRouteImport } from './routes/residents'
+import { Route as VendorsRouteImport } from './routes/vendors'
 import { Route as AgentsAgentIdRouteImport } from './routes/agents.$agentId'
 import { Route as MenuDateRouteImport } from './routes/menu_.$date'
 import { Route as ResidentsResidentIdRouteImport } from './routes/residents_.$residentId'
+import { Route as VendorsVendorIdRouteImport } from './routes/vendors_.$vendorId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentRoomRoute = AgentRoomRouteImport.update({
+  id: '/agent-room',
+  path: '/agent-room',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApprovalsRoute = ApprovalsRouteImport.update({
@@ -73,6 +81,11 @@ const ResidentsRoute = ResidentsRouteImport.update({
   path: '/residents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendorsRoute = VendorsRouteImport.update({
+  id: '/vendors',
+  path: '/vendors',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgentsAgentIdRoute = AgentsAgentIdRouteImport.update({
   id: '/agents/$agentId',
   path: '/agents/$agentId',
@@ -88,9 +101,15 @@ const ResidentsResidentIdRoute = ResidentsResidentIdRouteImport.update({
   path: '/residents/$residentId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendorsVendorIdRoute = VendorsVendorIdRouteImport.update({
+  id: '/vendors_/$vendorId',
+  path: '/vendors/$vendorId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
@@ -100,12 +119,15 @@ export interface FileRoutesByFullPath {
   '/recipes': typeof RecipesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/residents': typeof ResidentsRoute
+  '/vendors': typeof VendorsRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu/$date': typeof MenuDateRoute
   '/residents/$residentId': typeof ResidentsResidentIdRoute
+  '/vendors/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
@@ -115,13 +137,16 @@ export interface FileRoutesByTo {
   '/recipes': typeof RecipesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/residents': typeof ResidentsRoute
+  '/vendors': typeof VendorsRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu/$date': typeof MenuDateRoute
   '/residents/$residentId': typeof ResidentsResidentIdRoute
+  '/vendors/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agent-room': typeof AgentRoomRoute
   '/approvals': typeof ApprovalsRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
@@ -131,14 +156,17 @@ export interface FileRoutesById {
   '/recipes': typeof RecipesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/residents': typeof ResidentsRoute
+  '/vendors': typeof VendorsRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu_/$date': typeof MenuDateRoute
   '/residents_/$residentId': typeof ResidentsResidentIdRoute
+  '/vendors_/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agent-room'
     | '/approvals'
     | '/auth'
     | '/dashboard'
@@ -148,12 +176,15 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/reset-password'
     | '/residents'
+    | '/vendors'
     | '/agents/$agentId'
     | '/menu/$date'
     | '/residents/$residentId'
+    | '/vendors/$vendorId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agent-room'
     | '/approvals'
     | '/auth'
     | '/dashboard'
@@ -163,12 +194,15 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/reset-password'
     | '/residents'
+    | '/vendors'
     | '/agents/$agentId'
     | '/menu/$date'
     | '/residents/$residentId'
+    | '/vendors/$vendorId'
   id:
     | '__root__'
     | '/'
+    | '/agent-room'
     | '/approvals'
     | '/auth'
     | '/dashboard'
@@ -178,13 +212,16 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/reset-password'
     | '/residents'
+    | '/vendors'
     | '/agents/$agentId'
     | '/menu_/$date'
     | '/residents_/$residentId'
+    | '/vendors_/$vendorId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentRoomRoute: typeof AgentRoomRoute
   ApprovalsRoute: typeof ApprovalsRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
@@ -194,9 +231,11 @@ export interface RootRouteChildren {
   RecipesRoute: typeof RecipesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResidentsRoute: typeof ResidentsRoute
+  VendorsRoute: typeof VendorsRoute
   AgentsAgentIdRoute: typeof AgentsAgentIdRoute
   MenuDateRoute: typeof MenuDateRoute
   ResidentsResidentIdRoute: typeof ResidentsResidentIdRoute
+  VendorsVendorIdRoute: typeof VendorsVendorIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -206,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agent-room': {
+      id: '/agent-room'
+      path: '/agent-room'
+      fullPath: '/agent-room'
+      preLoaderRoute: typeof AgentRoomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/approvals': {
@@ -271,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendors': {
+      id: '/vendors'
+      path: '/vendors'
+      fullPath: '/vendors'
+      preLoaderRoute: typeof VendorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agents/$agentId': {
       id: '/agents/$agentId'
       path: '/agents/$agentId'
@@ -292,11 +345,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResidentsResidentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendors_/$vendorId': {
+      id: '/vendors_/$vendorId'
+      path: '/vendors/$vendorId'
+      fullPath: '/vendors/$vendorId'
+      preLoaderRoute: typeof VendorsVendorIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentRoomRoute: AgentRoomRoute,
   ApprovalsRoute: ApprovalsRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
@@ -306,9 +367,11 @@ const rootRouteChildren: RootRouteChildren = {
   RecipesRoute: RecipesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResidentsRoute: ResidentsRoute,
+  VendorsRoute: VendorsRoute,
   AgentsAgentIdRoute: AgentsAgentIdRoute,
   MenuDateRoute: MenuDateRoute,
   ResidentsResidentIdRoute: ResidentsResidentIdRoute,
+  VendorsVendorIdRoute: VendorsVendorIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
