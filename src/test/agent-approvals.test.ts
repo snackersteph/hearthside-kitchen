@@ -112,7 +112,7 @@ describe("Approve Weekly Menu", () => {
     s = approveAlternatives(s, WEEK, now);
     expect(weeklyApprovalChecks(s, WEEK, now)).toMatchObject({ ready: true, blockers: [] });
     s = act(s, { type: "approveWeeklyMenu", id: WEEK }, 30);
-    expect(plan(s)).toMatchObject({ menuStatus: "approved", menuApprovedAt: later(30).getTime(), purchasingStatus: "not-started" });
+    expect(plan(s)).toMatchObject({ menuStatus: "approved", menuApprovedAt: later(30).getTime(), purchasingStatus: "needs-review" });
     expect(Object.keys(plan(s).menuApprovalSignatures ?? {})).toHaveLength(21);
     // Each meal is signed off with the existing per-meal approval, so the Daily Menu agrees.
     expect(weeklyMenu(s, WEEK, now).slots.every((x) => x.approved)).toBe(true);
@@ -157,7 +157,7 @@ describe("Approve Weekly Menu", () => {
     expect(checks.purchasingTasks).toBeGreaterThan(0);
     expect(checks.ready).toBe(true);
     s = act(s, { type: "approveWeeklyMenu", id: WEEK }, 30);
-    expect(plan(s)).toMatchObject({ menuStatus: "approved", purchasingStatus: "not-started", purchasingApprovedAt: null });
+    expect(plan(s)).toMatchObject({ menuStatus: "approved", purchasingStatus: "needs-review", purchasingApprovedAt: null });
   });
 });
 

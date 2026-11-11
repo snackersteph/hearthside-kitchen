@@ -151,11 +151,25 @@ function appendEvents(s: KitchenState, run: WorkflowRun, events: NewEvent[], ref
 
 // ---------- Deterministic analyses ----------
 
-interface IngredientProjection {
+export interface IngredientProjection {
   ingredientId: string; name: string; unit: string; vendor: string; packSize: number;
   requirement: number; availableAtWeekStart: number; incomingDuringWeek: number; minBalance: number; firstShortDate: string | null;
+  /** Physical stock today (never reduced by planning). */
+  onHand: number;
+  /** Planned use from today until the day before the week starts. */
+  useBeforeWeek: number;
+  /** Deliveries expected from tomorrow through the week's first service day. */
+  incomingBeforeWeek: number;
+  /** Projected stock before service if earlier deficits were not cleared (may be negative). */
+  unclampedAtWeekStart: number;
+  /** Planned use per service date in the week. */
+  dailyNeed: Record<string, number>;
+  /** Deliveries per service date after the first day of the week. */
+  arrivalsDuringWeek: Record<string, number>;
+  /** This week's own orders arriving by its first service day (counted at week start). */
+  reservedArrivals: { date: string; qty: number }[];
 }
-interface WeekProjection {
+export interface WeekProjection {
   dates: string[];
   earliestDelivery: string;
   ingredients: Map<string, IngredientProjection>;
@@ -195,26 +209,42 @@ export function projectWeekInventory(s: KitchenState, plan: WeeklyPlan, referenc
   const unlisted = [...new Set(daily.flatMap((d) => Object.keys(d)))].filter((id) => !known.has(id))
     .map((id) => ({ id, name: id, unit: "", vendor: "Unlisted ingredient", packSize: 1, stock: 0, onOrder: 0 }));
   for (const ing of [...s.ingredients, ...unlisted]) {
-    const incoming = (s.orders ?? []).filter((o) => o.status === "incoming")
-      .flatMap((o) => o.lines.filter((l) => l.ingredientId === ing.id).map((l) => ({ date: o.deliveryDate, qty: l.qty })));
-    const legacy = Math.max(0, ing.onOrder - incoming.reduce((n, l) => n + l.qty, 0));
-    if (legacy) incoming.push({ date: dateKey(new Date(reference.getFullYear(), reference.getMonth(), reference.getDate() + leadTime, 12)), qty: legacy });
+    // Orders approved for this week are reserved for it: if they arrive before service starts they
+    // are counted at the week's start, so earlier weeks' deficits never absorb them.
+    const all = (s.orders ?? []).filter((o) => o.status === "incoming")
+      .flatMap((o) => o.lines.filter((l) => l.ingredientId === ing.id).map((l) => ({ date: o.deliveryDate, qty: l.qty, reserved: o.serviceWeekId === plan.id })));
+    const reservedArrivals = all.filter((l) => l.reserved && dates[0] && l.date <= dates[0]).map((l) => ({ date: l.date, qty: l.qty }));
+    const reservedAtStart = round(reservedArrivals.reduce((n, l) => n + l.qty, 0));
+    const incoming = all.filter((l) => !(l.reserved && dates[0] && l.date <= dates[0]));
+    const legacy = Math.max(0, ing.onOrder - all.reduce((n, l) => n + l.qty, 0));
+    if (legacy) incoming.push({ date: dateKey(new Date(reference.getFullYear(), reference.getMonth(), reference.getDate() + leadTime, 12)), qty: legacy, reserved: false });
     let balance = ing.stock;
     let requirement = 0;
     let availableAtWeekStart = 0;
     let incomingDuringWeek = 0;
     let minBalance = Infinity;
     let firstShortDate: string | null = null;
+    let useBeforeWeek = 0;
+    let incomingBeforeWeek = 0;
+    let unclampedAtWeekStart = 0;
+    const dailyNeed: Record<string, number> = {};
+    const arrivalsDuringWeek: Record<string, number> = {};
     for (let offset = 0; offset < total; offset++) {
       const date = addDays(today, offset);
       const arriving = offset === 0 ? 0 : incoming.filter((l) => l.date === date || (offset === 1 && l.date < date)).reduce((n, l) => n + l.qty, 0);
       balance = round(balance + arriving);
       const inWeek = date >= plan.startDate;
-      if (inWeek && date === dates[0]) availableAtWeekStart = balance = Math.max(0, balance);
-      else if (inWeek) incomingDuringWeek = round(incomingDuringWeek + arriving);
+      if (!inWeek || date === dates[0]) incomingBeforeWeek = round(incomingBeforeWeek + arriving);
+      if (inWeek && date === dates[0]) {
+        unclampedAtWeekStart = balance;
+        availableAtWeekStart = balance = round(Math.max(0, balance) + reservedAtStart);
+        incomingBeforeWeek = round(incomingBeforeWeek + reservedAtStart);
+      }
+      else if (inWeek) { incomingDuringWeek = round(incomingDuringWeek + arriving); if (arriving) arrivalsDuringWeek[date] = arriving; }
       const need = daily[offset]?.[ing.id] ?? 0;
       balance = round(balance - need);
-      if (!inWeek) continue;
+      if (!inWeek) { useBeforeWeek = round(useBeforeWeek + need); continue; }
+      if (need) dailyNeed[date] = need;
       requirement = round(requirement + need);
       minBalance = Math.min(minBalance, balance);
       if (balance < 0 && !firstShortDate) firstShortDate = date;
@@ -222,6 +252,7 @@ export function projectWeekInventory(s: KitchenState, plan: WeeklyPlan, referenc
     ingredients.set(ing.id, {
       ingredientId: ing.id, name: ing.name, unit: ing.unit, vendor: ing.vendor, packSize: ing.packSize,
       requirement, availableAtWeekStart, incomingDuringWeek, minBalance: minBalance === Infinity ? 0 : minBalance, firstShortDate,
+      onHand: ing.stock, useBeforeWeek, incomingBeforeWeek, unclampedAtWeekStart, dailyNeed, arrivalsDuringWeek, reservedArrivals,
     });
   }
   return { dates, ingredients, slotUse, earliestDelivery: addDays(today, leadTime) };

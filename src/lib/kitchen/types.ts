@@ -33,6 +33,8 @@ export interface Ingredient {
   vendor: string;
   packSize: number;
   unitCost: number;
+  /** Days a delivery stays usable in storage; when absent, a catalog planning assumption is used or the gap is flagged. */
+  shelfLifeDays?: number;
 }
 
 export interface Dish {
@@ -57,6 +59,8 @@ export interface Decision {
   modified: boolean;
   serviceDate?: string;
   note?: string;
+  /** Service week a weekly purchase decision belongs to. */
+  serviceWeekId?: string;
   alternativeScope?: { meal: Meal; fromDishId: string; dishId: string; residentSignatures: Record<string, string> };
 }
 
@@ -151,6 +155,10 @@ export interface PurchaseProposal {
   vendor: string;
   lines: PurchaseLine[];
   total: number;
+  /** Set for weekly purchasing drafts generated from an approved weekly menu. */
+  serviceWeekId?: string;
+  /** Assumptions and missing information staff should check before approving. */
+  flags?: string[];
 }
 
 export type Proposal = SubstitutionProposal | PurchaseProposal;
@@ -162,6 +170,8 @@ export interface PurchaseOrder {
   deliveryDate: string;
   status: "incoming" | "received";
   receivedAt?: number;
+  /** Service week this order was approved for (weekly purchasing). */
+  serviceWeekId?: string;
 }
 
 export interface Conflict {
