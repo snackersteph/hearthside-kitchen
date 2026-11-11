@@ -4,6 +4,8 @@
 - [x] Refresh shared colors, navigation, typography and controls to complement the logo without changing behavior; verify pages and existing workflows.
 
 # Inventory operations
+- [x] Remove the Today column and resident/meal summary, emphasize forecast dates, and verify every filtered ingredient row remains accessible with matching counts.
+- [x] Move Stock alert out of the food-category tabs into a clearer main inventory view and verify its counts and ordering actions.
 - [x] Populate profile updates and the observation board with persistent demo examples, preserving existing staff work; test and verify.
 - [x] Add user account icon, login, editable name/avatar, private messages and notifications; personalize the greeting.
 - [x] Reduce snapshot fonts and fit resident portraits proportionally; verify account flow and display.
