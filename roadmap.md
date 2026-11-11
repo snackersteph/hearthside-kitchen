@@ -1,4 +1,5 @@
 # Agents navigation
+- [x] Replace Menu and Inventory dashboard responsibility lists with live open-item summaries matching their sidebar counts; verify all three cards.
 - [x] Show the number of residents with dietary conflicts in today’s menu on the Dietary Agent dashboard card and verify the count.
 - [x] Reuse the shared sidebar agent avatars on the Agent Workspace cards and verify their appearance.
 - [x] Add a Chat tab under Agents that opens its own page; verify navigation and page metadata.

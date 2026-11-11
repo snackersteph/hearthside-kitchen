@@ -72,6 +72,13 @@ export function AgentWorkspace({
   const [selectedCell, setSelectedCell] = useState<{ day: number; meal: number } | null>(null);
   const { analysis } = useKitchen();
   const dietaryResidentCount = new Set(analysis.conflicts.map((conflict) => conflict.residentId)).size;
+  const menuOpenItemCount = analysis.proposals.filter((proposal) => proposal.kind === "substitution").length + (analysis.mealReviews ?? []).filter((review) => !review.approved).length;
+  const inventoryOpenItemCount = analysis.proposals.filter((proposal) => proposal.kind === "purchase").length;
+  const agentSummaries: Record<AgentId, string> = {
+    dietary: `Found ${dietaryResidentCount} residents with meal dietary conflicts in today’s menu`,
+    menu: `Found ${menuOpenItemCount} open items across upcoming meal plans and substitutions`,
+    inventory: `Found ${inventoryOpenItemCount} open purchase requests for upcoming ingredients`,
+  };
 
   const scenarioWeek = ws.weekOffset === 0;
   const planned = ws.status !== "not-started" && scenarioWeek;
@@ -134,7 +141,7 @@ export function AgentWorkspace({
       {/* Agent overview */}
       <section aria-label="AI team overview" className="mb-8 grid gap-3 md:grid-cols-3">
         {AGENT_ORDER.map((id) => (
-          <AgentCard key={id} id={id} activity={activities[id]} started={planned || ws.status === "generating"} dietaryResidentCount={dietaryResidentCount} />
+          <AgentCard key={id} id={id} activity={activities[id]} started={planned || ws.status === "generating"} summary={agentSummaries[id]} />
         ))}
       </section>
 
@@ -369,7 +376,7 @@ function SummaryCard({ label, value, sub, tone }: { label: string; value: string
   );
 }
 
-function AgentCard({ id, activity, started, dietaryResidentCount }: { id: AgentId; activity: AgentActivity; started: boolean; dietaryResidentCount: number }) {
+function AgentCard({ id, activity, started, summary }: { id: AgentId; activity: AgentActivity; started: boolean; summary: string }) {
   const info = AGENT_INFO[id];
   const a = ACTIVITY_LABEL[activity];
   return (
@@ -381,13 +388,7 @@ function AgentCard({ id, activity, started, dietaryResidentCount }: { id: AgentI
         </span>
         <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", a.badge)}>{a.label}</span>
       </div>
-      {id === "dietary" ? (
-        <p className="mb-3 text-sm text-muted-foreground">Found {dietaryResidentCount} residents with meal dietary conflicts in today’s menu</p>
-      ) : (
-        <ul className="mb-3 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
-          {info.responsibilities.map((r) => <li key={r}>{r}</li>)}
-        </ul>
-      )}
+      <p className="mb-3 text-sm text-muted-foreground">{summary}</p>
       {started ? (
         <div className="rounded-lg bg-muted/60 p-3">
           <p className="text-sm font-medium">{activity === "idle" ? "Waiting to start" : info.statusTitle}</p>
