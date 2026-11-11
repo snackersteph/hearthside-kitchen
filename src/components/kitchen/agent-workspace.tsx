@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AgentAvatar } from "@/components/kitchen/agents";
+import { useKitchen } from "@/lib/kitchen/store";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,8 @@ export function AgentWorkspace({
 }) {
   const [selectedHandoff, setSelectedHandoff] = useState<string>("h3");
   const [selectedCell, setSelectedCell] = useState<{ day: number; meal: number } | null>(null);
+  const { analysis } = useKitchen();
+  const dietaryResidentCount = new Set(analysis.conflicts.map((conflict) => conflict.residentId)).size;
 
   const scenarioWeek = ws.weekOffset === 0;
   const planned = ws.status !== "not-started" && scenarioWeek;
@@ -131,7 +134,7 @@ export function AgentWorkspace({
       {/* Agent overview */}
       <section aria-label="AI team overview" className="mb-8 grid gap-3 md:grid-cols-3">
         {AGENT_ORDER.map((id) => (
-          <AgentCard key={id} id={id} activity={activities[id]} started={planned || ws.status === "generating"} />
+          <AgentCard key={id} id={id} activity={activities[id]} started={planned || ws.status === "generating"} dietaryResidentCount={dietaryResidentCount} />
         ))}
       </section>
 
@@ -366,7 +369,7 @@ function SummaryCard({ label, value, sub, tone }: { label: string; value: string
   );
 }
 
-function AgentCard({ id, activity, started }: { id: AgentId; activity: AgentActivity; started: boolean }) {
+function AgentCard({ id, activity, started, dietaryResidentCount }: { id: AgentId; activity: AgentActivity; started: boolean; dietaryResidentCount: number }) {
   const info = AGENT_INFO[id];
   const a = ACTIVITY_LABEL[activity];
   return (
@@ -378,9 +381,13 @@ function AgentCard({ id, activity, started }: { id: AgentId; activity: AgentActi
         </span>
         <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", a.badge)}>{a.label}</span>
       </div>
-      <ul className="mb-3 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
-        {info.responsibilities.map((r) => <li key={r}>{r}</li>)}
-      </ul>
+      {id === "dietary" ? (
+        <p className="mb-3 text-sm text-muted-foreground">Found {dietaryResidentCount} residents with meal dietary conflicts in today’s menu</p>
+      ) : (
+        <ul className="mb-3 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
+          {info.responsibilities.map((r) => <li key={r}>{r}</li>)}
+        </ul>
+      )}
       {started ? (
         <div className="rounded-lg bg-muted/60 p-3">
           <p className="text-sm font-medium">{activity === "idle" ? "Waiting to start" : info.statusTitle}</p>
