@@ -101,7 +101,8 @@ export function weeklyMenu(s: KitchenState, idOrDate: string, reference = new Da
         lock: offset < 0 ? "past" : plan?.menuStatus === "approved" ? "approved-week" : approved ? "approved-meal" : null,
         needsRevalidation: plan?.revalidationSlots?.includes(slotKey(date, meal)) ?? false,
         residentsSafe: s.residents.length - conflicts.length,
-        pendingAlternatives: conflicts.filter((c) => c.status === "proposal-pending").length,
+        // Today's service can no longer be approved in the Approval Center (it lists from tomorrow).
+        pendingAlternatives: offset > 0 ? conflicts.filter((c) => c.status === "proposal-pending").length : 0,
         unresolved: conflicts.filter((c) => c.status === "needs-staff").length,
       };
     });

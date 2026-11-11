@@ -786,9 +786,10 @@ export function weeklyApprovalChecks(s: KitchenState, weekId: string, reference 
   const profiles = (s.profileUpdates ?? []).filter((u) => u.review === "open").length;
   if (profiles) blockers.push({ code: "open-profile-updates", count: profiles, message: `${plural(profiles, "resident care update")} not yet reviewed; meals were checked against them.`, link: "/profile-updates" });
   // Open concern observations about a dish a resident is served again this week.
-  const served = new Set(open.flatMap((x) => s.residents.map((r) => `${r.id}|${x.overrides[r.id] ?? x.dishId}`)));
+  const upcoming = open.filter((x) => x.date > dateKey(reference));
+  const served = new Set(upcoming.flatMap((x) => s.residents.map((r) => `${r.id}|${x.overrides[r.id] ?? x.dishId}`)));
   const concerns = (s.observations ?? []).filter((o) => o.status === "open" && o.severity === "concern" && served.has(`${o.residentId}|${o.dishId}`)).length;
-  if (concerns) blockers.push({ code: "open-concerns", count: concerns, message: `${plural(concerns, "open meal concern")} about dishes served again this week need review.`, link: "/residents" });
+  if (concerns) blockers.push({ code: "open-concerns", count: concerns, message: `${plural(concerns, "open meal concern")} about dishes served later this week need review.`, link: "/residents" });
   return { ready: blockers.length === 0, blockers, purchasingTasks: findings };
 }
 

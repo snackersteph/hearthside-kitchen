@@ -142,3 +142,4 @@
 ## Dashboard naming and service links
 - [x] Rename Command Center to "Kitchen Pulse" across sidebar, page title and back links.
 - [x] Link each "Today's service" bar to that date's menu page on its own meal tab (breakfast/lunch/dinner).
+- [x] Approval Center: show 50 requests at a time with Load more (+50)

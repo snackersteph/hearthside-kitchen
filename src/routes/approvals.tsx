@@ -21,6 +21,8 @@ import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-d
 import { WeeklyPurchasingPanel } from "@/components/kitchen/weekly-purchasing";
 import { weekRange } from "@/lib/kitchen/weekly-operations";
 
+const PAGE_SIZE = 50;
+
 export const Route = createFileRoute("/approvals")({
   validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; fromMenu?: boolean } => {
     const kind = search["kind"];
@@ -84,6 +86,10 @@ function ApprovalsPage() {
   const [approvalRequest, setApprovalRequest] = useState<SubstitutionProposal | null>(null);
   const [range, setRange] = useState<7 | 14 | 30>(7);
   const [historyKind, setHistoryKind] = useState<"all" | "substitution" | "purchase">("all");
+  const [limits, setLimits] = useState<Record<string, number>>({});
+  useEffect(() => setLimits({}), [query, kind, date, meal, range, historyKind]);
+  const limit = (key: string) => limits[key] ?? PAGE_SIZE;
+  const more = (key: string, total: number) => total > limit(key) ? <div className="flex justify-center pt-2"><Button variant="link" onClick={() => setLimits((l) => ({ ...l, [key]: limit(key) + PAGE_SIZE }))}>Load {Math.min(PAGE_SIZE, total - limit(key))} more ({limit(key)} of {total} shown)</Button></div> : null;
   const now = Date.now();
   const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000 && (kind || historyKind === "all" || h.kind === historyKind) && (!q || h.summary.toLowerCase().includes(q))).sort((x, y) => y.at - x.at);
   return (
@@ -110,11 +116,12 @@ function ApprovalsPage() {
         <TabsContent value="pending" className="mt-6 space-y-3">
           {reviews.length === 0 ? <Empty text="No alternatives awaiting approval." /> : <>
             <p className="text-sm text-muted-foreground">Most urgent first</p>
-            {reviews.map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}
+            {reviews.slice(0, limit("pending")).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}
+            {more("pending", reviews.length)}
           </>}
         </TabsContent>
         <TabsContent value="approved" className="mt-6 space-y-3">
-          {approved.length ? approved.map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />) : <Empty text="No approved alternatives for this selection." />}
+          {approved.length ? <>{approved.slice(0, limit("approved")).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}{more("approved", approved.length)}</> : <Empty text="No approved alternatives for this selection." />}
         </TabsContent>
         <TabsContent value="orders" className="mt-6 space-y-3">
           {weeklyShown.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
@@ -123,7 +130,7 @@ function ApprovalsPage() {
             {w.state === "ready-to-confirm" && <ConfirmWeeklyPurchasing weekId={w.weekId} title={`service week ${weekRange(w.startDate, w.endDate)}`} rejected={w.rejected.length} />}
           </WeeklyPurchasingPanel>)}
           {weeklyShown.length > 0 && purchases.length > 0 && <h3 className="pt-2 text-sm font-semibold text-muted-foreground">Rolling {state.purchaseHorizonDays ?? 7}-day forecast requests</h3>}
-          {purchases.length ? purchases.map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} /></div>) : !weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
+          {purchases.length ? <>{purchases.slice(0, limit("orders")).map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} /></div>)}{more("orders", purchases.length)}</> : !weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
         </TabsContent>
         <TabsContent value="history" className="mt-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -136,7 +143,7 @@ function ApprovalsPage() {
           </div>
           {history.length === 0 ? <Empty text="No decisions in this period." /> : (
             <ul className="divide-y rounded-xl border bg-card shadow-soft">
-              {history.map((h) => (
+              {history.slice(0, limit("history")).map((h) => (
                 <li key={h.proposalId + h.at} className="flex items-center gap-3 px-5 py-4 text-sm">
                   <Tag tone={h.status === "approved" ? "ok" : "danger"}>{h.status}</Tag>
                   {h.modified && <Tag tone="warn">modified</Tag>}
@@ -146,6 +153,7 @@ function ApprovalsPage() {
               ))}
             </ul>
           )}
+          {more("history", history.length)}
         </TabsContent>
       </Tabs>
       {approvalRequest && <RememberApprovalDialog p={approvalRequest} onApproved={() => setTab("pending")} onClose={() => setApprovalRequest(null)} />}
