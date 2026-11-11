@@ -138,96 +138,6 @@ export const ACTION_LABEL: Record<AgentAction, string> = {
   "revalidation-required": "Revalidation required",
 };
 
-/** Why each kind of handoff happens (the event itself says what was exchanged). */
-function handoffReason(e: AgentEvent): string {
-  switch (e.action) {
-    case "share-dietary-constraints":
-      return "The Menu Agent can't choose safe meals without each resident's documented restrictions.";
-    case "send-ingredient-requirements":
-      return "Every planned meal must be checked against stock and scheduled deliveries before the plan is final.";
-    case "report-shortage":
-      return e.structuredPayload.kind === "shortage"
-        ? "Stock runs out before a new order could arrive, so the menu itself must change."
-        : "Some ingredients will run short but can still be ordered in time, so the Menu Agent can keep the plan.";
-    case "confirm-stock":
-      return "Stock covers the plan, so no menu changes are needed for inventory.";
-    case "propose-revision":
-      return e.structuredPayload.kind === "revision"
-        ? "A shortage can't be fixed by purchasing in time; a catalog alternative avoids it."
-        : "The Menu Agent looked for an alternative and could not find one.";
-    case "recommend-purchase":
-      return "Shortfalls need an order. Purchase approval is a separate manager decision.";
-    case "revalidate-dietary":
-      return "A changed dish must be rechecked against every resident's requirements.";
-    case "revalidate-inventory":
-      return "A changed dish changes ingredient demand, so stock must be rechecked.";
-    case "validate-week":
-      return "Final dietary check across all 21 meals before manager review.";
-    case "request-approval":
-      return "Agents can't approve their own proposals. The kitchen manager decides.";
-    case "approve-revision":
-    case "decline-revision":
-    case "replace-revision":
-      return "Manager decision on a proposed revision.";
-    case "approve-week":
-      return "Manager sign-off for the weekly menu.";
-    case "revalidation-required":
-      return "The approved plan changed, so its approval no longer covers the changed meals.";
-  }
-}
-
-/** Ingredient(s) a handoff is about, read from its structured payload. */
-function affectedIngredients(e: AgentEvent, events: AgentEvent[]): string[] {
-  const p = e.structuredPayload;
-  switch (p.kind) {
-    case "shortage":
-      return [p.finding.name];
-    case "purchasable-shortages":
-      return p.findings.map((f) => f.name);
-    case "revision":
-      return [p.proposal.ingredientName];
-    case "purchase":
-      return p.lines.map((l) => l.name);
-    case "revalidation":
-    case "decision": {
-      const source = events.find((x) => x.eventId === p.proposalEventId);
-      return source?.structuredPayload.kind === "revision"
-        ? [source.structuredPayload.proposal.ingredientName]
-        : [];
-    }
-    default:
-      return [];
-  }
-}
-
-/** The receiving party's reply: its next event in the run, or the manager's decision. */
-function handoffResponse(
-  e: AgentEvent,
-  events: AgentEvent[],
-  run: WorkflowRun | undefined,
-): string {
-  if (e.receivingAgent === "manager") {
-    const decision =
-      events.find(
-        (x) =>
-          x.structuredPayload.kind === "decision" &&
-          x.structuredPayload.proposalEventId === e.eventId,
-      ) ??
-      (e.action === "request-approval"
-        ? events.find((x) => x.action === "approve-week" && x.timestamp >= e.timestamp)
-        : undefined);
-    if (decision) return decision.summary;
-    return run?.status === "awaiting-approval"
-      ? "Awaiting your decision."
-      : "No decision recorded.";
-  }
-  if (e.receivingAgent === "team") return "Recorded for the AI team.";
-  const index = events.indexOf(e);
-  const reply = events.slice(index + 1).find((x) => x.sendingAgent === e.receivingAgent);
-  if (reply) return `${PARTY_LABEL[reply.sendingAgent]}: ${reply.summary}`;
-  return run?.status === "running" ? "Waiting for a response…" : "No further response was needed.";
-}
-
 const CELL_STYLE: Record<CellStatus, string> = {
   unplanned: "bg-muted text-muted-foreground",
   planned: "border border-dashed border-primary/50 bg-card text-foreground",
@@ -390,13 +300,11 @@ export function AgentWorkspace({
     () => (activeRun ? runEvents(state, activeRun.workflowRunId) : []),
     [state, activeRun],
   );
-  const [selectedHandoff, setSelectedHandoff] = useState<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ day: number; meal: number } | null>(null);
 
   const changeWeek = (delta: number) => {
     const next = addDays(weekStart, delta * 7);
     setWeekStart(next);
-    setSelectedHandoff(null);
     if (state.weeklyPlans?.some((p) => p.id === weeklyPlanId(next)))
       dispatch({ type: "selectServiceWeek", id: weeklyPlanId(next) });
   };
@@ -437,11 +345,6 @@ export function AgentWorkspace({
       ? `Found ${purchasableCount + shortageEvents.length} ingredients to purchase for this week; ${shortageEvents.length ? `${shortageEvents.length} can't arrive in time` : "all can arrive in time"}`
       : "Stock not yet checked for this week",
   };
-
-  const handoff =
-    events.find((e) => e.eventId === selectedHandoff) ??
-    events.find((e) => e.status === "warning") ??
-    events.at(-1);
 
   const cellStatusOf = (slot: WeeklyMenuSlot): CellStatus => {
     if (!isPlanned(slot)) return "unplanned";
@@ -550,22 +453,7 @@ export function AgentWorkspace({
         today={today}
       />
 
-      {/* 6 · Handoff inspector (below the weekly lifecycle) */}
-      <section
-        aria-label="Handoff details"
-        className="mb-8 rounded-xl border bg-card p-5 shadow-soft"
-      >
-        <h2 className="mb-3 text-lg font-semibold">Handoff Inspector</h2>
-        {handoff ? (
-          <HandoffDetails handoff={handoff} events={events} run={activeRun} />
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Select a handoff in the collaboration flow to inspect what the agents exchanged.
-          </p>
-        )}
-      </section>
-
-      {/* 7 · Manager decisions (kept prominent, above the detail) */}
+      {/* 3 · Manager decisions */}
       {(activeRun || weekApproved) && (
         <ManagerDecisions
           weekId={weekId}
@@ -579,20 +467,6 @@ export function AgentWorkspace({
           pendingAlternatives={pendingAlternatives}
         />
       )}
-
-      {/* 3 · Agent overview */}
-      <section aria-label="AI team overview" className="mb-8 grid gap-3 md:grid-cols-3">
-        {AGENT_ORDER.map((id) => (
-          <AgentCard
-            key={id}
-            id={id}
-            activity={activities[id]}
-            latest={events.filter((e) => e.sendingAgent === id).at(-1)}
-            summary={agentSummaries[id]}
-            {...agentDuty(id, activities[id], activeRun, pendingRevs.length)}
-          />
-        ))}
-      </section>
 
       {/* 4 · Weekly meal coverage */}
       <section
@@ -673,7 +547,21 @@ export function AgentWorkspace({
         </div>
       </section>
 
-      {/* 5 · Collaboration flow */}
+      {/* 5 · Agent overview */}
+      <section aria-label="AI team overview" className="mb-8 grid gap-3 md:grid-cols-3">
+        {AGENT_ORDER.map((id) => (
+          <AgentCard
+            key={id}
+            id={id}
+            activity={activities[id]}
+            latest={events.filter((e) => e.sendingAgent === id).at(-1)}
+            summary={agentSummaries[id]}
+            {...agentDuty(id, activities[id], activeRun, pendingRevs.length)}
+          />
+        ))}
+      </section>
+
+      {/* 6 · Collaboration flow */}
       <div className="mb-8">
         <section aria-label="Collaboration flow">
           <h2 className="mb-4 text-lg font-semibold">Collaboration Flow</h2>
@@ -719,18 +607,8 @@ export function AgentWorkspace({
                     <div className="space-y-2">
                       {stageEvents.map((h) => {
                         const hs = HANDOFF_STYLE[h.status];
-                        const active = handoff?.eventId === h.eventId;
                         return (
-                          <button
-                            key={h.eventId}
-                            type="button"
-                            onClick={() => setSelectedHandoff(h.eventId)}
-                            aria-pressed={active}
-                            className={cn(
-                              "w-full rounded-lg border p-3 text-left transition-colors hover:border-primary",
-                              active && "border-primary ring-1 ring-primary",
-                            )}
-                          >
+                          <div key={h.eventId} className="w-full rounded-lg border p-3 text-left">
                             <div className="flex items-center justify-between gap-2">
                               <span className="flex items-center gap-1.5 text-xs font-semibold">
                                 {PARTY_LABEL[h.sendingAgent]}{" "}
@@ -750,7 +628,7 @@ export function AgentWorkspace({
                             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                               {h.summary}
                             </p>
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
@@ -1156,17 +1034,6 @@ function PurchasingTasks({
   );
 }
 
-function SummaryLine({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <h3 className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
 function AgentCard({
   id,
   activity,
@@ -1242,97 +1109,6 @@ function AgentCard({
         </div>
       </article>
     </Link>
-  );
-}
-
-function HandoffDetails({
-  handoff,
-  events,
-  run,
-}: {
-  handoff: AgentEvent;
-  events: AgentEvent[];
-  run: WorkflowRun | undefined;
-}) {
-  const style = HANDOFF_STYLE[handoff.status];
-  const time = new Date(handoff.timestamp);
-  const ingredients = affectedIngredients(handoff, events);
-  return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-sm font-semibold">
-          {PARTY_LABEL[handoff.sendingAgent]}{" "}
-          <ArrowRight className="size-3.5 text-muted-foreground" />{" "}
-          {PARTY_LABEL[handoff.receivingAgent]}
-        </span>
-        <span className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span
-            className={cn(
-              "flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold",
-              style.badge,
-            )}
-          >
-            <style.icon className="size-3" />
-            {style.label}
-          </span>
-          <time dateTime={time.toISOString()}>
-            {time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-          </time>
-        </span>
-      </div>
-      <dl className="mb-3 grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <dt className="text-xs text-muted-foreground">Sending agent</dt>
-          <dd className="font-medium">{PARTY_LABEL[handoff.sendingAgent]}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Receiving agent</dt>
-          <dd className="font-medium">{PARTY_LABEL[handoff.receivingAgent]}</dd>
-        </div>
-      </dl>
-      <div className="space-y-3 text-sm">
-        <SummaryLine label={ACTION_LABEL[handoff.action]}>
-          <p>{handoff.summary}</p>
-        </SummaryLine>
-        <SummaryLine label="Reason for handoff">
-          <p>{handoffReason(handoff)}</p>
-        </SummaryLine>
-        <SummaryLine label="Information exchanged">
-          <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
-            {handoff.structuredPayload.facts.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
-        </SummaryLine>
-        <SummaryLine label="Agent response">
-          <p>{handoffResponse(handoff, events, run)}</p>
-        </SummaryLine>
-        <SummaryLine label="Affected meal or ingredient">
-          <p>
-            {handoff.affectedDate && handoff.affectedMeal
-              ? `${shortDate(handoff.affectedDate)} ${handoff.affectedMeal}`
-              : "Whole week"}
-            {ingredients.length
-              ? ` · ${ingredients.slice(0, 4).join(", ")}${ingredients.length > 4 ? ` +${ingredients.length - 4} more` : ""}`
-              : ""}
-          </p>
-        </SummaryLine>
-        <SummaryLine label="Impact on weekly plan">
-          <p>{handoff.result}</p>
-        </SummaryLine>
-        {handoff.affectedDate && handoff.affectedMeal && (
-          <Button size="sm" variant="outline" asChild>
-            <Link
-              to="/menu/$date"
-              params={{ date: handoff.affectedDate }}
-              search={{ meal: handoff.affectedMeal, focus: true }}
-            >
-              View Affected Meal <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
-        )}
-      </div>
-    </div>
   );
 }
 
