@@ -144,9 +144,7 @@ function RecipeDetail({ recipe, servings, onClose, onDelete, onEdit }: { recipe:
     <Dialog open={!!recipe} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         {recipe && n && <>
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg">
-            <img src={recipePhoto(recipe.id, recipe.name)} alt={recipe.name} width={992} height={672} className="absolute inset-0 block h-full w-full object-cover object-center" />
-          </div>
+          <img src={recipePhoto(recipe.id, recipe.name)} alt={recipe.name} width={992} height={672} className="block aspect-[16/9] h-auto w-full rounded-lg object-cover object-center" />
           <DialogHeader>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[recipe.meal]} · {recipeCategory(recipe)}</div>
             <DialogTitle className="text-2xl">{recipe.name}</DialogTitle>
