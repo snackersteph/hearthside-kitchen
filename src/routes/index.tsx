@@ -54,46 +54,32 @@ function CommandCenter() {
   const residentOf = (id: string) => state.residents.find((r) => r.id === id);
 
   return (
-    <div className="pulse-dashboard">
+    <>
       <PageHeader eyebrow={today} title={`Good evening, ${account.data?.profile?.display_name || "Chef"}.`} />
 
-      <section className="mb-6 rounded-2xl bg-primary px-5 py-5 text-primary-foreground shadow-soft md:px-6" aria-label="Daily snapshot">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-primary-foreground/75">Today's snapshot</h2>
-          <span className="flex items-center gap-2 text-xs font-medium text-primary-foreground/75"><span className="size-2 rounded-full bg-primary-foreground" />Live kitchen overview</span>
-        </div>
-        <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">{facts.map((fact) => <div key={fact.label} className="min-w-0 border-primary-foreground/15 sm:border-l sm:pl-4 first:sm:border-l-0 first:sm:pl-0">
-          <dt className="flex items-center gap-2 text-xs text-primary-foreground/70"><fact.icon className="h-3.5 w-3.5 shrink-0" />{fact.label}</dt>
-          <dd className="mt-2 whitespace-nowrap font-display text-lg font-semibold xl:text-xl">{fact.value}</dd>
-          <dd className="mt-1 text-[11px] text-primary-foreground/65">{fact.detail}</dd>
+      <section className="mb-8 border-y py-5" aria-label="Daily snapshot">
+        <h2 className="mb-4 text-xs font-semibold text-muted-foreground">Today's snapshot</h2>
+        <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">{facts.map((fact) => <div key={fact.label} className="min-w-0">
+          <dt className="flex items-center gap-2 text-xs text-muted-foreground"><fact.icon className="h-3.5 w-3.5 shrink-0 text-primary" />{fact.label}</dt>
+          <dd className="mt-2 break-words font-display text-xl font-semibold">{fact.value}</dd>
+          <dd className="mt-1 text-[11px] text-muted-foreground">{fact.detail}</dd>
         </div>)}</dl>
       </section>
 
-      <section aria-label="Kitchen actions">
-        <div className="mb-3 flex items-end justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">At a glance</h2>
-            <p className="text-sm text-muted-foreground">Approvals, deliveries and resident updates in one place.</p>
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {cards.map((card) => (
-            <ActionCardTile
-              key={card.id}
-              card={card}
-              icon={CARD_ICONS[card.id]}
-            />
-          ))}
-        </div>
-      </section>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+        {cards.map((card) => (
+          <ActionCardTile
+            key={card.id}
+            card={card}
+            icon={CARD_ICONS[card.id]}
+          />
+        ))}
+      </div>
 
-      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(320px,0.85fr)_minmax(0,1.15fr)]">
-        <section className="rounded-2xl border bg-card p-5 shadow-soft">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Today's service</h2>
-            <p className="text-sm text-muted-foreground">Open a meal to see its menu and approvals.</p>
-          </div>
-          <div className="space-y-2">
+      <div className="mt-8">
+        <section>
+          <h2 className="mb-3 text-xl font-semibold">Today's service</h2>
+          <div className="space-y-3">
             {MEALS.map((meal) => {
               const main = dishById(dayState.plan[meal]);
               const served = analysis.served[meal];
@@ -102,14 +88,14 @@ function CommandCenter() {
               const bad = analysis.conflicts.filter((c) => c.meal === meal && c.status === "needs-staff").length;
               const mainCount = Object.values(served).filter((d) => d === main.id).length;
               return (
-                <Link key={meal} to="/menu/$date" params={{ date: todayKey }} search={{ meal, focus: true }} className="group flex flex-wrap items-center gap-4 rounded-xl bg-muted/60 p-4 transition-colors hover:bg-accent">
+                <Link key={meal} to="/menu/$date" params={{ date: todayKey }} search={{ meal, focus: true }} className="flex items-center gap-5 rounded-xl border bg-card p-5 shadow-soft transition hover:border-primary">
                   <div className="w-20 shrink-0">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-primary">{MEAL_LABEL[meal]}</div>
-                    <div className="text-xs text-muted-foreground">{MEAL_TIME[meal]}</div>
+                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{MEAL_LABEL[meal]}</div>
+                    <div className="text-sm text-muted-foreground">{MEAL_TIME[meal]}</div>
                   </div>
-                  <div className="min-w-40 flex-1">
-                    <div className="font-display text-base font-semibold">{main.name}</div>
-                    <div className="text-xs text-muted-foreground">{mainCount} on main · {alt} on approved alternatives</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-display text-lg font-semibold">{main.name}</div>
+                    <div className="text-sm text-muted-foreground">{mainCount} on main · {alt} on approved alternatives</div>
                   </div>
                   <div className="flex flex-col items-end gap-1 text-xs font-semibold">
                     {pend > 0 && <span className="rounded-full bg-agent-menu-soft px-2 py-0.5 text-agent-menu">{pend} pending swap</span>}
@@ -120,70 +106,71 @@ function CommandCenter() {
               );
             })}
           </div>
-        </section>
 
-        <section className="rounded-2xl border bg-card p-5 shadow-soft">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold">Observation board</h2>
-              <p className="text-sm text-muted-foreground">Reactions reported after a resident ate a specific meal.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {open.length > 0 && (
-                <Button variant="outline" size="sm" onClick={() => open.forEach((o) => dispatch({ type: "reviewObservation", id: o.id }))}>
-                  Mark all reviewed
-                </Button>
-              )}
-              <Button size="sm" onClick={() => setLogging(true)}>Log a reaction</Button>
-            </div>
-          </div>
-
-          {open.length === 0 ? (
-            <div className="flex items-center gap-3 rounded-xl border border-success/35 bg-success-soft/45 p-5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success/15 text-success"><CircleCheck className="h-5 w-5" /></span>
+          <section className="mt-8">
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
               <div>
-                <div className="font-semibold text-success">No reactions to review</div>
-                <div className="text-sm text-muted-foreground">Every resident ate without incident. Reactions you log will appear here.</div>
+                <h2 className="text-xl font-semibold">Observation board</h2>
+                <p className="text-sm text-muted-foreground">Reactions reported after a resident ate a specific meal.</p>
+              </div>
+              <div className="flex gap-2">
+                {open.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => open.forEach((o) => dispatch({ type: "reviewObservation", id: o.id }))}>
+                    Mark all reviewed
+                  </Button>
+                )}
+                <Button size="sm" onClick={() => setLogging(true)}>Log a reaction</Button>
               </div>
             </div>
-          ) : (
-            <ul className="divide-y">
-              {open.map((o) => {
-                const resident = residentOf(o.residentId);
-                return (
-                  <li key={o.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
-                    {resident && <ResidentPhoto resident={resident} className="h-10 w-10" />}
-                    <div className="min-w-48 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                        {resident?.name ?? o.residentId}
-                        <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", o.severity === "concern" ? "bg-danger-soft text-destructive" : "bg-muted text-muted-foreground")}>
-                          {o.severity === "concern" ? "Needs follow-up" : "Note only"}
-                        </span>
-                      </div>
-                      <div className="text-sm">{o.reaction}</div>
-                      <div className="text-xs text-muted-foreground">{MEAL_LABEL[o.meal]} · {dishById(o.dishId).name} · served {o.serviceDate}</div>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => dispatch({ type: "reviewObservation", id: o.id })}>Mark reviewed</Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
 
-          {reviewed.length > 0 && (
-            <details className="mt-4 rounded-xl bg-muted/60 p-4">
-              <summary className="cursor-pointer text-sm font-medium">Reviewed reactions ({reviewed.length})</summary>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                {reviewed.map((o) => (
-                  <li key={o.id}>{residentOf(o.residentId)?.name ?? o.residentId} — {o.reaction} ({MEAL_LABEL[o.meal]}, {o.serviceDate})</li>
-                ))}
+            {open.length === 0 ? (
+              <div className="flex items-center gap-3 rounded-xl border border-success/35 bg-success-soft/45 p-5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success/15 text-success"><CircleCheck className="h-5 w-5" /></span>
+                <div>
+                  <div className="font-semibold text-success">No reactions to review</div>
+                  <div className="text-sm text-muted-foreground">Every resident ate without incident. Reactions you log will appear here.</div>
+                </div>
+              </div>
+            ) : (
+              <ul className="divide-y rounded-xl border bg-card shadow-soft">
+                {open.map((o) => {
+                  const resident = residentOf(o.residentId);
+                  return (
+                    <li key={o.id} className="flex flex-wrap items-center gap-4 px-4 py-3">
+                      {resident && <ResidentPhoto resident={resident} className="h-10 w-10" />}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                          {resident?.name ?? o.residentId}
+                          <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", o.severity === "concern" ? "bg-danger-soft text-destructive" : "bg-muted text-muted-foreground")}>
+                            {o.severity === "concern" ? "Needs follow-up" : "Note only"}
+                          </span>
+                        </div>
+                        <div className="text-sm">{o.reaction}</div>
+                        <div className="text-xs text-muted-foreground">{MEAL_LABEL[o.meal]} · {dishById(o.dishId).name} · served {o.serviceDate}</div>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => dispatch({ type: "reviewObservation", id: o.id })}>Mark reviewed</Button>
+                    </li>
+                  );
+                })}
               </ul>
-            </details>
-          )}
+            )}
+
+            {reviewed.length > 0 && (
+              <details className="mt-3 rounded-xl border bg-card p-4 shadow-soft">
+                <summary className="cursor-pointer text-sm font-medium">Reviewed reactions ({reviewed.length})</summary>
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  {reviewed.map((o) => (
+                    <li key={o.id}>{residentOf(o.residentId)?.name ?? o.residentId} — {o.reaction} ({MEAL_LABEL[o.meal]}, {o.serviceDate})</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </section>
         </section>
+
       </div>
 
       {logging && <ObservationDialog onClose={() => setLogging(false)} />}
-    </div>
+    </>
   );
 }
