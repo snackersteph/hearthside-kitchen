@@ -15,6 +15,7 @@ import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as LiveAgentsRouteImport } from './routes/live-agents'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ProfileUpdatesRouteImport } from './routes/profile-updates'
 import { Route as RecipesRouteImport } from './routes/recipes'
@@ -54,6 +55,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveAgentsRoute = LiveAgentsRouteImport.update({
+  id: '/live-agents',
+  path: '/live-agents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MenuRoute = MenuRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
+  '/live-agents': typeof LiveAgentsRoute
   '/menu': typeof MenuRoute
   '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
+  '/live-agents': typeof LiveAgentsRoute
   '/menu': typeof MenuRoute
   '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
+  '/live-agents': typeof LiveAgentsRoute
   '/menu': typeof MenuRoute
   '/profile-updates': typeof ProfileUpdatesRoute
   '/recipes': typeof RecipesRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/inventory'
+    | '/live-agents'
     | '/menu'
     | '/profile-updates'
     | '/recipes'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/inventory'
+    | '/live-agents'
     | '/menu'
     | '/profile-updates'
     | '/recipes'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/inventory'
+    | '/live-agents'
     | '/menu'
     | '/profile-updates'
     | '/recipes'
@@ -226,6 +238,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   InventoryRoute: typeof InventoryRoute
+  LiveAgentsRoute: typeof LiveAgentsRoute
   MenuRoute: typeof MenuRoute
   ProfileUpdatesRoute: typeof ProfileUpdatesRoute
   RecipesRoute: typeof RecipesRoute
@@ -280,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live-agents': {
+      id: '/live-agents'
+      path: '/live-agents'
+      fullPath: '/live-agents'
+      preLoaderRoute: typeof LiveAgentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -362,6 +382,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   InventoryRoute: InventoryRoute,
+  LiveAgentsRoute: LiveAgentsRoute,
   MenuRoute: MenuRoute,
   ProfileUpdatesRoute: ProfileUpdatesRoute,
   RecipesRoute: RecipesRoute,

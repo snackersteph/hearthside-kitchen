@@ -57,8 +57,13 @@ export interface Button {
 }
 
 export type Outbound =
-  | { kind: "send"; chatId: number; text: string; buttons?: Button[][] }
+  | { kind: "send"; chatId: number; text: string; buttons?: Button[][]; questionId?: string }
   | { kind: "edit"; chatId: number; messageId: number; text: string }
+  /**
+   * A question was answered, so every copy of it that is still tappable (in every chat) should lose its
+   * buttons and get this note. The transport remembers which messages it sent for each question.
+   */
+  | { kind: "retire"; questionId: string; text: string }
   | { kind: "answer"; callbackId: string; text?: string; alert?: boolean };
 
 export interface BotStores {
@@ -295,6 +300,12 @@ async function handleCallback(
       messageId: query.message.message_id,
       text: `${query.message.text ?? ""}\n\n✔ ${user.name} (${ROLE_LABEL[user.role]}) chose: ${chosen}`,
     });
+  // The others in the room still hold a copy of this question: it is answered now, so retire theirs too.
+  out.push({
+    kind: "retire",
+    questionId: a,
+    text: `✔ ${user.name} (${ROLE_LABEL[user.role]}) chose: ${chosen}`,
+  });
   out.push(
     ...(await share(result.thread, result.thread.events.slice(thread.events.length), stores)),
   );
@@ -352,7 +363,7 @@ async function share(
       kind: "send",
       chatId: u.chatId,
       text: clip(`${header}\n\n${body}${waiting}`),
-      ...(buttons ? { buttons } : {}),
+      ...(buttons && question ? { buttons, questionId: question.id } : {}),
     };
   });
 }

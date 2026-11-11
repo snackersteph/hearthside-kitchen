@@ -238,6 +238,21 @@ describe("telegram: answering with buttons", () => {
     expect((stores.peek.kitchen().orders ?? []).length).toBe(orders);
   });
 
+  it("tells the transport to retire everyone's copy of a question once it is answered", async () => {
+    const stores = await setup(shortageKitchen("lunch"));
+    const asked = await handleUpdate(msg(CHEF, "/plan lunch tomorrow"), stores);
+    const questionId = to(asked, CHEF)?.questionId;
+    expect(questionId).toBeDefined();
+    // The Chef and Management both hold the question; the caregiver only follows along.
+    expect(to(asked, MGMT)?.questionId).toBe(questionId);
+    expect(to(asked, CARE)?.questionId).toBeUndefined();
+
+    const out = await handleUpdate(tap(CHEF, dataFor(asked, CHEF, /yes/i)!), stores);
+    expect(out.filter((o) => o.kind === "retire")).toEqual([
+      { kind: "retire", questionId, text: "✔ Chris (Chef) chose: Yes, use it" },
+    ]);
+  });
+
   it("handles the same Telegram update only once", async () => {
     const stores = await setup();
     const update = msg(CHEF, "/plan dinner in 2 days");
