@@ -1,4 +1,8 @@
+# Agents navigation
+- [x] Add a Chat tab under Agents that opens its own page; verify navigation and page metadata.
+
 # Visual refresh
+- [x] Match the Kitchen Pulse attention-card sketch with three compact cards across on wide screens; verify responsive layouts.
 - [x] Compact Kitchen Pulse attention cards into single-line rows where space allows; preserve actions and status colors and verify layouts.
 - [x] Try a light sage navigation, new typography and a split dashboard layout; preserve all actions and red/yellow warnings and verify.
 - [x] Try an editorial font pairing, forest-green navigation and cool secondary neutrals; preserve warning colors and behavior and verify layouts.
