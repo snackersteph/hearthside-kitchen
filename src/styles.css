@@ -267,6 +267,15 @@
 .pulse-service-status { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; font-weight: 600; }
 .pulse-observations { padding-top: 24px; border-top: 1px solid var(--border); min-width: 0; }
 .pulse-observations :where(ul, details) { border-radius: 8px; box-shadow: none; }
+.pulse-weeks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.pulse-weeks-heading { grid-column: 1 / -1; }
+.pulse-week { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 8px; box-shadow: none; min-width: 0; }
+.pulse-week-action { margin-top: auto; padding-top: 4px; }
+@media (min-width: 1000px) {
+  .pulse-weeks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.menu-week-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; margin-top: 10px; padding: 4px 8px; border-radius: 6px; text-align: left; font-size: 12px; transition: background-color 140ms ease; }
+.menu-week-status:hover, .menu-week-status:focus-visible { background: var(--muted); }
 @media (min-width: 1100px) {
   .kitchen-pulse { grid-template-columns: minmax(0, 1fr); }
   .kitchen-pulse > .page-header, .pulse-snapshot, .pulse-observations { grid-column: 1 / -1; }
