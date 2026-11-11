@@ -61,7 +61,7 @@ function InventoryPage() {
     <>
       <PageHeader eyebrow="Pantry & walk-in" title="Inventory"><div className="flex flex-wrap gap-2"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Search ingredients" placeholder="Search ingredients or vendors" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 pl-9" /></div><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div></PageHeader>
 
-      <div role="tablist" aria-label="Inventory views" className="mb-6 flex flex-wrap gap-2 border-b pb-3">
+      <div role="tablist" aria-label="Inventory views" className="inventory-view-tabs mb-6 flex flex-wrap gap-2 border-b pb-3">
         {([{ id: "stock", label: "Food stock" }, { id: "delivered", label: "Delivered orders" }, { id: "incoming", label: "Incoming orders" }] as const).map((item) => <Button key={item.id} role="tab" aria-selected={view === item.id} variant={view === item.id ? "default" : "ghost"} onClick={() => setView(item.id)}>{item.label}</Button>)}
       </div>
       {view !== "stock" ? <InventoryOrders key={view} mode={view} /> : <>
@@ -92,7 +92,7 @@ function InventoryPage() {
         </div>
       )}
 
-      <div role="tablist" aria-label="Ingredient sections" className="sticky top-0 z-10 -mx-1 mb-6 flex flex-wrap gap-2 bg-background/95 px-1 py-3 backdrop-blur">
+      <div role="tablist" aria-label="Ingredient sections" className="ingredient-section-tabs sticky top-0 z-10 -mx-1 mb-6 flex flex-wrap gap-2 bg-background/95 px-1 py-3 backdrop-blur">
         {["All", "Stock alert", ...FOOD_CATEGORIES].map((c) => { const n = c === "All" ? rows.length : c === "Stock alert" ? alertRows.length : rows.filter((i) => ingredientCategory(i) === c).length; if (c !== "All" && c !== "Stock alert" && !n) return null; return <Button key={c} role="tab" aria-selected={tab === c} onClick={() => setTab(c)} variant={tab === c ? "default" : "outline"}>{c} <span className="ml-1 opacity-70">{n}</span></Button>; })}
       </div>
       {FOOD_CATEGORIES.filter((c) => tab === "All" || tab === "Stock alert" || c === tab).map((category) => { const categoryRows = (tab === "Stock alert" ? alertRows : rows).filter((i) => ingredientCategory(i) === category); if (!categoryRows.length) return null; return <section key={category} aria-label={category} className="mb-8"><h2 className="mb-3 font-display text-xl font-semibold">{category} <span className="ml-2 text-sm font-normal text-muted-foreground">{categoryRows.length}</span></h2><div className="overflow-x-auto rounded-lg border bg-card">
