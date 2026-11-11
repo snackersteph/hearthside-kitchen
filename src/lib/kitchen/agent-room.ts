@@ -71,18 +71,18 @@ export const MANAGEMENT_APPROVAL_THRESHOLD = 200;
 
 type KitchenAction = Parameters<typeof reducer>[1];
 
-const round = (n: number) => Math.round(n * 100) / 100;
-const money = (n: number) => `$${n.toFixed(2)}`;
-const firstName = (name: string) => name.split(" ")[0] ?? name;
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-const list = (items: string[]) =>
+export const round = (n: number) => Math.round(n * 100) / 100;
+export const money = (n: number) => `$${n.toFixed(2)}`;
+export const firstName = (name: string) => name.split(" ")[0] ?? name;
+export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+export const list = (items: string[]) =>
   items.length <= 1
     ? items.join("")
     : items.length === 2
       ? `${items[0]} and ${items[1]}`
       : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
 /** A readable list that stays short: the first few names, then a count. */
-const short = (items: string[], max = 3) =>
+export const short = (items: string[], max = 3) =>
   items.length <= max
     ? list(items)
     : `${items.slice(0, max).join(", ")} and ${items.length - max} more`;
@@ -92,7 +92,7 @@ export const dayLabel = (date: string) =>
     month: "short",
     day: "numeric",
   });
-const offsetOf = (date: string, reference: Date) =>
+export const offsetOf = (date: string, reference: Date) =>
   Math.round(
     (new Date(`${date}T12:00:00`).getTime() -
       new Date(`${dateKey(reference)}T12:00:00`).getTime()) /
@@ -103,7 +103,7 @@ const offsetOf = (date: string, reference: Date) =>
 /* Evaluating one candidate main dish                                */
 /* ---------------------------------------------------------------- */
 
-interface Risk {
+export interface Risk {
   ingredientId: string;
   name: string;
   unit: string;
@@ -111,7 +111,7 @@ interface Risk {
   sourcing: VendorSourcing;
 }
 
-interface Evaluation {
+export interface Evaluation {
   dish: Dish;
   conflicted: { residentId: string; name: string; reasons: string[] }[];
   covered: { dishId: string; residentIds: string[] }[];
@@ -137,7 +137,7 @@ function withMainDish(state: KitchenState, date: string, meal: Meal, dishId: str
   };
 }
 
-function evaluate(
+export function evaluate(
   state: KitchenState,
   date: string,
   meal: Meal,
@@ -224,7 +224,7 @@ const better = (a: Evaluation, b: Evaluation) => {
 };
 
 /** The Menu Agent's search for another main dish: skip dishes that use an unavailable ingredient, then rank. */
-function chooseReplacement(
+export function chooseReplacement(
   state: KitchenState,
   date: string,
   meal: Meal,
@@ -254,7 +254,7 @@ function chooseReplacement(
 /* Purchase drafts                                                   */
 /* ---------------------------------------------------------------- */
 
-function draftsFrom(risks: Risk[]): DraftPurchaseRequest[] {
+export function draftsFrom(risks: Risk[]): DraftPurchaseRequest[] {
   const byVendor = new Map<string, Risk[]>();
   for (const r of risks) {
     const rec = r.sourcing.recommended;
@@ -289,7 +289,7 @@ function draftsFrom(risks: Risk[]): DraftPurchaseRequest[] {
   });
 }
 
-function whyBlocked(r: Risk): string {
+export function whyBlocked(r: Risk): string {
   const { sourcing } = r;
   if (sourcing.outcome === "too-slow") {
     const earliest = sourcing.options
@@ -302,6 +302,173 @@ function whyBlocked(r: Risk): string {
   if (sourcing.outcome === "no-compliant-vendor")
     return `no compliant vendor (${[...new Set(sourcing.options.flatMap((o) => o.compliance.reasons))].join("; ")})`;
   return "no vendor on file";
+}
+
+/* ---------------------------------------------------------------- */
+/* What each agent says (shared by the replay and the live flow)      */
+/* ---------------------------------------------------------------- */
+
+export type Say = (
+  from: RoomActor,
+  to: RoomActor | "all",
+  kind: RoomKind,
+  tone: RoomEvent["tone"],
+  text: string,
+) => void;
+export interface NarrationContext {
+  state: KitchenState;
+  date: string;
+  meal: Meal;
+  say: Say;
+}
+
+/** Dietary Agent's verdict on an evaluation. */
+export function narrateDietary(
+  { state, say }: NarrationContext,
+  e: Evaluation,
+  recheck: boolean,
+): void {
+  const residents = state.residents.length;
+  if (!e.conflicted.length) {
+    say(
+      "dietary",
+      "menu",
+      "check",
+      "ok",
+      `${recheck ? "Re-checked: all" : "All"} ${residents} residents are cleared for ${e.dish.name}.`,
+    );
+    return;
+  }
+  const byReason = new Map<string, string[]>();
+  for (const c of e.conflicted)
+    for (const why of c.reasons)
+      byReason.set(why, [...(byReason.get(why) ?? []), firstName(c.name)]);
+  const detail = [...byReason.entries()]
+    .map(([why, names]) => `${short(names)} (${why})`)
+    .join("; ");
+  const alternatives = e.covered.map(
+    (c) =>
+      `${dishById(c.dishId).name} for ${short(c.residentIds.map((rid) => firstName(state.residents.find((r) => r.id === rid)?.name ?? rid)))}`,
+  );
+  let text = `${recheck ? "Re-checked: " : ""}${plural(e.conflicted.length, "resident")} can't have ${e.dish.name}: ${detail}.`;
+  if (alternatives.length) text += ` Safe alternatives: ${alternatives.join("; ")}.`;
+  if (e.uncovered.length)
+    text += ` No safe option on file for ${list(e.uncovered.map((u) => firstName(u.name)))}, so staff must decide.`;
+  say("dietary", "menu", "check", e.uncovered.length ? "alert" : "info", text);
+}
+
+/** Inventory Agent's verdict on an evaluation. */
+export function narrateInventory(
+  { meal, date, say }: NarrationContext,
+  e: Evaluation,
+  recheck: boolean,
+): void {
+  const when = dayLabel(date);
+  if (!e.risks.length) {
+    say(
+      "inventory",
+      "menu",
+      "check",
+      "ok",
+      `${recheck ? "Re-checked: stock" : "Stock"} covers ${meal} on ${when}. No order needed.`,
+    );
+    return;
+  }
+  if (e.blocked.length) {
+    // Group ingredients that share the same reason, so the message does not repeat itself.
+    const byReason = new Map<string, string[]>();
+    for (const r of e.blocked)
+      byReason.set(whyBlocked(r), [...(byReason.get(whyBlocked(r)) ?? []), r.name.toLowerCase()]);
+    const reasons = [...byReason.entries()]
+      .map(([why, names]) => (byReason.size === 1 ? why : `${list(names)}: ${why}`))
+      .join("; ");
+    say(
+      "inventory",
+      "menu",
+      "handoff",
+      "alert",
+      `I can't get ${list(e.blocked.map((r) => r.name.toLowerCase()))} by ${when}: ${reasons}. Menu Agent, please swap the dish.`,
+    );
+  }
+  if (e.orderable.length) {
+    const drafts = draftsFrom(e.orderable);
+    const total = round(drafts.reduce((sum, d) => sum + d.total, 0));
+    say(
+      "inventory",
+      "chef",
+      "check",
+      "info",
+      `${recheck ? "Re-checked: " : ""}${e.blocked.length ? "The rest I can order in time. " : ""}Short on ${list(e.orderable.map((r) => r.name.toLowerCase()))}. Drafted ${plural(drafts.length, "order")} totalling ${money(total)} from ${list(drafts.map((d) => d.vendorName))}, arriving by ${when}.`,
+    );
+    for (const r of e.orderable) {
+      const chosen = r.sourcing.recommended;
+      const skipped = r.sourcing.options.find(
+        (o) =>
+          chosen &&
+          o.vendorId !== chosen.vendorId &&
+          o.total < chosen.total &&
+          o.compliance.status !== "eligible",
+      );
+      if (skipped) {
+        const [first, ...rest] = skipped.compliance.reasons;
+        say(
+          "inventory",
+          "chef",
+          "check",
+          "alert",
+          `Skipped ${skipped.vendorName} for ${r.name.toLowerCase()} (${money(skipped.total)}, cheaper): ${first?.toLowerCase()}${rest.length ? ` (+${rest.length} more)` : ""}.`,
+        );
+      }
+    }
+  }
+}
+
+/** Why the Menu Agent likes a replacement dish, in a sentence. */
+export function swapReason(state: KitchenState, swap: Evaluation, avoid: Set<string>): string {
+  const names = [...avoid].map(
+    (i) => state.ingredients.find((x) => x.id === i)?.name.toLowerCase() ?? i,
+  );
+  const reason = names.length ? `it avoids ${list(names)}` : "it is a safe, available choice";
+  const eaters =
+    swap.conflicted.length === 0
+      ? "every resident can eat it"
+      : `only ${plural(swap.conflicted.length, "resident")} need${swap.conflicted.length === 1 ? "s" : ""} an alternative`;
+  return `${reason}, and ${eaters}`;
+}
+
+/** The plan the agents would put in front of a person for one evaluated dish. */
+export function buildPlan(
+  state: KitchenState,
+  date: string,
+  meal: Meal,
+  current: Evaluation,
+): RoomPlan {
+  const orders = draftsFrom(current.orderable);
+  const orderTotal = round(orders.reduce((sum, o) => sum + o.total, 0));
+  return {
+    date,
+    meal,
+    dishId: current.dish.id,
+    dishName: current.dish.name,
+    overrides: current.overrides,
+    alternatives: current.covered.map((c) => ({
+      dishId: c.dishId,
+      dishName: dishById(c.dishId).name,
+      residentNames: c.residentIds.map(
+        (rid) => state.residents.find((r) => r.id === rid)?.name ?? rid,
+      ),
+    })),
+    unresolved: current.uncovered.map((u) => u.name),
+    blocked: current.blocked.map((r) => ({
+      ingredientId: r.ingredientId,
+      name: r.name,
+      reason: whyBlocked(r),
+    })),
+    orders,
+    orderTotal,
+    approver: orderTotal > MANAGEMENT_APPROVAL_THRESHOLD ? "management" : "chef",
+    ready: current.uncovered.length === 0 && current.blocked.length === 0,
+  };
 }
 
 /* ---------------------------------------------------------------- */
@@ -331,96 +498,9 @@ export function runAgentRoom(
   const when = dayLabel(date);
   const residents = state.residents.length;
 
-  /** Dietary Agent's verdict on an evaluation. */
-  const dietaryReview = (e: Evaluation, recheck: boolean) => {
-    if (!e.conflicted.length) {
-      say(
-        "dietary",
-        "menu",
-        "check",
-        "ok",
-        `${recheck ? "Re-checked: all" : "All"} ${residents} residents are cleared for ${e.dish.name}.`,
-      );
-      return;
-    }
-    const byReason = new Map<string, string[]>();
-    for (const c of e.conflicted)
-      for (const why of c.reasons)
-        byReason.set(why, [...(byReason.get(why) ?? []), firstName(c.name)]);
-    const detail = [...byReason.entries()]
-      .map(([why, names]) => `${short(names)} (${why})`)
-      .join("; ");
-    const alternatives = e.covered.map(
-      (c) =>
-        `${dishById(c.dishId).name} for ${short(c.residentIds.map((rid) => firstName(state.residents.find((r) => r.id === rid)?.name ?? rid)))}`,
-    );
-    let text = `${recheck ? "Re-checked: " : ""}${plural(e.conflicted.length, "resident")} can't have ${e.dish.name}: ${detail}.`;
-    if (alternatives.length) text += ` Safe alternatives: ${alternatives.join("; ")}.`;
-    if (e.uncovered.length)
-      text += ` No safe option on file for ${list(e.uncovered.map((u) => firstName(u.name)))}, so staff must decide.`;
-    say("dietary", "menu", "check", e.uncovered.length ? "alert" : "info", text);
-  };
-
-  /** Inventory Agent's verdict on an evaluation. */
-  const inventoryReview = (e: Evaluation, recheck: boolean) => {
-    if (!e.risks.length) {
-      say(
-        "inventory",
-        "menu",
-        "check",
-        "ok",
-        `${recheck ? "Re-checked: stock" : "Stock"} covers ${meal} on ${when}. No order needed.`,
-      );
-      return;
-    }
-    if (e.blocked.length) {
-      // Group ingredients that share the same reason, so the message does not repeat itself.
-      const byReason = new Map<string, string[]>();
-      for (const r of e.blocked)
-        byReason.set(whyBlocked(r), [...(byReason.get(whyBlocked(r)) ?? []), r.name.toLowerCase()]);
-      const reasons = [...byReason.entries()]
-        .map(([why, names]) => (byReason.size === 1 ? why : `${list(names)}: ${why}`))
-        .join("; ");
-      say(
-        "inventory",
-        "menu",
-        "handoff",
-        "alert",
-        `I can't get ${list(e.blocked.map((r) => r.name.toLowerCase()))} by ${when}: ${reasons}. Menu Agent, please swap the dish.`,
-      );
-    }
-    if (e.orderable.length) {
-      const drafts = draftsFrom(e.orderable);
-      const total = round(drafts.reduce((sum, d) => sum + d.total, 0));
-      say(
-        "inventory",
-        "chef",
-        "check",
-        "info",
-        `${recheck ? "Re-checked: " : ""}${e.blocked.length ? "The rest I can order in time. " : ""}Short on ${list(e.orderable.map((r) => r.name.toLowerCase()))}. Drafted ${plural(drafts.length, "order")} totalling ${money(total)} from ${list(drafts.map((d) => d.vendorName))}, arriving by ${when}.`,
-      );
-      for (const r of e.orderable) {
-        const chosen = r.sourcing.recommended;
-        const skipped = r.sourcing.options.find(
-          (o) =>
-            chosen &&
-            o.vendorId !== chosen.vendorId &&
-            o.total < chosen.total &&
-            o.compliance.status !== "eligible",
-        );
-        if (skipped) {
-          const [first, ...rest] = skipped.compliance.reasons;
-          say(
-            "inventory",
-            "chef",
-            "check",
-            "alert",
-            `Skipped ${skipped.vendorName} for ${r.name.toLowerCase()} (${money(skipped.total)}, cheaper): ${first?.toLowerCase()}${rest.length ? ` (+${rest.length} more)` : ""}.`,
-          );
-        }
-      }
-    }
-  };
+  const ctx: NarrationContext = { state, date, meal, say };
+  const dietaryReview = (e: Evaluation, recheck: boolean) => narrateDietary(ctx, e, recheck);
+  const inventoryReview = (e: Evaluation, recheck: boolean) => narrateInventory(ctx, e, recheck);
 
   const planned = dishById(resolveMenuState(state, offset, reference).plan[meal]);
   let current: Evaluation;
@@ -479,17 +559,13 @@ export function runAgentRoom(
       const avoid = new Set(current.blocked.map((r) => r.ingredientId));
       const swap = chooseReplacement(state, date, meal, [planned.id], avoid, reference);
       if (swap) {
-        const reason = `it avoids ${list([...avoid].map((i) => state.ingredients.find((x) => x.id === i)?.name.toLowerCase() ?? i))}`;
-        const eaters =
-          swap.conflicted.length === 0
-            ? "every resident can eat it"
-            : `only ${plural(swap.conflicted.length, "resident")} need${swap.conflicted.length === 1 ? "s" : ""} an alternative`;
+        const why = swapReason(state, swap, avoid);
         say(
           "menu",
           "all",
           "proposal",
           "info",
-          `Swapping ${planned.name} for ${swap.dish.name}: ${reason}, and ${eaters}. Dietary and Inventory, please re-check.`,
+          `Swapping ${planned.name} for ${swap.dish.name}: ${why}. Dietary and Inventory, please re-check.`,
         );
         tried.push(planned.id);
         current = swap;
@@ -508,32 +584,8 @@ export function runAgentRoom(
   }
   if (!tried.includes(current.dish.id)) tried.push(current.dish.id);
 
-  const orders = draftsFrom(current.orderable);
-  const orderTotal = round(orders.reduce((sum, o) => sum + o.total, 0));
-  const plan: RoomPlan = {
-    date,
-    meal,
-    dishId: current.dish.id,
-    dishName: current.dish.name,
-    overrides: current.overrides,
-    alternatives: current.covered.map((c) => ({
-      dishId: c.dishId,
-      dishName: dishById(c.dishId).name,
-      residentNames: c.residentIds.map(
-        (rid) => state.residents.find((r) => r.id === rid)?.name ?? rid,
-      ),
-    })),
-    unresolved: current.uncovered.map((u) => u.name),
-    blocked: current.blocked.map((r) => ({
-      ingredientId: r.ingredientId,
-      name: r.name,
-      reason: whyBlocked(r),
-    })),
-    orders,
-    orderTotal,
-    approver: orderTotal > MANAGEMENT_APPROVAL_THRESHOLD ? "management" : "chef",
-    ready: current.uncovered.length === 0 && current.blocked.length === 0,
-  };
+  const plan = buildPlan(state, date, meal, current);
+  const { orders, orderTotal } = plan;
 
   const summary = [
     `${current.dish.name}`,
