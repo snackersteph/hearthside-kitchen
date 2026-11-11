@@ -97,7 +97,7 @@ function InventoryPage() {
       <InventoryAgentPanel />
 
       {weekly.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
-        {w.proposals.length > 0 && <Button asChild size="sm"><Link to="/approvals" search={{ kind: "purchase" }}>Review weekly purchasing</Link></Button>}
+        {w.proposals.length > 0 && <Button asChild size="sm"><Link to="/approvals" search={{ kind: "purchase", fromInventory: view }}>Review weekly purchasing</Link></Button>}
       </WeeklyPurchasingPanel>)}
 
       {purchases.length > 0 && (
@@ -107,7 +107,7 @@ function InventoryPage() {
             <div className="font-semibold">{purchases.length} purchase request{purchases.length > 1 ? "s" : ""} for the {horizon}-day plan</div>
             <div className="text-muted-foreground">{purchases.map((p) => p.kind === "purchase" && `${p.vendor} ($${p.total.toFixed(2)})`).join(" · ")}</div>
           </div>
-          <Button asChild><Link to="/approvals" search={{ kind: "purchase" }}>Review orders</Link></Button>
+          <Button asChild><Link to="/approvals" search={{ kind: "purchase", fromInventory: view }}>Review orders</Link></Button>
         </div>
       )}
 

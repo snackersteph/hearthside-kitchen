@@ -146,3 +146,10 @@
 
 ## Snapshot band compaction
 - [x] Fit the five daily facts on one compact line with a soft band; verify desktop, tablet and phone.
+
+## Return to inventory after order review
+- [x] Add a back link from Purchase Orders to the inventory tab the user came from; verify both review buttons and the sidebar route.
+
+## Agent profile back and edit
+- [ ] Add a back button returning to the previous screen on each agent profile.
+- [ ] Add an edit button for "What it does" and "Configuration" on each agent profile.
