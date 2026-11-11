@@ -751,6 +751,8 @@ export interface ApprovalBlocker {
   message: string;
   /** Where staff resolve it. */
   link?: "/approvals" | "/profile-updates" | "/residents";
+  /** Observation ids behind an open-concerns blocker, so staff can review them in place. */
+  observationIds?: string[];
 }
 export interface WeeklyApprovalChecks {
   ready: boolean;
@@ -788,8 +790,9 @@ export function weeklyApprovalChecks(s: KitchenState, weekId: string, reference 
   // Open concern observations about a dish a resident is served again this week.
   const upcoming = open.filter((x) => x.date > dateKey(reference));
   const served = new Set(upcoming.flatMap((x) => s.residents.map((r) => `${r.id}|${x.overrides[r.id] ?? x.dishId}`)));
-  const concerns = (s.observations ?? []).filter((o) => o.status === "open" && o.severity === "concern" && served.has(`${o.residentId}|${o.dishId}`)).length;
-  if (concerns) blockers.push({ code: "open-concerns", count: concerns, message: `${plural(concerns, "open meal concern")} about dishes served later this week need review.`, link: "/residents" });
+  const concernIds = (s.observations ?? []).filter((o) => o.status === "open" && o.severity === "concern" && served.has(`${o.residentId}|${o.dishId}`)).map((o) => o.id);
+  const concerns = concernIds.length;
+  if (concerns) blockers.push({ code: "open-concerns", count: concerns, message: `${plural(concerns, "open meal concern")} about dishes served later this week need review:`, observationIds: concernIds });
   return { ready: blockers.length === 0, blockers, purchasingTasks: findings };
 }
 

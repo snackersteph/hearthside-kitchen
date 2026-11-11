@@ -957,7 +957,7 @@ function ManagerDecisions({
   running: boolean;
   pendingAlternatives: number;
 }) {
-  const { dispatch } = useKitchen();
+  const { state, dispatch } = useKitchen();
   const weekApproved = plan?.menuStatus === "approved";
   const purchase = events.find((e) => e.structuredPayload.kind === "purchase");
   const approvedRevisions = events.filter((e) => e.action === "approve-revision");
@@ -1068,6 +1068,26 @@ function ManagerDecisions({
                                 Review
                               </Link>
                             </>
+                          )}
+                          {b.observationIds && (
+                            <ul className="mt-1 space-y-1">
+                              {b.observationIds.map((id) => {
+                                const o = state.observations?.find((x) => x.id === id);
+                                if (!o) return null;
+                                const resident = state.residents.find((r) => r.id === o.residentId);
+                                return (
+                                  <li key={id} className="flex flex-wrap items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-xs">
+                                    <span className="min-w-0 flex-1">
+                                      <span className="font-semibold">{resident?.name ?? o.residentId}</span>
+                                      {" · "}{dishById(o.dishId)?.name ?? o.dishId}{" · "}{o.reaction}
+                                    </span>
+                                    <Button variant="outline" size="sm" className="h-7" onClick={() => dispatch({ type: "reviewObservation", id })}>
+                                      Mark reviewed
+                                    </Button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
                           )}
                         </span>
                       </li>
