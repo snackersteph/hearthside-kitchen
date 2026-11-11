@@ -253,11 +253,9 @@
 .pulse-observations { padding-top: 24px; border-top: 1px solid var(--border); min-width: 0; }
 .pulse-observations :where(ul, details) { border-radius: 8px; box-shadow: none; }
 @media (min-width: 1100px) {
-  .kitchen-pulse { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); column-gap: 32px; }
+  .kitchen-pulse { grid-template-columns: minmax(0, 1fr); }
   .kitchen-pulse > .page-header, .pulse-snapshot, .pulse-observations { grid-column: 1 / -1; }
   .pulse-facts { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
-  .pulse-service { grid-column: 1; grid-row: 3; }
-  .pulse-actions { grid-column: 2; grid-row: 3; }
 }
 .app-main :where(table) { font-variant-numeric: tabular-nums; }
 .app-main :where(thead) { background: var(--muted); }
