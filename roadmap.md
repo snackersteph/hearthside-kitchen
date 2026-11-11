@@ -1,4 +1,5 @@
 # Agents navigation
+- [x] Reuse the shared sidebar agent avatars on the Agent Workspace cards and verify their appearance.
 - [x] Add a Chat tab under Agents that opens its own page; verify navigation and page metadata.
 
 # Visual refresh

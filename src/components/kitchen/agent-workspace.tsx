@@ -5,6 +5,7 @@ import {
   ClipboardCheck, Clock, Minus, Sparkles, TriangleAlert, UserCheck, type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/kitchen/app-shell";
+import { AgentAvatar } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -367,13 +368,12 @@ function SummaryCard({ label, value, sub, tone }: { label: string; value: string
 
 function AgentCard({ id, activity, started }: { id: AgentId; activity: AgentActivity; started: boolean }) {
   const info = AGENT_INFO[id];
-  const Icon = info.icon;
   const a = ACTIVITY_LABEL[activity];
   return (
     <article className="rounded-xl border bg-card p-5 shadow-soft">
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-2 font-semibold">
-          <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon className="size-4.5" /></span>
+          <AgentAvatar agent={id} />
           {info.name}
         </span>
         <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", a.badge)}>{a.label}</span>
