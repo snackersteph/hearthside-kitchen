@@ -9,9 +9,9 @@ import { PageHeader } from "@/components/kitchen/app-shell";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Tag } from "@/components/kitchen/agents";
 import { cn } from "@/lib/utils";
-import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
-import { WEEK_STATUS_LABEL, weekRange, weekStatus } from "@/lib/kitchen/weekly-operations";
-import { WeekStatusBadge } from "@/components/kitchen/week-status";
+import { alternativeOverview, calendarWeekApproval, residentApprovalCount } from "@/components/kitchen/approval-rules";
+import { weekRange } from "@/lib/kitchen/weekly-operations";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({ meta: [
@@ -59,25 +59,28 @@ function MenuPage() {
     </CalendarDayButton>;
   }
 
-  // Each calendar row is one Monday–Sunday service week; its status opens that week in the Agent Workspace.
+  // Calendar rows summarize resident approvals; workflow lifecycle remains in the Agent Workspace.
   function ServiceWeek({ week, children, ...props }: WeekProps) {
-    const monday = week.days[0]!.date;
+    const monday = week.days[0]?.date;
+    if (!monday || !reference) return <tr {...props}>{children}</tr>;
     const sunday = week.days[6]?.date ?? monday;
     const inRange = sunday >= start && monday <= end;
-    const info = inRange ? weekStatus(state, dateKey(monday), reference!) : null;
+    const info = inRange ? calendarWeekApproval(overview, dateKey(monday), dateKey(sunday), reference) : null;
+    const label = info?.status === "pending" ? `${info.pending} to approve` : info?.status === "unresolved" ? "Needs attention" : info?.status === "approved" ? "Approved" : info?.status === "past" ? "Past" : "No approvals";
     const range = weekRange(dateKey(monday), dateKey(sunday));
     return <tr {...props}>
       {info && <td className="col-span-7">
-        <button type="button" className="menu-week-status"
-          aria-label={`Service week ${range}: ${WEEK_STATUS_LABEL[info.status]}${info.outstanding.length ? `, ${info.outstanding.map((o) => o.message).join("; ")}` : ""}. Open in Agent Workspace`}
-          title={[...info.outstanding.map((o) => o.message), info.note].filter(Boolean).join(" · ") || undefined}
-          onClick={() => navigate({ to: "/dashboard", search: { week: info.startDate } })}>
+        <Button type="button" variant="ghost" className="menu-week-status"
+          aria-label={`Service week ${range}: ${label}. Open in Agent Workspace`}
+          onClick={() => navigate({ to: "/dashboard", search: { week: dateKey(monday) } })}>
           <span className="flex min-w-0 items-center gap-2">
             <span className="hidden whitespace-nowrap font-medium text-muted-foreground sm:inline">Week of {range}</span>
-            <WeekStatusBadge info={info} compact />
+            <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold", info.status === "pending" || info.status === "unresolved" ? "bg-danger-soft text-destructive" : info.status === "past" ? "bg-muted text-muted-foreground" : "bg-success-soft text-success")}>
+              {info.status === "pending" || info.status === "unresolved" ? <ClipboardCheck className="size-3 shrink-0" /> : info.status === "past" ? <History className="size-3 shrink-0" /> : <CheckCircle2 className="size-3 shrink-0" />}{label}
+            </span>
           </span>
           <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
-        </button>
+        </Button>
       </td>}
       {children}
     </tr>;

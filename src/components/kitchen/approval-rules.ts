@@ -23,6 +23,17 @@ export function alternativeOverview(state: KitchenState, reference: Date, dates?
   });
 }
 
+/** Calendar week labels summarize the same resident decisions as their day cells, not workflow sign-off. */
+export function calendarWeekApproval(days: ReturnType<typeof alternativeOverview>, start: string, end: string, reference: Date) {
+  const today = dateKey(reference);
+  if (end < today) return { status: "past" as const, pending: 0 };
+  const active = days.filter((day) => day.date >= start && day.date <= end && day.date > today);
+  const pending = residentApprovalCount(active.flatMap((day) => day.pending));
+  if (pending) return { status: "pending" as const, pending };
+  if (active.some((day) => day.unresolved.length)) return { status: "unresolved" as const, pending: 0 };
+  return { status: active.some((day) => day.approved.length) ? "approved" as const : "none" as const, pending: 0 };
+}
+
 /** Keep accommodation reviews visible even after their alternatives are approved. */
 export function needsDietaryReview(state: KitchenState, review: MealReview) {
   const main = dishById(review.mainDishId);

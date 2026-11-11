@@ -1,8 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { alternativeOverview, needsDietaryReview, residentApprovalCount } from "@/components/kitchen/approval-rules";
+import { alternativeOverview, calendarWeekApproval, needsDietaryReview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 import { analyze, mealSignature } from "@/lib/kitchen/engine";
 import { initialState } from "@/lib/kitchen/data";
 import { reducer } from "@/lib/kitchen/store";
+import { addDays, createWeeklyPlan } from "@/lib/kitchen/weekly-schedule";
+
+describe("calendar weekly approval summary", () => {
+  const reference = new Date(2026, 10, 11, 15, 16);
+  const dates = Array.from({ length: 7 }, (_, i) => addDays("2026-11-09", i));
+  it("shows Nov 9–15 as approved when all upcoming alternatives are approved despite a weekly draft", () => {
+    let state = { ...initialState(), weeklyPlans: [{ ...createWeeklyPlan("2026-11-09", reference), menuStatus: "needs-review" as const }] };
+    const before = alternativeOverview(state, reference, dates);
+    expect(calendarWeekApproval(before, "2026-11-09", "2026-11-15", reference).pending).toBeGreaterThan(0);
+    for (const day of before) for (const p of day.pending) state = reducer(state, { type: "approveSub", proposalId: p.id, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, serviceDate: p.serviceDate, modified: false, summary: "Approve resident alternatives" }, reference) as typeof state;
+    const after = alternativeOverview(state, reference, dates);
+    expect(calendarWeekApproval(after, "2026-11-09", "2026-11-15", reference)).toEqual({ status: "approved", pending: 0 });
+    expect(state.weeklyPlans[0]?.menuStatus).toBe("needs-review");
+  });
+  it("counts only pending residents within Nov 9–15 even if the weekly menu is signed off", () => {
+    const state = { ...initialState(), weeklyPlans: [{ ...createWeeklyPlan("2026-11-09", reference), menuStatus: "approved" as const }] };
+    const overview = alternativeOverview(state, reference);
+    const count = residentApprovalCount(overview.filter((day) => day.date <= "2026-11-15").flatMap((day) => day.pending));
+    expect(count).toBeGreaterThan(0);
+    expect(calendarWeekApproval(overview, "2026-11-09", "2026-11-15", reference)).toEqual({ status: "pending", pending: count });
+  });
+});
 
 describe("matching calendar and Approval Center alternatives", () => {
   const reference = new Date("2026-11-10T12:00:00");
