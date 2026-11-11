@@ -7,21 +7,23 @@ import { MEALS } from "@/lib/kitchen/types";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { MEAL_LABEL, MEAL_TIME } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
-import { scheduledState } from "@/lib/kitchen/schedule";
+import { dateKey, scheduledState } from "@/lib/kitchen/schedule";
 import { actionCards, dailySnapshot, openObservations, reviewedObservations } from "@/lib/kitchen/overview";
 import { ActionCardTile } from "@/components/kitchen/action-card";
 import { ObservationDialog } from "@/components/kitchen/observation-dialog";
 import { ResidentPhoto } from "@/components/kitchen/resident-photo";
 import { cn } from "@/lib/utils";
+import { useAccountData } from "@/lib/account";
+import { recipePhoto } from "@/lib/kitchen/recipe-photos";
 
 const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: PackageX, delivered: PackageCheck, incoming: Truck, profiles: UserRound } as const;
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Command Center · NutriSync" },
+      { title: "Kitchen Pulse · NutriSync" },
       { name: "description", content: "Today's meals, dietary issues and live agent activity at a glance." },
-      { property: "og:title", content: "Command Center · NutriSync" },
+      { property: "og:title", content: "Kitchen Pulse · NutriSync" },
       { property: "og:description", content: "Today's meals, dietary issues and live agent activity at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -31,6 +33,7 @@ export const Route = createFileRoute("/")({
 });
 
 function CommandCenter() {
+  const account = useAccountData(false);
   const { state, analysis, dispatch } = useKitchen();
   const cards = actionCards(state, analysis);
   const snapshot = dailySnapshot(state, analysis);
@@ -44,6 +47,7 @@ function CommandCenter() {
     { label: "Estimated daily food cost", value: money(snapshot.cost), detail: `${money(snapshot.costPerResident)} / resident${snapshot.unpriced ? " · some prices missing" : " · ingredients only"}`, icon: DollarSign },
   ];
   const dayState = scheduledState(state, 0);
+  const todayKey = dateKey(new Date());
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const open = openObservations(state);
   const reviewed = reviewedObservations(state);
@@ -51,19 +55,20 @@ function CommandCenter() {
   const residentOf = (id: string) => state.residents.find((r) => r.id === id);
 
   return (
-    <>
-      <PageHeader eyebrow={today} title="Good evening, Chef." />
+    <div className="kitchen-pulse">
+      <PageHeader eyebrow={today} title={`Good evening, ${account.data?.profile?.display_name || "Chef"}.`} />
 
-      <section className="mb-8 border-y py-5" aria-label="Daily snapshot">
-        <h2 className="mb-4 text-sm font-semibold text-muted-foreground">Today's snapshot</h2>
-        <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">{facts.map((fact) => <div key={fact.label} className="min-w-0">
-          <dt className="flex items-center gap-2 text-sm text-muted-foreground"><fact.icon className="h-4 w-4 shrink-0 text-primary" />{fact.label}</dt>
-          <dd className="mt-2 break-words font-display text-2xl font-semibold">{fact.value}</dd>
-          <dd className="mt-1 text-xs text-muted-foreground">{fact.detail}</dd>
+      <section className="pulse-snapshot" aria-label="Daily snapshot">
+        <h2 className="mb-4 text-xs font-semibold text-muted-foreground">Today's snapshot</h2>
+        <dl className="pulse-facts">{facts.map((fact) => <div key={fact.label} className="min-w-0">
+          <dt className="flex items-center gap-2 text-xs text-muted-foreground"><fact.icon className="h-3.5 w-3.5 shrink-0 text-primary" />{fact.label}</dt>
+          <dd className="mt-2 break-words font-display text-xl font-semibold">{fact.value}</dd>
+          <dd className="mt-1 text-[11px] text-muted-foreground">{fact.detail}</dd>
         </div>)}</dl>
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+      <section className="pulse-actions" aria-label="Kitchen action items">
+        <h2 className="text-xl font-semibold">Needs your attention</h2>
         {cards.map((card) => (
           <ActionCardTile
             key={card.id}
@@ -71,10 +76,11 @@ function CommandCenter() {
             icon={CARD_ICONS[card.id]}
           />
         ))}
-      </div>
+      </section>
 
-      <div className="mt-8">
-        <section>
+      <div className="pulse-content">
+        <div className="pulse-content-inner">
+        <section className="pulse-service">
           <h2 className="mb-3 text-xl font-semibold">Today's service</h2>
           <div className="space-y-3">
             {MEALS.map((meal) => {
@@ -85,8 +91,9 @@ function CommandCenter() {
               const bad = analysis.conflicts.filter((c) => c.meal === meal && c.status === "needs-staff").length;
               const mainCount = Object.values(served).filter((d) => d === main.id).length;
               return (
-                <Link key={meal} to="/menu" className="flex items-center gap-5 rounded-xl border bg-card p-5 shadow-soft transition hover:border-primary">
-                  <div className="w-20 shrink-0">
+                <Link key={meal} to="/menu/$date" params={{ date: todayKey }} search={{ meal, focus: true }} className="pulse-service-link border bg-card transition hover:border-primary">
+                  <img src={recipePhoto(main.id, main.name)} alt={main.name} className="pulse-service-photo" />
+                  <div className="pulse-service-time">
                     <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{MEAL_LABEL[meal]}</div>
                     <div className="text-sm text-muted-foreground">{MEAL_TIME[meal]}</div>
                   </div>
@@ -94,7 +101,7 @@ function CommandCenter() {
                     <div className="font-display text-lg font-semibold">{main.name}</div>
                     <div className="text-sm text-muted-foreground">{mainCount} on main · {alt} on approved alternatives</div>
                   </div>
-                  <div className="flex flex-col items-end gap-1 text-xs font-semibold">
+                  <div className="pulse-service-status">
                     {pend > 0 && <span className="rounded-full bg-agent-menu-soft px-2 py-0.5 text-agent-menu">{pend} pending swap</span>}
                     {bad > 0 && <span className="rounded-full bg-danger-soft px-2 py-0.5 text-destructive">{bad} unresolved</span>}
                     {!pend && !bad && <span className="rounded-full bg-success-soft px-2 py-0.5 text-success">All safe</span>}
@@ -103,8 +110,9 @@ function CommandCenter() {
               );
             })}
           </div>
+        </section>
 
-          <section className="mt-8">
+          <section className="pulse-observations">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold">Observation board</h2>
@@ -163,11 +171,11 @@ function CommandCenter() {
               </details>
             )}
           </section>
-        </section>
+        </div>
 
       </div>
 
       {logging && <ObservationDialog onClose={() => setLogging(false)} />}
-    </>
+    </div>
   );
 }

@@ -46,7 +46,7 @@ const photos: Record<string, string> = {
 
 export function ResidentPhoto({ resident, large = false, className }: { resident: Resident; large?: boolean; className?: string }) {
   const src = resident.photoUrl || photos[resident.id];
-  const classes = cn("shrink-0 rounded-lg border object-cover", large ? "h-32 w-32 sm:h-40 sm:w-40" : "h-13.75 w-13.75", className);
+  const classes = cn("block aspect-square shrink-0 rounded-lg border bg-secondary object-cover object-center", large ? "h-32 w-32 sm:h-40 sm:w-40" : "h-14 w-14 min-w-14 max-w-none", className);
   if (!src) return <span aria-label={`${resident.name} profile`} className={cn(classes, "flex items-center justify-center bg-secondary font-semibold text-secondary-foreground")}>{resident.name.split(/\s+/).map((word) => word[0]).join("")}</span>;
   return <img src={src} alt={`${resident.name} profile photo`} width={320} height={320} loading={large ? "eager" : "lazy"} className={classes} />;
 }

@@ -5,9 +5,11 @@ import { useKitchen } from "@/lib/kitchen/store";
 import { AGENTS, AgentAvatar } from "./agents";
 import type { AgentId } from "@/lib/kitchen/types";
 import logo from "@/assets/nutrisync-logo.png";
+import { AccountMenu } from "@/components/account-menu";
+import { Button } from "@/components/ui/button";
 
 const NAV = [
-  { to: "/", label: "Command Center", icon: LayoutDashboard },
+  { to: "/", label: "Kitchen Pulse", icon: LayoutDashboard },
   { to: "/menu", label: "Daily Menu", icon: UtensilsCrossed },
   { to: "/recipes", label: "Recipes", icon: BookOpen },
   { to: "/residents", label: "Residents", icon: Users },
@@ -26,21 +28,21 @@ export function AppShell({ children }: { children: ReactNode }) {
     inventory: analysis.proposals.filter((p) => p.kind === "purchase").length,
   };
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
+    <div className="app-shell flex min-h-screen bg-background">
+      <aside className="app-sidebar sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="px-5 pb-6 pt-7">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0" />
+            <img src={logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-md bg-card p-1" />
             <div className="min-w-0">
-              <div className="font-display text-2xl font-semibold leading-none">NutriSync</div>
-              <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/60">SMART NUTRITION, CONNECTED CARE</div>
+              <div className="font-display text-2xl font-semibold leading-none text-sidebar-foreground">NutriSync</div>
+              <div className="mt-1.5 text-[9px] font-medium uppercase tracking-normal text-muted-foreground">SMART NUTRITION, CONNECTED CARE</div>
             </div>
           </div>
         </div>
         <nav className="flex flex-col gap-1 px-3">
           {NAV.map((n) => (
             <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className="app-nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>
               <n.icon className="h-4 w-4" />
               <span className="flex-1">{n.label}</span>
@@ -51,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="mt-auto space-y-3 border-t border-sidebar-border px-5 py-5">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-sidebar-foreground/50">Agents</div>
+          <div className="text-[11px] font-semibold uppercase tracking-normal text-muted-foreground">Agents</div>
           <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 -mx-3 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>
             <Gauge className="h-4 w-4" /><span className="flex-1">Dashboard</span>
           </Link>
@@ -65,9 +67,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className={`h-2 w-2 rounded-full ${busy[id] ? "bg-sidebar-primary animate-pulse-dot" : "bg-success"}`} />
             </Link>
           ))}
-          <button onClick={() => dispatch({ type: "reset" })} className="mt-2 flex items-center gap-2 text-xs text-sidebar-foreground/55 hover:text-sidebar-foreground">
+          <Button variant="ghost" size="sm" onClick={() => dispatch({ type: "reset" })} className="mt-2 gap-2 px-0 text-xs text-muted-foreground hover:text-sidebar-foreground">
             <RotateCcw className="h-3 w-3" /> Reset demo day
-          </button>
+          </Button>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -76,7 +78,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }} className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium text-sidebar-foreground/75" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>{n.label}</Link>
           ))}
         </nav>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-8 md:px-10">{children}</main>
+        <div className="mx-auto flex w-full max-w-7xl justify-end px-5 pt-5 md:px-10"><AccountMenu /></div>
+        <main className="app-main mx-auto w-full max-w-7xl flex-1 px-5 pb-8 pt-3 md:px-8 lg:px-10">{children}</main>
       </div>
     </div>
   );
@@ -84,10 +87,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 export function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="page-header mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{eyebrow}</div>
-        <h1 className="mt-1 text-3xl font-semibold text-foreground md:text-4xl">{title}</h1>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{eyebrow}</div>
+        <h1 className="mt-2 text-3xl font-semibold leading-tight text-foreground">{title}</h1>
       </div>
       {children}
     </div>

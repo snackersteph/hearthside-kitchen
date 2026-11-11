@@ -57,10 +57,12 @@ export interface Decision {
   modified: boolean;
   serviceDate?: string;
   note?: string;
+  alternativeScope?: { meal: Meal; fromDishId: string; dishId: string; residentSignatures: Record<string, string> };
 }
 
 /** A staff-visible record that a resident's care information was changed. */
 export interface ProfileUpdate {
+  demo?: boolean;
   id: string;
   residentId: string;
   at: number;
@@ -73,6 +75,7 @@ export interface ProfileUpdate {
 
 /** A reaction observed after a resident ate a specific meal. */
 export interface Observation {
+  demo?: boolean;
   id: string;
   residentId: string;
   serviceDate: string;
@@ -85,6 +88,7 @@ export interface Observation {
 }
 
 export interface KitchenState {
+  demoContentVersion?: number;
   orderSnapshotVersion?: number;
   recipes?: import("./recipes").Recipe[];
   deletedRecipeIds?: string[];

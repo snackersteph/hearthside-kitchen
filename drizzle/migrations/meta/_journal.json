@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794342031583,
+      "tag": "0000_user_accounts_messages_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794342229095,
+      "tag": "0001_restrict_account_column_updates",
+      "breakpoints": true
+    }
+  ]
+}

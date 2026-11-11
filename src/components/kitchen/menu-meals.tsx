@@ -7,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { canApproveMeal, dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
+import { dateKey, dayAt, scheduledState } from "@/lib/kitchen/schedule";
 import { Button } from "@/components/ui/button";
 import { analyzeMenuDay, resolveMenuState } from "@/lib/kitchen/engine";
+import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 
 const MEAL_BG: Record<Meal, string> = { breakfast: "bg-meal-breakfast", lunch: "bg-meal-lunch", dinner: "bg-meal-dinner" };
 
@@ -19,20 +20,22 @@ export function MealSection({ meal, offset, reference }: { meal: Meal; offset: n
   const analysis = analyzeMenuDay(kitchen, offset, reference);
   const date = dateKey(dayAt(offset, reference));
   const review = allAnalysis.mealReviews?.find((r) => r.serviceDate === date && r.meal === meal);
-  const timely = canApproveMeal(date, reference);
   const main = dishById(state.plan[meal]);
   const approved = new Map<string, string[]>();
   for (const [rid, did] of Object.entries(state.overrides[meal])) approved.set(did, [...(approved.get(did) ?? []), rid]);
   const pending = analysis.proposals.filter((p) => p.kind === "substitution" && p.meal === meal);
   const unresolved = analysis.conflicts.filter((c) => c.meal === meal && c.status === "needs-staff");
   const mainCount = Object.values(analysis.served[meal]).filter((d) => d === main.id).length;
+  const status = alternativeOverview(kitchen, reference, [date])[0];
+  const approvedCount = status?.approved.filter((p) => p.meal === meal).length ?? 0;
+  const pendingCount = residentApprovalCount(status?.pending.filter((p) => p.meal === meal) ?? []);
 
   return (
     <section className={cn("overflow-hidden rounded-2xl border shadow-soft", MEAL_BG[meal])}>
       <div className="grid gap-6 p-6 md:grid-cols-[1fr_320px]">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{MEAL_LABEL[meal]} · {MEAL_TIME[meal]}</div>
-          <h2 className="mt-1 text-2xl font-semibold"><Link to="/approvals" search={{ kind: "substitution", date, meal }} className="hover:text-primary">{main.name}</Link></h2>
+          <h2 className="mt-1 text-2xl font-semibold"><Link to="/approvals" search={{ kind: "substitution", date, meal, fromMenu: true }} className="hover:text-primary">{main.name}</Link></h2>
           <p className="mt-1 text-sm text-muted-foreground">{main.description}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {main.allergens.map((a) => <Tag key={a} tone="danger">{a}</Tag>)}
@@ -50,9 +53,9 @@ export function MealSection({ meal, offset, reference }: { meal: Meal; offset: n
             <SelectContent>{DISHES.filter((d) => d.meal === meal).map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
           </Select>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Tag tone={review?.approved ? "ok" : timely ? "warn" : "danger"}>{review?.approved ? "Approved in advance" : timely ? `Approval due ${review?.approvalDueDate}` : "Approval overdue"}</Tag>
+            <Tag tone={pendingCount || unresolved.length ? "danger" : "ok"}>{pendingCount ? `${pendingCount} to approve` : unresolved.length ? "Needs attention" : approvedCount ? "Approved" : "No approvals needed"}</Tag>
           </div>
-          <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/approvals" search={{ kind: "substitution", date, meal }}>Review {MEAL_LABEL[meal].toLowerCase()} <ChevronRight /></Link></Button>
+          <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/approvals" search={{ kind: "substitution", date, meal, fromMenu: true }}>Review {MEAL_LABEL[meal].toLowerCase()} <ChevronRight /></Link></Button>
         </div>
       </div>
 
@@ -66,7 +69,7 @@ export function MealSection({ meal, offset, reference }: { meal: Meal; offset: n
             </div>
           ))}
           {pending.map((p) => p.kind === "substitution" && (
-            <Link to="/approvals" search={{ kind: "substitution", date, meal }} key={p.id} className="rounded-xl border border-dashed border-agent-menu bg-card p-4 transition hover:bg-agent-menu-soft">
+            <Link to="/approvals" search={{ kind: "substitution", date, meal, fromMenu: true }} key={p.id} className="rounded-xl border border-dashed border-agent-menu bg-card p-4 transition hover:bg-agent-menu-soft">
               <div className="flex items-center gap-2"><AgentAvatar agent="menu" size="sm" /><Tag tone="warn">Proposed · awaiting approval</Tag></div>
               <div className="mt-2 font-semibold">{dishById(p.dishId).name}</div>
               <div className="mt-1 text-sm text-muted-foreground">{p.residentIds.map((r) => residentName(state, r)).join(", ")}</div>

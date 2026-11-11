@@ -1,4 +1,18 @@
+# Visual refresh
+- [x] Try a light sage navigation, new typography and a split dashboard layout; preserve all actions and red/yellow warnings and verify.
+- [x] Try an editorial font pairing, forest-green navigation and cool secondary neutrals; preserve warning colors and behavior and verify layouts.
+- [x] Refresh shared colors, navigation, typography and controls to complement the logo without changing behavior; verify pages and existing workflows.
+
 # Inventory operations
+- [x] Populate profile updates and the observation board with persistent demo examples, preserving existing staff work; test and verify.
+- [x] Add user account icon, login, editable name/avatar, private messages and notifications; personalize the greeting.
+- [x] Reduce snapshot fonts and fit resident portraits proportionally; verify account flow and display.
+- [x] Close completed approval cards with success feedback, align menu calendar/status counts with alternatives, and return to the originating meal; test and verify.
+- [x] Add individual resident and whole-card alternative approvals/rejections; test persistence and verify the page.
+- [x] Move delivered-order View below ingredients, keep Confirm delivery visible, fold other actions and confirmed deletion into three dots; test and verify.
+- [x] Rename vendor contact link and add delivered-order issue, replacement and rejection options that open vendor contact details; verify.
+- [x] Combine incoming orders by vendor, remove incoming delivery confirmation and editing, and provide vendor links in read-only details; verify.
+- [x] Remove pictured summary/warning; add Stock alert with vendor, estimated pricing, suggested quantities and delivery-aware ordering; verify persistence.
 - [x] Forecast ingredient consumption over 7 or 14 days from the shared menu schedule.
 - [x] Separate available stock from incoming deliveries and track approved orders.
 - [x] Open order-only reviews from Inventory.
@@ -100,3 +114,19 @@
 - [x] Add resident, recipe, daily consumption and estimated cost facts.
 - [x] Rename Incoming orders and populate the demo with two due deliveries and three incoming orders.
 - [x] Show old/new profile content and individually acknowledge updates; test and verify the flow.
+
+## Menu calendar readability
+- [x] Add an icon before "Past", make today's date stand out, and strengthen the to-approve and approved label contrast.
+- [x] Simplify today's highlight to just the green circle around the date number (no cell border/fill).
+
+## Agent Workspace redesign
+- [x] Rebuild /dashboard as a Weekly Agent Workspace per uploaded spec: weekly controls, summary cards, agent cards, meal matrix, collaboration flow with handoff details, manager decisions, final weekly approval.
+- [x] Simulated generation sequence; consistent state across all sections; verify in preview.
+
+## Profile update diff styling
+- [x] Remove the "Draft example" note and shorten labels to Previous/Updated.
+- [x] Show old vs new content in colored panels (soft red struck-through vs soft green highlighted) with an arrow between.
+
+## Dashboard naming and service links
+- [x] Rename Command Center to "Kitchen Pulse" across sidebar, page title and back links.
+- [x] Link each "Today's service" bar to that date's menu page on its own meal tab (breakfast/lunch/dinner).

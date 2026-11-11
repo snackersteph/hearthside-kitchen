@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { cn } from "@/lib/utils";
 import { recipePhoto } from "@/lib/kitchen/recipe-photos";
 import { ALLERGENS, MEALS, type Allergen, type Meal } from "@/lib/kitchen/types";
-import { DISH_CATEGORIES, recipeAvailability, recipeCategory, type DishCategory, DIET_GROUPS, TEXTURES, isValidRecipe, recipeLibrary, recipeNutrition, unitsFor, type DietGroup, type Recipe, type RecipeIngredient, type Texture } from "@/lib/kitchen/recipes";
+import { RECIPE_TYPES, recipeType, type RecipeType, DISH_CATEGORIES, recipeAvailability, recipeCategory, type DishCategory, DIET_GROUPS, TEXTURES, isValidRecipe, recipeLibrary, recipeNutrition, unitsFor, type DietGroup, type Recipe, type RecipeIngredient, type Texture } from "@/lib/kitchen/recipes";
 
 export const Route = createFileRoute("/recipes")({
   head: () => ({
@@ -38,6 +38,7 @@ function RecipesPage() {
   const [diet, setDiet] = useState<"all" | DietGroup>("all");
   const [texture, setTexture] = useState<"all" | Texture>("all");
   const [category, setCategory] = useState<"all" | DishCategory>("all");
+  const [type, setType] = useState<"all" | RecipeType>("all");
   const [stock, setStock] = useState<"all" | "available" | "low" | "unavailable">("all");
   const [editing, setEditing] = useState<Recipe | null>(null);
   const servings = state.residents.length;
@@ -46,7 +47,7 @@ function RecipesPage() {
   const [adding, setAdding] = useState(false);
   const all = recipeLibrary(state);
   const q = query.trim().toLowerCase();
-  const rows = all.filter((r) => (meal === "all" || r.meal === meal) && (diet === "all" || r.dietGroup === diet) && (texture === "all" || r.texture === texture) && (category === "all" || recipeCategory(r) === category) && (stock === "all" || recipeAvailability(r, state.ingredients, servings).status === stock)
+  const rows = all.filter((r) => (type === "all" || recipeType(r) === type) && (meal === "all" || r.meal === meal) && (diet === "all" || r.dietGroup === diet) && (texture === "all" || r.texture === texture) && (category === "all" || recipeCategory(r) === category) && (stock === "all" || recipeAvailability(r, state.ingredients, servings).status === stock)
     && (!q || r.name.toLowerCase().includes(q) || r.ingredients.some((l) => state.ingredients.find((i) => i.id === l.id)?.name.toLowerCase().includes(q))))
     .sort((a, b) => MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal) || a.name.localeCompare(b.name));
 
@@ -62,6 +63,7 @@ function RecipesPage() {
       <div className="mb-6 flex flex-wrap gap-3 border-b pb-5">
         <Filter label="Meal" value={meal} onChange={setMeal} options={MEALS} />
         <Filter label="Category" value={category} onChange={setCategory} options={DISH_CATEGORIES} />
+        <Filter label="Recipe type" value={type} onChange={setType} options={RECIPE_TYPES} />
         <Filter label="Diet group" value={diet} onChange={setDiet} options={DIET_GROUPS} />
         <Filter label="Texture" value={texture} onChange={setTexture} options={TEXTURES} />
         <label className="text-sm font-medium">Stock
@@ -70,20 +72,22 @@ function RecipesPage() {
             <SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="available">In stock</SelectItem><SelectItem value="low">Running low</SelectItem><SelectItem value="unavailable">Missing</SelectItem></SelectContent>
           </Select>
         </label>
-        {(meal !== "all" || stock !== "all" || category !== "all" || diet !== "all" || texture !== "all" || q) && <Button variant="ghost" className="self-end" onClick={() => { setMeal("all"); setCategory("all"); setStock("all"); setDiet("all"); setTexture("all"); setQuery(""); }}><X />Clear</Button>}
+        {(type !== "all" || meal !== "all" || stock !== "all" || category !== "all" || diet !== "all" || texture !== "all" || q) && <Button variant="ghost" className="self-end" onClick={() => { setType("all"); setMeal("all"); setCategory("all"); setStock("all"); setDiet("all"); setTexture("all"); setQuery(""); }}><X />Clear</Button>}
       </div>
 
       <p className="mb-3 text-sm font-medium text-muted-foreground">{rows.length === all.length ? `${all.length} recipes` : `${rows.length} of ${all.length} recipes`}</p>
       {rows.length === 0 ? <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">No recipes match these filters.</div> :
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((r) => (
-            <button key={r.id} onClick={() => setOpen(r)} className={cn("overflow-hidden rounded-xl border text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
-              <img src={recipePhoto(r.id, r.name)} alt={r.name} loading="lazy" width={992} height={672} className="aspect-[16/9] w-full object-cover" />
+            <button key={r.id} onClick={() => setOpen(r)} className={cn("flex flex-col overflow-hidden rounded-xl border p-0 text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
+              <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+                <img src={recipePhoto(r.id, r.name)} alt={r.name} loading="lazy" width={992} height={672} className="absolute inset-0 block h-full w-full object-cover object-center" />
+              </div>
               <div className="p-5">
               <div className="flex items-start justify-between gap-2"><div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[r.meal]} · {recipeCategory(r)}</div><StockBadge recipe={r} servings={servings} compact /></div>
               <div className="mt-1 text-lg font-semibold leading-snug">{r.name}</div>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                <Tag>{r.dietGroup}</Tag><Tag>{r.texture} texture</Tag>
+                <Tag>{label(recipeType(r))}</Tag><Tag>{r.dietGroup}</Tag><Tag>{r.texture} texture</Tag>
                 {r.allergens.map((a) => <Tag key={a} tone="danger">{a}</Tag>)}
               </div>
               </div>
@@ -140,11 +144,11 @@ function RecipeDetail({ recipe, servings, onClose, onDelete, onEdit }: { recipe:
     <Dialog open={!!recipe} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         {recipe && n && <>
-          <img src={recipePhoto(recipe.id, recipe.name)} alt={recipe.name} width={992} height={672} className="aspect-[16/9] w-full rounded-lg object-cover" />
+          <img src={recipePhoto(recipe.id, recipe.name)} alt={recipe.name} width={992} height={672} className="block aspect-[16/9] h-auto w-full rounded-lg object-cover object-center" />
           <DialogHeader>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[recipe.meal]} · {recipeCategory(recipe)}</div>
             <DialogTitle className="text-2xl">{recipe.name}</DialogTitle>
-            <DialogDescription asChild><div className="flex flex-wrap gap-1.5 pt-1"><Tag>{recipe.dietGroup}</Tag><Tag>{recipe.texture} texture</Tag></div></DialogDescription>
+            <DialogDescription asChild><div className="flex flex-wrap gap-1.5 pt-1"><Tag>{label(recipeType(recipe))}</Tag><Tag>{recipe.dietGroup}</Tag><Tag>{recipe.texture} texture</Tag></div></DialogDescription>
           </DialogHeader>
           <StockBadge recipe={recipe} servings={servings} />
           <section>
@@ -175,11 +179,11 @@ function RecipeDetail({ recipe, servings, onClose, onDelete, onEdit }: { recipe:
 
 function AddRecipeDialog({ open, onClose, onSave, existing, initial }: { open: boolean; onClose: () => void; onSave: (r: Recipe) => void; existing: Recipe[]; initial?: Recipe | undefined }) {
   const { state } = useKitchen();
-  const blank = initial ? { name: initial.name, meal: initial.meal, category: recipeCategory(initial), dietGroup: initial.dietGroup, texture: initial.texture, allergens: [...initial.allergens], halal: initial.halal, sodium: String(initial.sodiumMg), lines: initial.ingredients.map((l) => ({ ...l })) } : { name: "", meal: "lunch" as Meal, category: "main" as DishCategory, dietGroup: "regular" as DietGroup, texture: "regular" as Texture, allergens: [] as Allergen[], halal: false, sodium: "", lines: [] as RecipeIngredient[] };
+  const blank = initial ? { name: initial.name, meal: initial.meal, category: recipeCategory(initial), recipeType: initial.recipeType ?? "auto" as "auto" | RecipeType, dietGroup: initial.dietGroup, texture: initial.texture, allergens: [...initial.allergens], halal: initial.halal, sodium: String(initial.sodiumMg), lines: initial.ingredients.map((l) => ({ ...l })) } : { name: "", meal: "lunch" as Meal, category: "main" as DishCategory, recipeType: "auto" as "auto" | RecipeType, dietGroup: "regular" as DietGroup, texture: "regular" as Texture, allergens: [] as Allergen[], halal: false, sodium: "", lines: [] as RecipeIngredient[] };
   const [f, setF] = useState(blank);
   const [pick, setPick] = useState("");
   const ingredients = [...state.ingredients].sort((a, b) => a.name.localeCompare(b.name));
-  const recipe: Recipe = { id: initial?.id ?? `r-${Date.now().toString(36)}`, name: f.name, meal: f.meal, category: f.category, dietGroup: f.dietGroup, texture: f.texture, allergens: f.allergens, halal: f.halal, sodiumMg: f.sodium === "" ? NaN : Number(f.sodium), ingredients: f.lines };
+  const recipe: Recipe = { id: initial?.id ?? `r-${Date.now().toString(36)}`, name: f.name, meal: f.meal, category: f.category, ...(f.recipeType !== "auto" ? { recipeType: f.recipeType } : {}), dietGroup: f.dietGroup, texture: f.texture, allergens: f.allergens, halal: f.halal, sodiumMg: f.sodium === "" ? NaN : Number(f.sodium), ingredients: f.lines };
   const duplicate = existing.some((r) => r.name.trim().toLowerCase() === f.name.trim().toLowerCase());
   const valid = isValidRecipe(recipe, state.ingredients) && !duplicate;
   const close = () => { setF(blank); setPick(""); onClose(); };
@@ -193,6 +197,7 @@ function AddRecipeDialog({ open, onClose, onSave, existing, initial }: { open: b
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <SimpleSelect label="Meal" value={f.meal} options={MEALS} onChange={(v) => setF({ ...f, meal: v })} />
             <SimpleSelect label="Category" value={f.category} options={DISH_CATEGORIES} onChange={(v) => setF({ ...f, category: v })} />
+            <SimpleSelect label="Recipe type" value={f.recipeType} options={["auto", ...RECIPE_TYPES]} onChange={(v) => setF({ ...f, recipeType: v })} />
             <SimpleSelect label="Diet group" value={f.dietGroup} options={DIET_GROUPS} onChange={(v) => setF({ ...f, dietGroup: v })} />
             <SimpleSelect label="Texture" value={f.texture} options={TEXTURES} onChange={(v) => setF({ ...f, texture: v })} />
           </div>

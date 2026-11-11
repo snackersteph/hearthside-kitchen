@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Check, CircleCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleCheck, X } from "lucide-react";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { Button } from "@/components/ui/button";
+import { draftProfileChanges } from "@/lib/kitchen/profile-changes";
 
 export const Route = createFileRoute("/profile-updates")({
   head: () => ({ meta: [
@@ -20,9 +21,13 @@ export const Route = createFileRoute("/profile-updates")({
 function ProfileUpdates() {
   const { state, dispatch } = useKitchen();
   const [view, setView] = useState<"open" | "seen">("open");
-  const updates = (state.profileUpdates ?? []).filter((u) => u.review === view).sort((a, b) => b.at - a.at);
+  const updates = (state.profileUpdates ?? []).filter((u) => u.review === view).sort((a, b) => b.at - a.at).map((u) => ({
+    ...u,
+    isDraft: !u.changes?.length,
+    changes: u.changes?.length ? u.changes : draftProfileChanges(u.residentId),
+  }));
   return <>
-    <Button asChild variant="ghost" className="mb-5"><Link to="/"><ArrowLeft />Command Center</Link></Button>
+    <Button asChild variant="ghost" className="mb-5"><Link to="/"><ArrowLeft />Kitchen Pulse</Link></Button>
     <PageHeader eyebrow="Resident care" title="Profile updates" />
     <div className="mb-6 flex gap-2 border-b pb-4">
       <Button variant={view === "open" ? "default" : "outline"} onClick={() => setView("open")}>Needs acknowledgment ({(state.profileUpdates ?? []).filter((u) => u.review === "open").length})</Button>
@@ -34,13 +39,20 @@ function ProfileUpdates() {
         <div><h2 className="text-lg font-semibold">{state.residents.some((r) => r.id === u.residentId) ? <Link to="/residents/$residentId" params={{ residentId: u.residentId }} className="text-primary hover:underline">{residentName(state, u.residentId)}</Link> : u.residentName ?? u.residentId}</h2><p className="text-sm text-muted-foreground">{new Date(u.at).toLocaleString()} · {u.summary}</p></div>
         {u.review === "open" ? <Button onClick={() => dispatch({ type: "acknowledgeProfileUpdate", id: u.id })}><Check />Acknowledge update</Button> : <span className="text-sm text-success">Acknowledged{u.acknowledgedAt ? ` · ${new Date(u.acknowledgedAt).toLocaleString()}` : ""}</span>}
       </header>
-      {u.changes?.length ? <div className="divide-y">{u.changes.map((c) => <div key={c.field} className="py-4 first:pt-0">
+      <div className="divide-y">{u.changes.map((c) => <div key={c.field} className="py-4 first:pt-0">
         <h3 className="mb-2 text-sm font-semibold">{c.field}</h3>
-        <div className="grid gap-4 sm:grid-cols-2">{([{ label: "Previous content", value: c.before }, { label: "Updated content", value: c.after }]).map((entry) => <div key={entry.label} className="min-w-0 border-l-2 pl-3">
-          <div className="mb-1 text-xs font-semibold text-muted-foreground">{entry.label}</div>
-          {c.kind === "photo" && entry.value ? <img src={entry.value} alt={entry.label} className="h-24 w-24 rounded-lg object-cover" /> : <p className="whitespace-pre-wrap break-words text-sm">{entry.value || "Not specified"}</p>}
-        </div>)}</div>
-      </div>)}</div> : <p className="text-sm text-muted-foreground">Previous and updated content was not recorded for this older update.</p>}
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-stretch">
+          <div className="min-w-0 rounded-lg bg-danger-soft p-3">
+            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-destructive"><X className="h-3.5 w-3.5" />Previous</div>
+            {c.kind === "photo" && c.before ? <img src={c.before} alt="Previous" className="h-24 w-24 rounded-lg object-cover opacity-60" /> : <p className="whitespace-pre-wrap break-words text-sm"><del className="text-muted-foreground decoration-destructive/60 decoration-2">{c.before || "Not specified"}</del></p>}
+          </div>
+          <div className="hidden items-center text-muted-foreground sm:flex"><ArrowRight className="h-4 w-4" /></div>
+          <div className="min-w-0 rounded-lg bg-success-soft p-3">
+            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-success"><Check className="h-3.5 w-3.5" />Updated</div>
+            {c.kind === "photo" && c.after ? <img src={c.after} alt="Updated" className="h-24 w-24 rounded-lg object-cover ring-2 ring-success" /> : <p className="whitespace-pre-wrap break-words text-sm"><mark className="rounded-sm bg-warning-soft px-0.5">{c.after || "Not specified"}</mark></p>}
+          </div>
+        </div>
+      </div>)}</div>
     </article>)}</div>
   </>;
 }

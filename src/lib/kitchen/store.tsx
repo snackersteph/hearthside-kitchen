@@ -7,6 +7,8 @@ import { ADDITIONAL_RESIDENTS } from "./additional-residents";
 import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
 import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 import { profileContentChanges } from "./profile-changes";
+import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orders";
+import { migrateDemoContent } from "./demo-content";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -23,6 +25,8 @@ type Action =
   | { type: "setHorizon"; days: 7 | 14 }
   | { type: "setLeadTime"; days: number }
   | { type: "receiveOrder"; id: string }
+  | { type: "deleteOrder"; id: string }
+  | { type: "placeStockOrder"; ingredientId: string; vendor: string; qty: number }
   | { type: "updateOrder"; id: string; vendor: string; deliveryDate: string; lines: PurchaseLine[] }
   | { type: "load"; state: KitchenState }
   | { type: "reset" }
@@ -35,6 +39,7 @@ type Action =
   | { type: "acknowledgeProfileUpdate"; id: string }
   | { type: "setStock"; id: string; stock: number }
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
+  | { type: "rejectSub"; proposalId: string; meal: Meal; dishId: string; fromDishId: string; residentIds: string[]; serviceDate?: string | undefined; summary: string }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
   | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string };
 
@@ -121,6 +126,14 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         }),
         history: [{ proposalId: order.id, kind: "purchase", status: "approved", at: reference.getTime(), summary: `Updated ${a.vendor.trim()} order · expected ${a.deliveryDate}`, modified: true }, ...s.history],
       };
+    }
+    case "deleteOrder": {
+      const order = s.orders?.find((o) => o.id === a.id);
+      if (!order) return s;
+      return { ...s, orders: (s.orders ?? []).filter((o) => o.id !== a.id), ingredients: s.ingredients.map((i) => {
+        const qty = order.status === "incoming" ? order.lines.filter((line) => line.ingredientId === i.id).reduce((sum, line) => sum + line.qty, 0) : 0;
+        return { ...i, onOrder: Math.max(0, i.onOrder - qty) };
+      }) };
     }
     case "receiveOrder": {
       const order = s.orders?.find((o) => o.id === a.id && o.status === "incoming");
@@ -216,6 +229,20 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         mealRejections: { ...s.mealRejections, [a.date]: { ...s.mealRejections?.[a.date], [a.meal]: undefined } },
         history: [{ proposalId: `meal-${a.date}-${a.meal}-${reference.getTime()}`, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: a.date, summary: `Approved ${a.meal} menu for ${a.date}`, modified: false }, ...s.history] };
     }
+    case "rejectSub": {
+      if (!a.serviceDate || !canApproveMeal(a.serviceDate, reference) || !a.residentIds.length) return s;
+      const residentSignatures = Object.fromEntries(s.residents.filter((r) => a.residentIds.includes(r.id)).map((r) => [r.id, dietarySignature(r)]));
+      if (Object.keys(residentSignatures).length !== a.residentIds.length) return s;
+      const date = a.serviceDate;
+      const overrides = { ...s.scheduledOverrides?.[date]?.[a.meal] };
+      for (const id of a.residentIds) delete overrides[id];
+      return { ...s,
+        alternativePreferences: (s.alternativePreferences ?? []).filter((p) => !(p.meal === a.meal && p.fromDishId === a.fromDishId && a.residentIds.includes(p.residentId))),
+        scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: overrides } },
+        mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } },
+        history: [{ proposalId: `${a.proposalId}-decision-${s.history.length}`, kind: "substitution", status: "rejected", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: false, alternativeScope: { meal: a.meal, fromDishId: a.fromDishId, dishId: a.dishId, residentSignatures } }, ...s.history],
+      };
+    }
     case "approveSub": {
       if (!a.serviceDate || !canApproveMeal(a.serviceDate, reference)) return s;
       if (!a.residentIds.length || dishById(a.dishId).meal !== a.meal || a.residentIds.some((id) => {
@@ -236,11 +263,25 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
           ...(preferences ? { alternativePreferences: preferences } : {}),
           scheduledOverrides: { ...s.scheduledOverrides, [date]: { ...s.scheduledOverrides?.[date], [a.meal]: o } },
           mealApprovals: { ...s.mealApprovals, [date]: { ...s.mealApprovals?.[date], [a.meal]: undefined } },
-          history: [{ proposalId: a.proposalId, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: a.modified }, ...s.history] };
+          history: [{ proposalId: `${a.proposalId}-decision-${s.history.length}`, kind: "substitution", status: "approved", at: reference.getTime(), serviceDate: date, summary: a.summary, modified: a.modified, alternativeScope: { meal: a.meal, fromDishId, dishId: a.dishId, residentSignatures: Object.fromEntries(s.residents.filter((r) => a.residentIds.includes(r.id)).map((r) => [r.id, dietarySignature(r)])) } }, ...s.history] };
       }
       const o = { ...s.overrides[a.meal] };
       for (const id of a.residentIds) o[id] = a.dishId;
       return { ...s, overrides: { ...s.overrides, [a.meal]: o }, history: [{ proposalId: a.proposalId, kind: "substitution", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified }, ...s.history] };
+    }
+    case "placeStockOrder": {
+      const parsed = stockOrderSchema.safeParse(a);
+      if (!parsed.success || !stockVendors(s).includes(parsed.data.vendor)) return s;
+      const { ingredientId, vendor, qty } = parsed.data;
+      const estimate = stockOrderEstimate(s, ingredientId, 0, reference);
+      const ingredient = s.ingredients.find((i) => i.id === ingredientId);
+      if (!estimate || !ingredient) return s;
+      const id = `stock-${reference.getTime()}-${s.history.length}`;
+      return { ...s,
+        orders: [...(s.orders ?? []), { id, vendor, deliveryDate: estimate.deliveryDate, status: "incoming", lines: [{ ingredientId, qty, shortage: 0 }] }],
+        ingredients: s.ingredients.map((i) => i.id === ingredientId ? { ...i, onOrder: i.onOrder + qty } : i),
+        history: [{ proposalId: id, kind: "purchase", status: "approved", at: reference.getTime(), modified: true, summary: `Ordered ${qty} ${ingredient.unit} ${ingredient.name} from ${vendor} · Estimated $${(qty * ingredient.unitCost).toFixed(2)}` }, ...s.history],
+      };
     }
     case "approvePurchase":
       return {
@@ -272,26 +313,7 @@ export function seedDemo(base: KitchenState, reference = new Date()): KitchenSta
       ? { proposalId: `seed-${ago}`, kind: "purchase", status: "approved", at: reference.getTime() - ago * day, summary: `Approved Sysco produce order ($${(80 + ago * 7).toFixed(2)})`, modified: false }
       : { proposalId: `seed-${ago}`, kind: "substitution", status: i % 5 === 4 ? "rejected" : "approved", at: reference.getTime() - (ago + 1) * day, serviceDate: date, summary: `${i % 5 === 4 ? "Rejected" : "Approved"} ${meal} menu for ${date}`, modified: i % 3 === 1 };
   });
-  return { ...s, observations: SEED_OBSERVATIONS(reference), profileUpdates: SEED_PROFILE_UPDATES(reference), history: [...s.history.map((h, i) => ({ ...h, at: reference.getTime() - (i % 3 + 1) * 3600000 })), ...past] };
-}
-
-/** Demo reactions and profile changes so the Command Center board starts with real work visible. */
-function SEED_OBSERVATIONS(reference: Date): Observation[] {
-  const hour = 3600000;
-  return [
-    { id: "obs-seed-1", residentId: "R005", serviceDate: dateKey(dayAt(0, reference)), meal: "lunch", dishId: currentDishId("l-lentil"), reaction: "Refused most of the tray — soup came back nearly full", severity: "concern", status: "open", notedAt: reference.getTime() - 3 * hour },
-    { id: "obs-seed-2", residentId: "R011", serviceDate: dateKey(dayAt(-1, reference)), meal: "dinner", dishId: currentDishId("d-salmon"), reaction: "Coughing during the last few bites; temperature normal afterwards", severity: "concern", status: "open", notedAt: reference.getTime() - 20 * hour },
-    { id: "obs-seed-3", residentId: "R002", serviceDate: dateKey(dayAt(-1, reference)), meal: "breakfast", dishId: currentDishId("b-oatmeal"), reaction: "Reported nausea about 30 minutes after the meal", severity: "concern", status: "open", notedAt: reference.getTime() - 22 * hour },
-    { id: "obs-seed-4", residentId: "R008", serviceDate: dateKey(dayAt(-2, reference)), meal: "lunch", dishId: currentDishId("l-club"), reaction: "Finished the meal and asked for a second portion", severity: "note", status: "reviewed", notedAt: reference.getTime() - 3 * 86400000 },
-  ];
-}
-
-function SEED_PROFILE_UPDATES(reference: Date): ProfileUpdate[] {
-  const hour = 3600000;
-  return [
-    { id: "profile-seed-1", residentId: "R003", at: reference.getTime() - 5 * hour, summary: "Care information updated", review: "open" },
-    { id: "profile-seed-2", residentId: "R012", at: reference.getTime() - 26 * hour, summary: "Care information updated", review: "open" },
-  ];
+  return migrateDemoContent({ ...s, history: [...s.history.map((h, i) => ({ ...h, at: reference.getTime() - (i % 3 + 1) * 3600000 })), ...past] }, reference);
 }
 
 /** Replaces outdated resident records and clears decisions tied to the previous residents. */
@@ -359,7 +381,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState()))) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);

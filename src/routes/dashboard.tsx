@@ -1,16 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
-import { useKitchen, residentName } from "@/lib/kitchen/store";
-import { PageHeader } from "@/components/kitchen/app-shell";
-import { AgentAvatar, AgentChip, MEAL_LABEL } from "@/components/kitchen/agents";
+import { useEffect, useState } from "react";
+import { AgentWorkspace } from "@/components/kitchen/agent-workspace";
+import { GEN_STEPS, INITIAL_WORKSPACE, type SubstitutionId, type WorkspaceState } from "@/lib/kitchen/weekly-plan";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Agent Dashboard · NutriSync" },
-      { name: "description", content: "Live agent channel showing how the dietary, menu and inventory agents share context." },
-      { property: "og:title", content: "Agent Dashboard · NutriSync" },
-      { property: "og:description", content: "Live agent channel showing how the dietary, menu and inventory agents share context." },
+      { title: "Agent Workspace · NutriSync" },
+      { name: "description", content: "See how your AI team collaborates to plan meals for the week: handoffs, decisions, and approvals." },
+      { property: "og:title", content: "Agent Workspace · NutriSync" },
+      { property: "og:description", content: "See how your AI team collaborates to plan meals for the week: handoffs, decisions, and approvals." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -19,38 +18,52 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-  const { state, analysis } = useKitchen();
-  const needsStaff = analysis.conflicts.filter((c) => c.status === "needs-staff");
+  const [ws, setWs] = useState<WorkspaceState>(INITIAL_WORKSPACE);
+
+  // Simulated generation: advance one step at a time until the plan needs review.
+  useEffect(() => {
+    if (ws.status !== "generating") return;
+    if (ws.genStep >= GEN_STEPS) {
+      setWs((s) => ({ ...s, status: "needs-review" }));
+      return;
+    }
+    const timer = window.setTimeout(() => setWs((s) => ({ ...s, genStep: s.genStep + 1 })), 800);
+    return () => window.clearTimeout(timer);
+  }, [ws.status, ws.genStep]);
+
+  const generate = () =>
+    setWs((s) => ({ ...INITIAL_WORKSPACE, weekOffset: s.weekOffset, status: "generating", genStep: 1 }));
+
+  const changeWeek = (offset: number) =>
+    setWs({ ...INITIAL_WORKSPACE, weekOffset: offset });
+
+  const approveDecision = (id: SubstitutionId) =>
+    setWs((s) => ({ ...s, decisions: { ...s.decisions, [id]: { ...s.decisions[id], state: "approved" } } }));
+
+  const requestAnother = (id: SubstitutionId) => {
+    setWs((s) => ({ ...s, decisions: { ...s.decisions, [id]: { ...s.decisions[id], state: "revalidating" } } }));
+    window.setTimeout(() => {
+      setWs((s) => {
+        const d = s.decisions[id];
+        if (d.state !== "revalidating") return s;
+        return {
+          ...s,
+          decisions: { ...s.decisions, [id]: { proposalIndex: (d.proposalIndex + 1) % 2, state: "pending" } },
+        };
+      });
+    }, 1500);
+  };
+
+  const approveWeekly = () => setWs((s) => ({ ...s, status: "approved" }));
+
   return (
-    <>
-      <PageHeader eyebrow="Agents" title="Dashboard" />
-      <section className="max-w-3xl">
-        <h2 className="mb-3 text-xl font-semibold">Agent channel</h2>
-        <div className="rounded-xl border bg-card p-4 shadow-soft">
-          <p className="mb-4 text-xs text-muted-foreground">Live shared context — each agent picks up where the other left off.</p>
-          <ol className="space-y-4">
-            {analysis.messages.map((m) => (
-              <li key={m.id} className="flex gap-3">
-                <AgentAvatar agent={m.agent} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                    <AgentChip agent={m.agent} />
-                    {m.to && <><ArrowRight className="h-3 w-3 text-muted-foreground" /><AgentChip agent={m.to} /></>}
-                    {m.meal && <span className="text-muted-foreground">· {MEAL_LABEL[m.meal]}</span>}
-                  </div>
-                  <p className={`mt-1 text-sm leading-relaxed ${m.tone === "ok" ? "text-muted-foreground" : "text-foreground"}`}>{m.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          {needsStaff.length > 0 && (
-            <div className="mt-5 rounded-lg bg-danger-soft p-3 text-sm text-destructive">
-              <div className="font-semibold">Needs your attention</div>
-              {needsStaff.map((c) => <div key={c.meal + c.residentId}>{residentName(state, c.residentId)} — {MEAL_LABEL[c.meal]} ({c.reasons.join(", ")})</div>)}
-            </div>
-          )}
-        </div>
-      </section>
-    </>
+    <AgentWorkspace
+      ws={ws}
+      onGenerate={generate}
+      onWeekChange={changeWeek}
+      onApproveDecision={approveDecision}
+      onRequestAnother={requestAnother}
+      onApproveWeekly={approveWeekly}
+    />
   );
 }
