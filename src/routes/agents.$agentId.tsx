@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useKitchen } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AGENTS, AgentAvatar } from "@/components/kitchen/agents";
+import { AgentActionHistory } from "@/components/kitchen/agent-action-history";
 import type { AgentId } from "@/lib/kitchen/types";
 
 const INFO: Record<AgentId, { summary: string; duties: string[]; link: { to: "/residents" | "/menu" | "/inventory"; label: string } }> = {
@@ -69,6 +70,7 @@ function AgentPage() {
           <dl className="divide-y text-sm">{config.map(([k, v]) => <div key={k} className="flex justify-between gap-4 py-2.5"><dt className="text-muted-foreground">{k}</dt><dd className="text-right font-medium">{v}</dd></div>)}</dl>
         </section>
       </div>
+      <AgentActionHistory key={id} agent={id} />
     </>
   );
 }

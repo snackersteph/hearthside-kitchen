@@ -75,7 +75,7 @@ import {
 type CellStatus = "unplanned" | "planned" | "passed" | "review" | "approved";
 type StageState = "done" | "active" | "upcoming" | "overdue";
 
-const HANDOFF_STYLE: Record<AgentEventStatus, { icon: LucideIcon; label: string; badge: string }> =
+export const HANDOFF_STYLE: Record<AgentEventStatus, { icon: LucideIcon; label: string; badge: string }> =
   {
     completed: { icon: CheckCircle2, label: "Completed", badge: "bg-success-soft text-success" },
     warning: { icon: TriangleAlert, label: "Warning", badge: "bg-warning-soft text-warning" },
@@ -112,7 +112,7 @@ const PHASE_LABEL: Record<WeeklyPhase, string> = {
   completed: "Completed week",
 };
 
-const PARTY_LABEL: Record<AgentParty, string> = {
+export const PARTY_LABEL: Record<AgentParty, string> = {
   dietary: "Dietary Agent",
   menu: "Menu Agent",
   inventory: "Inventory Agent",
@@ -120,7 +120,7 @@ const PARTY_LABEL: Record<AgentParty, string> = {
   manager: "Kitchen Manager",
 };
 
-const ACTION_LABEL: Record<AgentAction, string> = {
+export const ACTION_LABEL: Record<AgentAction, string> = {
   "share-dietary-constraints": "Shared dietary constraints",
   "send-ingredient-requirements": "Sent ingredient requirements",
   "report-shortage": "Reported stock findings",
