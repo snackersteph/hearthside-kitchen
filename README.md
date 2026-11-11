@@ -4,15 +4,15 @@
 
 An AI-powered kitchen operations command center for senior living facilities, where specialized agents coordinate menus, dietary requirements, and inventory while staff supervise important decisions. Your three agents 
 
-Dietary Agent — The Safety Specialist
+Dietary Agent — The Safety Specialist:
 
  Maintains resident dietary profiles, identifies potential conflicts between meals and restrictions, and proposes appropriate alternatives. Example: "Three residents cannot have the planned dairy-containing dish." 
 
-Menu Agent — The Planner
+Menu Agent — The Planner:
 
  Proposes breakfast, lunch, and dinner, accounting for resident requirements, meal preferences, available ingredients, and kitchen constraints. Example: "I can substitute a dairy-free pasta dish for those residents." 
 
-Inventory Agent — The Procurement Specialist
+Inventory Agent — The Procurement Specialist:
 
  Tracks ingredient quantities, compares expected demand with stock, and prepares vendor orders for staff approval. Example: "We need 12 additional portions of chicken. I've prepared a purchase request." ---- The magic happens when the agents share context, rather than working independently. What to build in four days 
 
