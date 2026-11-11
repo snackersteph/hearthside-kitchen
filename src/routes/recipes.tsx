@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, Pencil, Plus, Search, Trash2, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Pencil, Plus, Search, Trash2, X, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
@@ -37,6 +37,7 @@ function RecipesPage() {
   const [meal, setMeal] = useState<"all" | Meal>("all");
   const [diet, setDiet] = useState<"all" | DietGroup>("all");
   const [texture, setTexture] = useState<"all" | Texture>("all");
+  const [hidden, setHidden] = useState<DishCategory[]>([]);
   const [category, setCategory] = useState<"all" | DishCategory>("all");
   const [type, setType] = useState<"all" | RecipeType>("all");
   const [stock, setStock] = useState<"all" | "available" | "low" | "unavailable">("all");
@@ -78,8 +79,9 @@ function RecipesPage() {
       {rows.length === 0 ? <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">No recipes match these filters.</div> :
         <div className="space-y-10">{DISH_CATEGORIES.map((cat) => { const group = rows.filter((r) => recipeCategory(r) === cat); return group.length === 0 ? null : (
         <section key={cat} aria-label={`${cat} recipes`}>
-        <h2 className="mb-4 flex items-baseline gap-2 font-display text-2xl font-semibold capitalize">{cat === "snack" ? "Snacks" : `${cat}s`}<span className="text-sm font-medium text-muted-foreground">{group.length}</span></h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <h2 className="mb-4"><button type="button" aria-expanded={!hidden.includes(cat)} onClick={() => setHidden((h) => h.includes(cat) ? h.filter((c) => c !== cat) : [...h, cat])} className="flex items-baseline gap-2 font-display text-2xl font-semibold capitalize hover:text-primary">
+          <ChevronDown className={cn("h-5 w-5 self-center transition-transform", hidden.includes(cat) && "-rotate-90")} />{cat === "snack" ? "Snacks" : `${cat}s`}<span className="text-sm font-medium text-muted-foreground">{group.length}</span></button></h2>
+        {!hidden.includes(cat) && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {group.map((r) => (
             <button key={r.id} onClick={() => setOpen(r)} className={cn("flex flex-col overflow-hidden rounded-xl border p-0 text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
               <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
@@ -95,7 +97,7 @@ function RecipesPage() {
               </div>
             </button>
           ))}
-        </div>
+        </div>}
         </section>); })}</div>}
 
       <RecipeDetail recipe={open} servings={servings} onClose={() => setOpen(null)} onDelete={(r) => setDeleting(r)} onEdit={(r) => { setOpen(null); setEditing(r); }} />
