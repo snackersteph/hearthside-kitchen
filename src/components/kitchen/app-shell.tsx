@@ -32,10 +32,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="app-sidebar sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="px-5 pb-6 pt-7">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0" />
+            <img src={logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-md bg-card p-1" />
             <div className="min-w-0">
-              <div className="font-display text-2xl font-semibold leading-none text-primary">NutriSync</div>
-              <div className="mt-1.5 text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground">SMART NUTRITION, CONNECTED CARE</div>
+              <div className="font-display text-2xl font-semibold leading-none text-sidebar-foreground">NutriSync</div>
+              <div className="mt-1.5 text-[9px] font-medium uppercase tracking-normal text-muted-foreground">SMART NUTRITION, CONNECTED CARE</div>
             </div>
           </div>
         </div>
@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="mt-auto space-y-3 border-t border-sidebar-border px-5 py-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Agents</div>
+          <div className="text-[11px] font-semibold uppercase tracking-normal text-muted-foreground">Agents</div>
           <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 -mx-3 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}>
             <Gauge className="h-4 w-4" /><span className="flex-1">Dashboard</span>
           </Link>
