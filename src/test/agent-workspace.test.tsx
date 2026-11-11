@@ -87,14 +87,17 @@ describe("Agent Workspace", () => {
     expect(screen.getByText(/Stage 1 — Analyze Weekly Requirements/)).toBeTruthy();
   });
 
-  it("lets the manager approve the week once the run pauses", async () => {
+  it("blocks weekly approval while required reviews are open, and says what they are", async () => {
     await mount();
     fireEvent.click(screen.getByRole("button", { name: /Generate Weekly Plan/ }));
     await runAllSteps();
     const approve = screen.getByRole("button", { name: /Approve Weekly Menu/ }) as HTMLButtonElement;
-    expect(approve.disabled).toBe(false);
+    expect(approve.disabled).toBe(true);
+    const blockers = screen.getByRole("list", { name: "Approval blockers" });
+    expect(within(blockers).getByText(/resident alternatives? awaiting approval in the Approval Center/)).toBeTruthy();
+    // Purchasing never blocks menu approval; it is listed as a separate task.
+    expect(screen.queryByText(/remain purchasing tasks|purchasing tasks; they don't block/)).toBeTruthy();
     fireEvent.click(approve);
-    expect(screen.getByText("Weekly Menu Approved")).toBeTruthy();
-    expect(screen.getByText(/This week's menu is approved/)).toBeTruthy();
+    expect(screen.queryByText("Weekly Menu Approved")).toBeNull();
   });
 });

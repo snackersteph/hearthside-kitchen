@@ -2,7 +2,9 @@ import { DISHES, dishById } from "./data";
 import { analyzeMenuDay, conflictReasons, lineCost, perServingQty } from "./engine";
 import { dateKey } from "./schedule";
 import { MEALS, type KitchenState, type Meal } from "./types";
-import { chooseDish, generateWeeklyMenu, setWeeklySlotDish, slotRotation, weekDishUsage, weeklyMenu } from "./weekly-menu";
+import {
+  chooseDish, generateWeeklyMenu, residentRequirementSignature, setWeeklySlotDish, slotKey, slotRotation, slotSignature, weekDishUsage, weeklyMenu,
+} from "./weekly-menu";
 import {
   addDays, applyWeeklyStatus, createWeeklyPlan, daysBetween, isDateKey, lifecycleDates, parseDateKey, sortWeeklyPlans,
   weekStartFor, weeklyPlanId, type WeeklyPlan,
@@ -18,7 +20,7 @@ export type AgentParty = AgentRole | "team" | "manager";
 export type AgentAction =
   | "share-dietary-constraints" | "send-ingredient-requirements" | "report-shortage" | "confirm-stock"
   | "propose-revision" | "recommend-purchase" | "revalidate-dietary" | "revalidate-inventory" | "validate-week"
-  | "request-approval" | "approve-revision" | "decline-revision" | "replace-revision" | "approve-week";
+  | "request-approval" | "approve-revision" | "decline-revision" | "replace-revision" | "approve-week" | "revalidation-required";
 export type AgentEventStatus = "completed" | "warning" | "pending";
 export type WorkflowStage = 1 | 2 | 3 | 4 | 5;
 
@@ -72,7 +74,8 @@ export type AgentPayload =
   | { kind: "week-validation"; facts: string[]; unresolved: number; pendingAlternatives: number; residentsCovered: number; residentsTotal: number }
   | { kind: "review-request"; facts: string[]; pendingRevisions: string[]; shortages: number; purchaseTotal: number }
   | { kind: "decision"; facts: string[]; proposalEventId: string; decision: "approved" | "declined" | "replaced" }
-  | { kind: "week-approved"; facts: string[] };
+  | { kind: "week-approved"; facts: string[] }
+  | { kind: "revalidation-required"; facts: string[]; slots: string[]; residentRequirementsChanged: boolean };
 
 export interface AgentEvent {
   eventId: string;
@@ -629,23 +632,46 @@ export function decideRevision(s: KitchenState, eventId: string, decision: "appr
   const ctx = decisionContext(s, eventId);
   if (!ctx) return s;
   const { run, plan, proposal: p } = ctx;
+  const record = (state: KitchenState, status: "approved" | "rejected", summary: string): KitchenState => ({
+    ...state,
+    history: [{ proposalId: eventId, kind: "substitution", status, at: reference.getTime(), summary, modified: false }, ...state.history],
+  });
   if (decision === "decline") {
-    return appendEvents(s, run, [{
+    const summary = `Kept ${p.fromDishName} for ${slotLabel(p.date, p.meal)}; declined Menu Agent revision to ${p.toDishName}`;
+    return appendEvents(record(s, "rejected", summary), run, [{
       sendingAgent: "manager", receivingAgent: "menu", action: "decline-revision", stage: 5, status: "completed",
       summary: `Kept ${p.fromDishName} for ${slotLabel(p.date, p.meal)}.`,
       structuredPayload: { kind: "decision", proposalEventId: eventId, decision: "declined", facts: [`Declined: ${p.toDishName}`, `The draft purchase still covers the ${p.ingredientName.toLowerCase()} shortfall`] },
       affectedDate: p.date, affectedMeal: p.meal, result: "Original meal kept; purchasing covers the shortfall.",
     }], reference);
   }
-  const next = setWeeklySlotDish(s, plan.id, p.date, p.meal, p.toDishId, reference);
-  if (next === s) return s;
-  const after = weekShortages(projectWeekInventory(next, plan, reference)).find((f) => f.ingredientId === p.ingredientId);
+  // Apply through the shared schedule (keeps safe resident alternatives), then rerun the checks.
+  const before = weekShortages(projectWeekInventory(s, plan, reference));
+  const applied = setWeeklySlotDish(s, plan.id, p.date, p.meal, p.toDishId, reference);
+  if (applied === s) return s;
+  const slot = weeklyMenu(applied, plan.id, reference).slots.find((x) => x.date === p.date && x.meal === p.meal)!;
+  const shortages = weekShortages(projectWeekInventory(applied, plan, reference));
+  const after = shortages.find((f) => f.ingredientId === p.ingredientId);
+  const known = new Set(before.map((f) => f.ingredientId));
+  const newConflicts = shortages.filter((f) => !f.purchasableInTime && !known.has(f.ingredientId));
+  const newPurchases = shortages.filter((f) => f.purchasableInTime && !known.has(f.ingredientId));
+  const kept = Object.keys(slot.overrides).length;
+  const next = record(applied, "approved", `Approved Menu Agent revision for ${slotLabel(p.date, p.meal)}: ${p.fromDishName} → ${p.toDishName}`);
   return appendEvents(next, run, [{
-    sendingAgent: "manager", receivingAgent: "menu", action: "approve-revision", stage: 5, status: "completed",
+    sendingAgent: "manager", receivingAgent: "menu", action: "approve-revision", stage: 5, status: slot.unresolved || newConflicts.length ? "warning" : "completed",
     summary: `Approved ${p.toDishName} for ${slotLabel(p.date, p.meal)}, replacing ${p.fromDishName}.`,
-    structuredPayload: { kind: "decision", proposalEventId: eventId, decision: "approved", facts: [`Saved to the daily menu for ${dayLabel(p.date)}`, after ? `${p.ingredientName} still short ${qty(after.shortfall, after.unit)}` : `${p.ingredientName} shortage resolved for this week`] },
+    structuredPayload: { kind: "decision", proposalEventId: eventId, decision: "approved", facts: [
+      `Saved to the daily menu for ${dayLabel(p.date)}`,
+      `Dietary recheck: ${slot.residentsSafe} of ${applied.residents.length} residents served safely, ${slot.pendingAlternatives} alternatives pending approval, ${slot.unresolved} without a safe option`,
+      `${plural(kept, "resident alternative")} kept for this meal`,
+      after ? `${p.ingredientName} still short ${qty(after.shortfall, after.unit)}` : `${p.ingredientName} shortage resolved for this week`,
+      ...(newConflicts.length ? [`New conflicts: ${newConflicts.map((f) => f.name).join(", ")}`] : []),
+      ...(newPurchases.length ? [`Added to purchasing: ${newPurchases.map((f) => `${f.name} ${qty(f.shortfall, f.unit)}`).join(", ")}`] : []),
+    ] },
     affectedDate: p.date, affectedMeal: p.meal,
-    result: after ? "Menu updated; remaining shortfall stays on the draft purchase list." : "Menu updated; this shortage no longer needs purchasing.",
+    result: slot.unresolved
+      ? "Menu updated, but some residents have no safe option for this meal; resolve before approving the week."
+      : after ? "Menu updated; remaining shortfall stays on the purchasing list." : "Menu updated; this shortage no longer needs purchasing.",
   }], reference);
 }
 
@@ -679,29 +705,139 @@ export function requestAnotherRevision(s: KitchenState, eventId: string, referen
   return appendEvents(withProposal, run, revalidate(withProposal, plan, newest, reference), reference);
 }
 
-export type WeekApprovalBlock = "no-review" | "pending-revisions";
-export function weekApprovalBlock(s: KitchenState, weekId: string): WeekApprovalBlock | null {
-  const run = latestRunFor(s, weekId);
-  if (!run || run.status !== "awaiting-approval") return "no-review";
-  return pendingRevisions(s, run.workflowRunId).length ? "pending-revisions" : null;
+// ---------- Weekly menu approval ----------
+
+export type ApprovalBlockerCode =
+  | "no-review" | "running" | "approved" | "unplanned-slots" | "pending-revisions" | "dietary-conflicts"
+  | "pending-alternatives" | "rejected-meals" | "open-profile-updates" | "open-concerns";
+export interface ApprovalBlocker {
+  code: ApprovalBlockerCode;
+  count: number;
+  message: string;
+  /** Where staff resolve it. */
+  link?: "/approvals" | "/profile-updates" | "/residents";
+}
+export interface WeeklyApprovalChecks {
+  ready: boolean;
+  blockers: ApprovalBlocker[];
+  /** Purchasing stays a separate task; it never blocks menu approval. */
+  purchasingTasks: number;
 }
 
-/** Manager sign-off for the week's menu; requires a finished run with every revision decided. */
+/**
+ * Live checks behind "Approve Weekly Menu". Past days are already served and are not rechecked.
+ * Purchasing needs are reported but never block menu approval.
+ */
+export function weeklyApprovalChecks(s: KitchenState, weekId: string, reference = new Date()): WeeklyApprovalChecks {
+  const plan = planFor(s, weekId);
+  const run = latestRunFor(s, weekId);
+  const blockers: ApprovalBlocker[] = [];
+  const findings = run ? allFindings(runEvents(s, run.workflowRunId)).length : 0;
+  if (plan?.menuStatus === "approved") return { ready: false, blockers: [{ code: "approved", count: 0, message: "This week's menu is already approved." }], purchasingTasks: findings };
+  if (!run || run.status === "superseded" || run.status === "stopped") blockers.push({ code: "no-review", count: 0, message: "Generate the weekly plan so the agents can run their checks." });
+  else if (run.status === "running") blockers.push({ code: "running", count: 0, message: "The agents are still running their checks." });
+  const menu = weeklyMenu(s, weekId, reference);
+  const open = menu.slots.filter((x) => x.lock !== "past");
+  const unplanned = open.filter((x) => x.source !== "saved").length;
+  if (unplanned) blockers.push({ code: "unplanned-slots", count: unplanned, message: `${plural(unplanned, "meal slot")} not yet planned; all 21 primary meals must exist.` });
+  const revisions = run && run.status === "awaiting-approval" ? pendingRevisions(s, run.workflowRunId).length : 0;
+  if (revisions) blockers.push({ code: "pending-revisions", count: revisions, message: `${plural(revisions, "menu revision")} awaiting your decision.` });
+  const conflicts = open.filter((x) => x.unresolved > 0);
+  if (conflicts.length) blockers.push({ code: "dietary-conflicts", count: conflicts.reduce((n, x) => n + x.unresolved, 0), message: `Critical dietary conflict: ${plural(conflicts.reduce((n, x) => n + x.unresolved, 0), "resident")} without a safe option across ${plural(conflicts.length, "meal")}.`, link: "/approvals" });
+  const alternatives = open.reduce((n, x) => n + x.pendingAlternatives, 0);
+  if (alternatives) blockers.push({ code: "pending-alternatives", count: alternatives, message: `${plural(alternatives, "resident alternative")} awaiting approval in the Approval Center.`, link: "/approvals" });
+  const rejected = open.filter((x) => x.rejected).length;
+  if (rejected) blockers.push({ code: "rejected-meals", count: rejected, message: `${plural(rejected, "meal")} rejected by staff and not yet replaced.` });
+  const profiles = (s.profileUpdates ?? []).filter((u) => u.review === "open").length;
+  if (profiles) blockers.push({ code: "open-profile-updates", count: profiles, message: `${plural(profiles, "resident care update")} not yet reviewed; meals were checked against them.`, link: "/profile-updates" });
+  // Open concern observations about a dish a resident is served again this week.
+  const served = new Set(open.flatMap((x) => s.residents.map((r) => `${r.id}|${x.overrides[r.id] ?? x.dishId}`)));
+  const concerns = (s.observations ?? []).filter((o) => o.status === "open" && o.severity === "concern" && served.has(`${o.residentId}|${o.dishId}`)).length;
+  if (concerns) blockers.push({ code: "open-concerns", count: concerns, message: `${plural(concerns, "open meal concern")} about dishes served again this week need review.`, link: "/residents" });
+  return { ready: blockers.length === 0, blockers, purchasingTasks: findings };
+}
+
+/**
+ * Records the manager's sign-off for the week's menu once every check passes. Per-meal sign-off
+ * (existing approveMeal) is applied by the store before this. Purchasing approval is separate.
+ */
 export function approveWeeklyMenu(s: KitchenState, weekId: string, reference = new Date()): KitchenState {
   const run = latestRunFor(s, weekId);
   const plan = planFor(s, weekId);
-  if (!run || !plan || weekApprovalBlock(s, weekId)) return s;
+  if (!run || !plan || !weeklyApprovalChecks(s, weekId, reference).ready) return s;
   const approved = applyWeeklyStatus(plan, { menuStatus: "approved" }, reference);
   if (!approved || approved === plan) return s;
   const menu = weeklyMenu(s, weekId, reference);
+  const signatures = Object.fromEntries(menu.slots.filter((x) => x.lock !== "past").map((x) => [slotKey(x.date, x.meal), slotSignature(s, x.date, x.meal, reference)]));
+  const { revalidationSlots: _cleared, ...rest } = approved;
   const now = reference.getTime();
-  const next = updateRun(updatePlan(s, weekId, () => approved), run.workflowRunId, { status: "completed", finishedAt: now, updatedAt: now });
+  const range = `${dayLabel(plan.startDate)}–${dayLabel(plan.endDate)}`;
+  let next = updatePlan(s, weekId, () => ({ ...rest, menuApprovalSignatures: signatures }));
+  next = updateRun(next, run.workflowRunId, { status: "completed", finishedAt: now, updatedAt: now });
+  next = { ...next, history: [{ proposalId: `week-approval-${weekId}-${now}`, kind: "substitution", status: "approved", at: now, summary: `Approved weekly menu for ${range}`, modified: false }, ...next.history] };
+  const findings = allFindings(runEvents(s, run.workflowRunId));
   return appendEvents(next, run, [{
     sendingAgent: "manager", receivingAgent: "team", action: "approve-week", stage: 5, status: "completed",
-    summary: `Weekly menu approved for ${dayLabel(plan.startDate)}–${dayLabel(plan.endDate)}.`,
-    structuredPayload: { kind: "week-approved", facts: [`${menu.slots.filter((x) => x.source === "saved" || x.lock === "past").length} of 21 meals planned`, `${menu.residentsCovered} of ${menu.residentsTotal} residents covered in every meal`] },
-    result: "Menu locked. Changes now require an explicit revision.",
+    summary: `Weekly menu approved for ${range}.`,
+    structuredPayload: { kind: "week-approved", facts: [
+      `${menu.slots.filter((x) => x.source === "saved" || x.lock === "past").length} of 21 meals planned`,
+      `${menu.residentsCovered} of ${menu.residentsTotal} residents covered in every meal`,
+      findings.length ? `${plural(findings.length, "ingredient")} remain open purchasing tasks (approved separately)` : "No purchasing needs",
+    ] },
+    result: "Menu approved. Any later change to a meal or to resident requirements reopens it for revalidation.",
   }], reference);
+}
+
+/**
+ * After any change, compare approved weeks against what was approved. Changed meals (or every
+ * meal, when resident requirements change) are flagged for revalidation, the week returns to
+ * review, and its latest run waits for renewed approval. `explicit` marks a staff edit or
+ * rejection of a dated meal as a revision even if its content signature is unchanged.
+ */
+export function flagApprovedWeekChanges(s: KitchenState, explicit: { date: string; meal?: Meal | undefined } | undefined, reference = new Date()): KitchenState {
+  const today = dateKey(reference);
+  const approvedPlans = (s.weeklyPlans ?? []).filter((p) => p.menuStatus === "approved");
+  if (!approvedPlans.length) return s;
+  const residents = residentRequirementSignature(s);
+  let next = s;
+  for (const plan of approvedPlans) {
+    const changed: string[] = [];
+    let residentRequirementsChanged = false;
+    for (const [key, signature] of Object.entries(plan.menuApprovalSignatures ?? {})) {
+      const [date, meal] = key.split("|") as [string, Meal];
+      if (date < today) continue;
+      if (slotSignature(s, date, meal, reference) === signature) continue;
+      changed.push(key);
+      try { if ((JSON.parse(signature) as { residents?: string }).residents !== residents) residentRequirementsChanged = true; } catch { /* treat as a menu change */ }
+    }
+    if (explicit && isDateKey(explicit.date) && explicit.date >= today && weekStartFor(explicit.date) === plan.startDate) {
+      for (const meal of explicit.meal ? [explicit.meal] : MEALS) if (!changed.includes(slotKey(explicit.date, meal))) changed.push(slotKey(explicit.date, meal));
+    }
+    if (!changed.length) continue;
+    const reopened = applyWeeklyStatus(plan, { menuStatus: "needs-review" }, reference);
+    if (!reopened) continue;
+    next = updatePlan(next, plan.id, () => ({ ...reopened, revalidationSlots: [...new Set([...(plan.revalidationSlots ?? []), ...changed])].sort() }));
+    const run = latestRunFor(next, plan.id);
+    if (!run) continue;
+    const now = reference.getTime();
+    if (run.status === "completed") next = updateRun(next, run.workflowRunId, { status: "awaiting-approval", finishedAt: null, updatedAt: now });
+    const labels = changed.slice(0, 6).map((k) => { const [d, m] = k.split("|") as [string, Meal]; return slotLabel(d, m); });
+    next = appendEvents(next, { ...run, status: "awaiting-approval" }, [{
+      sendingAgent: "team", receivingAgent: "manager", action: "revalidation-required", stage: 5, status: "warning",
+      summary: residentRequirementsChanged
+        ? `Resident dietary requirements changed after approval. All ${plural(changed.length, "remaining meal")} must be rechecked and the week re-approved.`
+        : `${plural(changed.length, "approved meal")} changed after approval and must be rechecked before the week is re-approved.`,
+      structuredPayload: { kind: "revalidation-required", slots: changed, residentRequirementsChanged, facts: [
+        residentRequirementsChanged ? "Cause: a resident's allergies, diet or care-profile requirements changed" : "Cause: a meal, its alternatives or its sign-off changed",
+        ...labels.map((l) => `Recheck ${l}`),
+        ...(changed.length > labels.length ? [`…and ${changed.length - labels.length} more`] : []),
+        ...(plan.purchasingStatus === "approved" ? ["Purchasing approval was withdrawn because it was based on the approved menu"] : []),
+      ] },
+      ...(labels.length === 1 ? { affectedDate: changed[0]!.split("|")[0]!, affectedMeal: changed[0]!.split("|")[1] as Meal } : {}),
+      result: "Week returned to review. Previous approval no longer applies to the changed meals.",
+    }], reference);
+  }
+  return next;
 }
 
 // ---------- Presentation helpers ----------

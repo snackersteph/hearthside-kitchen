@@ -11,7 +11,7 @@ import { useKitchen, useWeeklyMenu } from "@/lib/kitchen/store";
 import type { Meal } from "@/lib/kitchen/types";
 import {
   WORKFLOW_STEPS, WORKFLOW_STEP_LABELS, agentActivity, canStartWeeklyWorkflow, latestRunFor, pendingRevisions,
-  residentConstraints, runEvents, weekApprovalBlock,
+  residentConstraints, runEvents, weeklyApprovalChecks,
   type AgentAction, type AgentActivity, type AgentEvent, type AgentEventStatus, type AgentParty, type WorkflowRun,
 } from "@/lib/kitchen/agent-workflow";
 import type { WeeklyMenuSlot } from "@/lib/kitchen/weekly-menu";
@@ -79,6 +79,7 @@ const ACTION_LABEL: Record<AgentAction, string> = {
   "decline-revision": "Revision declined",
   "replace-revision": "Another option requested",
   "approve-week": "Week approved",
+  "revalidation-required": "Revalidation required",
 };
 
 const CELL_STYLE: Record<CellStatus, string> = {
@@ -154,8 +155,9 @@ export function AgentWorkspace() {
   const dietaryIssueSlots = menu.slots.filter((x) => x.unresolved > 0).length;
   const issues = shortageEvents.length + dietaryIssueSlots;
   const pendingApprovals = pendingRevs.length + pendingAlternatives;
-  const approvalBlock = weekApprovalBlock(state, weekId);
+  const approvalChecks = useMemo(() => weeklyApprovalChecks(state, weekId, reference), [state, weekId, reference]);
   const weekApproved = plan?.menuStatus === "approved";
+  const revalidationCount = menu.slots.filter((x) => x.needsRevalidation).length;
 
   const constraints = residentConstraints(state);
   const activities = agentActivity(activeRun);
@@ -171,6 +173,7 @@ export function AgentWorkspace() {
 
   const cellStatusOf = (slot: WeeklyMenuSlot): CellStatus => {
     if (!isPlanned(slot)) return "unplanned";
+    if (slot.needsRevalidation) return "review";
     if (weekApproved || slot.approved) return "approved";
     if (pendingRevKeys.has(slotKey(slot.date, slot.meal)) || slot.unresolved > 0 || slot.pendingAlternatives > 0) return "review";
     return "passed";
@@ -374,7 +377,9 @@ export function AgentWorkspace() {
             <>
               <h2 className="flex items-center gap-2 text-lg font-semibold"><CheckCircle2 className="size-5 text-success" />Weekly Menu Approved</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The {TOTAL_MEALS}-meal plan for {weekRangeLabel(weekStart)} is recorded in the daily menu. Changes now require an explicit revision.
+                The {TOTAL_MEALS}-meal plan for {weekRangeLabel(weekStart)} is recorded in the daily menu
+                {plan?.menuApprovedAt ? ` (approved ${new Date(plan.menuApprovedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })})` : ""}.
+                Any change to a meal or to resident requirements reopens it for revalidation. Purchase orders are approved separately.
               </p>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="rounded-lg border bg-card p-4">
@@ -403,16 +408,30 @@ export function AgentWorkspace() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold">Final weekly approval</h2>
-                <p className="text-sm text-muted-foreground">
-                  {approvalBlock === "pending-revisions"
-                    ? `Decide the ${pendingRevs.length} pending menu revision${pendingRevs.length > 1 ? "s" : ""} above before approving the week.`
-                    : approvalBlock === "no-review"
-                      ? "Generate the weekly plan to run the agent checks before approving."
-                      : `All agent checks have run and every revision is decided.${pendingAlternatives ? ` ${pendingAlternatives} resident alternatives are still awaiting approval in the Approval Center.` : ""}`}
-                </p>
+                {revalidationCount > 0 && (
+                  <p className="mt-1 flex items-center gap-1 text-sm text-warning"><TriangleAlert className="size-4" />{revalidationCount} meals changed after the last approval and are being rechecked.</p>
+                )}
+                {approvalChecks.ready ? (
+                  <p className="text-sm text-muted-foreground">All 21 meals are planned, every resident has an approved safe meal, and every revision is decided. The week is ready for your approval.</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">Resolve these before approving the week:</p>
+                    <ul aria-label="Approval blockers" className="mt-1 space-y-0.5 text-sm">
+                      {approvalChecks.blockers.map((b) => (
+                        <li key={b.code} className="flex flex-wrap items-center gap-1">
+                          <CircleAlert className="size-3.5 shrink-0 text-warning" />{b.message}
+                          {b.link && <Link to={b.link} className="font-medium text-primary underline-offset-2 hover:underline">Review</Link>}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {approvalChecks.purchasingTasks > 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">{approvalChecks.purchasingTasks} ingredients remain purchasing tasks; they don't block menu approval and are approved separately.</p>
+                )}
                 <p className="mt-1 text-xs text-muted-foreground">A passed automated check does not replace required clinical or professional review of therapeutic diets.</p>
               </div>
-              <Button size="lg" disabled={approvalBlock !== null} onClick={() => dispatch({ type: "approveWeeklyMenu", id: weekId })}>
+              <Button size="lg" disabled={!approvalChecks.ready} onClick={() => dispatch({ type: "approveWeeklyMenu", id: weekId })}>
                 <ClipboardCheck className="size-4" />Approve Weekly Menu
               </Button>
             </div>
@@ -602,6 +621,9 @@ function MealCellDetails({ slot, status, events, checked }: { slot: WeeklyMenuSl
                   ? <span className="flex items-center gap-1 text-warning"><TriangleAlert className="size-3.5" />Shortage — {shortages.join(", ").toLowerCase()}</span>
                   : <span className="flex items-center gap-1"><Check className="size-3.5 text-success" />Passed</span>}
             </div>
+            {slot.needsRevalidation && (
+              <p className="rounded-lg bg-warning-soft p-2 text-xs text-warning">Changed after the week was approved. Checks are rerun live above; the week needs your renewed approval.</p>
+            )}
             {pendingRevision && (
               <p className="rounded-lg bg-warning-soft p-2 text-xs text-warning">Pending manager decision: {pendingRevision.summary}</p>
             )}

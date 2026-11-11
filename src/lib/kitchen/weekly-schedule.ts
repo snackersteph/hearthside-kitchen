@@ -31,6 +31,10 @@ export interface WeeklyPlan {
   purchasingApprovedAt: number | null;
   createdAt: number;
   updatedAt: number;
+  /** Per-slot ("date|meal") content signatures captured at menu approval, to detect later changes. */
+  menuApprovalSignatures?: Record<string, string>;
+  /** Slots changed after approval that need revalidation and renewed approval. */
+  revalidationSlots?: string[];
 }
 
 export interface WeeklyLifecycleDates {
@@ -211,6 +215,8 @@ function normalizeWeeklyPlan(raw: unknown, reference: Date): WeeklyPlan | null {
     purchasingApprovedAt: purchasingStatus === "approved" ? timestampOrNull(r.purchasingApprovedAt) ?? createdAt : null,
     createdAt,
     updatedAt: finiteOr(r.updatedAt, createdAt),
+    ...(r.menuApprovalSignatures && typeof r.menuApprovalSignatures === "object" ? { menuApprovalSignatures: Object.fromEntries(Object.entries(r.menuApprovalSignatures as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === "string")) } : {}),
+    ...(Array.isArray(r.revalidationSlots) ? { revalidationSlots: (r.revalidationSlots as unknown[]).filter((x): x is string => typeof x === "string") } : {}),
   };
 }
 

@@ -10,8 +10,11 @@ import { profileContentChanges } from "./profile-changes";
 import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orders";
 import { migrateDemoContent } from "./demo-content";
 import { applyWeeklyStatus, createWeeklyPlan, isDateKey, migrateWeeklyPlans, sortWeeklyPlans, weeklyPlanId, weekStartFor, type WeeklyMenuStatus, type WeeklyPurchasingStatus } from "./weekly-schedule";
-import { generateWeeklyMenu, regenerateWeeklyMeal, reopenApprovedWeekFor, reviseWeeklyMenu, weeklyMenu, type WeeklyMenu } from "./weekly-menu";
-import { advanceWeeklyWorkflow, approveWeeklyMenu, decideRevision, migrateAgentWorkflow, requestAnotherRevision, startWeeklyWorkflow } from "./agent-workflow";
+import { generateWeeklyMenu, regenerateWeeklyMeal, reviseWeeklyMenu, weeklyMenu, type WeeklyMenu } from "./weekly-menu";
+import {
+  advanceWeeklyWorkflow, approveWeeklyMenu, decideRevision, flagApprovedWeekChanges, migrateAgentWorkflow, requestAnotherRevision,
+  startWeeklyWorkflow, weeklyApprovalChecks,
+} from "./agent-workflow";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -79,20 +82,21 @@ function profileUpdateRecord(s: KitchenState, previous: Resident, next: Resident
   return { profileUpdates: [update, ...(s.profileUpdates ?? [])] };
 }
 
-/** Daily-menu edits that change a dated service's content. */
-function editedServiceDate(a: Action, reference: Date): string | undefined {
+/** Daily-menu edits and decisions that touch a dated service (explicit revisions). */
+function editedService(a: Action, reference: Date): { date: string; meal?: Meal } | undefined {
   switch (a.type) {
-    case "setMealPlan": case "setScheduledMain": case "rejectMeal": return a.date;
-    case "approveSub": case "rejectSub": return a.serviceDate;
-    case "setMain": return dateKey(reference);
+    case "setMealPlan": case "setScheduledMain": case "rejectMeal": return { date: a.date, meal: a.meal };
+    case "approveSub": case "rejectSub": return a.serviceDate ? { date: a.serviceDate, meal: a.meal } : undefined;
+    case "setMain": return { date: dateKey(reference), meal: a.meal };
     default: return undefined;
   }
 }
 
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
   const next = applyAction(s, a, reference);
-  // Editing an approved week through any daily screen is itself the explicit revision.
-  return next === s ? s : reopenApprovedWeekFor(next, editedServiceDate(a, reference), reference);
+  // Any change that alters an approved week's meals or resident requirements (or an explicit
+  // daily-screen edit of one) sends that week back for revalidation and renewed approval.
+  return next === s ? s : flagApprovedWeekChanges(next, editedService(a, reference), reference);
 }
 
 function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState {
@@ -328,6 +332,8 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
       return { ...s, weeklyPlans: sortWeeklyPlans([...(s.weeklyPlans ?? []), createWeeklyPlan(a.date, reference)]) };
     }
     case "updateWeeklyPlanStatus": {
+      // Menu approval only goes through approveWeeklyMenu, which runs the safety checks.
+      if (a.menuStatus === "approved") return s;
       const plan = s.weeklyPlans?.find((p) => p.id === a.id);
       const next = plan && applyWeeklyStatus(plan, { menuStatus: a.menuStatus, purchasingStatus: a.purchasingStatus }, reference);
       if (!plan || !next || next === plan) return s;
@@ -352,7 +358,15 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
     case "advanceWeeklyWorkflow": return advanceWeeklyWorkflow(s, a.runId, reference);
     case "decideWeeklyRevision": return decideRevision(s, a.eventId, a.decision, reference);
     case "requestAnotherWeeklyRevision": return requestAnotherRevision(s, a.eventId, reference);
-    case "approveWeeklyMenu": return approveWeeklyMenu(s, a.id, reference);
+    case "approveWeeklyMenu": {
+      if (!weeklyApprovalChecks(s, a.id, reference).ready) return s;
+      // Sign off each remaining meal with the existing per-meal approval, then the week.
+      let next = s;
+      for (const slot of weeklyMenu(s, a.id, reference).slots) {
+        if (!slot.approved && slot.lock !== "past" && canApproveMeal(slot.date, reference)) next = applyAction(next, { type: "approveMeal", date: slot.date, meal: slot.meal }, reference);
+      }
+      return approveWeeklyMenu(next, a.id, reference);
+    }
   }
 }
 

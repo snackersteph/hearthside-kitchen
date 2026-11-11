@@ -23,6 +23,8 @@ export interface WeeklyMenuSlot {
   approved: boolean;
   rejected: boolean;
   lock: SlotLock | null;
+  /** Changed after the week was approved; its checks must be rerun and the week re-approved. */
+  needsRevalidation: boolean;
   /** Residents served a safe dish right now (main or approved alternative). */
   residentsSafe: number;
   /** Residents whose safe alternative is proposed but awaiting staff approval. */
@@ -52,16 +54,32 @@ export interface WeeklyMenu {
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+export const slotKey = (date: string, meal: Meal) => `${date}|${meal}`;
+
+/** Resident requirements that decide meal safety (allergens, diets, care-profile diet and faith needs). */
+export function residentRequirementSignature(s: KitchenState) {
+  return JSON.stringify(s.residents.map((r) => [r.id, [...r.allergens].sort(), [...r.diets].sort(), r.careProfile?.["Diet Type"] ?? "", r.careProfile?.["Religious/Cultural Requirements"] ?? ""]));
+}
+
+/**
+ * What a weekly approval vouches for in one slot: the main dish, the resident alternatives
+ * in effect, and the resident requirements they were checked against.
+ */
+export function slotSignature(s: KitchenState, date: string, meal: Meal, reference = new Date()) {
+  const day = resolveMenuState(s, daysBetween(dateKey(reference), date), reference);
+  const overrides = Object.entries(day.overrides[meal]).sort(([a], [b]) => a.localeCompare(b));
+  return JSON.stringify({ dish: day.plan[meal], overrides, residents: residentRequirementSignature(s) });
+}
 const today = (reference: Date) => dateKey(reference);
 const offsetOf = (date: string, reference: Date) => daysBetween(today(reference), date);
 
 const findPlan = (s: KitchenState, idOrDate: string) =>
   s.weeklyPlans?.find((p) => p.id === idOrDate) ?? (isDateKey(idOrDate) ? s.weeklyPlans?.find((p) => p.startDate === weekStartFor(idOrDate)) : undefined);
-
 /** Seven days × breakfast/lunch/dinner for the week containing `idOrDate` (a WeeklyPlan id or any date in the week). */
 export function weeklyMenu(s: KitchenState, idOrDate: string, reference = new Date()): WeeklyMenu {
   const plan = findPlan(s, idOrDate);
-  const startDate = plan?.startDate ?? weekStartFor(idOrDate);
+  // Accept a week id even before its WeeklyPlan record exists ("week-YYYY-MM-DD").
+  const startDate = plan?.startDate ?? weekStartFor(idOrDate.startsWith("week-") ? idOrDate.slice(5) : idOrDate);
   const blocked = new Set<string>();
   const days = WEEKDAYS.map((weekday, i): WeeklyMenuDay => {
     const date = addDays(startDate, i);
@@ -81,6 +99,7 @@ export function weeklyMenu(s: KitchenState, idOrDate: string, reference = new Da
         approved,
         rejected: s.mealRejections?.[date]?.[meal]?.signature === mealSignature(dayState, meal),
         lock: offset < 0 ? "past" : plan?.menuStatus === "approved" ? "approved-week" : approved ? "approved-meal" : null,
+        needsRevalidation: plan?.revalidationSlots?.includes(slotKey(date, meal)) ?? false,
         residentsSafe: s.residents.length - conflicts.length,
         pendingAlternatives: conflicts.filter((c) => c.status === "proposal-pending").length,
         unresolved: conflicts.filter((c) => c.status === "needs-staff").length,
@@ -234,14 +253,4 @@ export function reviseWeeklyMenu(s: KitchenState, planId: string, slot: { date: 
     next = { ...next, mealApprovals: { ...next.mealApprovals, [slot.date]: { ...next.mealApprovals[slot.date], [slot.meal]: undefined } } };
   }
   return next;
-}
-
-/**
- * Keeps weekly sign-off honest when staff edit an approved week through existing daily
- * screens: the change itself is the explicit revision, so the week returns to review.
- */
-export function reopenApprovedWeekFor(s: KitchenState, date: string | undefined, reference = new Date()): KitchenState {
-  if (!date || !isDateKey(date)) return s;
-  const plan = s.weeklyPlans?.find((p) => p.startDate === weekStartFor(date));
-  return plan && plan.menuStatus === "approved" ? reviseWeeklyMenu(s, plan.id, undefined, reference) : s;
 }

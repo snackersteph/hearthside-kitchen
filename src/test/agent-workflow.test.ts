@@ -7,6 +7,7 @@ import {
   type AgentEvent,
 } from "@/lib/kitchen/agent-workflow";
 import { weeklyMenu } from "@/lib/kitchen/weekly-menu";
+import { approveAlternatives } from "./weekly-fixtures";
 
 // Wednesday Nov 11, 2026: planning week is Nov 23–29.
 const now = new Date(2026, 10, 11, 9, 30);
@@ -149,6 +150,8 @@ describe("weekly agent workflow", () => {
     for (const e of pendingRevisions(s, runId)) s = reducer(s, { type: "decideWeeklyRevision", eventId: e.eventId, decision: "decline" }, later(12));
     expect(pendingRevisions(s, runId)).toEqual([]);
 
+    // Resident alternatives are approved by the manager in the Approval Center first.
+    s = approveAlternatives(s, WEEK, later(12));
     s = reducer(s, { type: "approveWeeklyMenu", id: WEEK }, later(13));
     expect(s.weeklyPlans?.find((p) => p.id === WEEK)?.menuStatus).toBe("approved");
     expect(run(s).status).toBe("completed");

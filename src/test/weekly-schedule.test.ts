@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { initialState } from "@/lib/kitchen/data";
 import { reducer } from "@/lib/kitchen/store";
+import { approveMenuFixture } from "./weekly-fixtures";
 import type { KitchenState } from "@/lib/kitchen/types";
 import {
   addDays, approvalTiming, isPastDue, lifecycleDates, migrateWeeklyPlans, parseDateKey, phaseFor, weekStartFor, type WeeklyPlan,
@@ -92,9 +93,14 @@ describe("weekly plan reducer actions", () => {
     for (const date of ["2026-11-23", "2026-11-09", "2026-11-16"]) s = create(s, date);
     expect(plans(s).map((p) => [p.id, p.phase])).toEqual([["week-2026-11-09", "service"], ["week-2026-11-16", "purchasing"], ["week-2026-11-23", "planning"]]);
     const approvedAt = at(2026, 11, 12);
-    s = reducer(s, { type: "updateWeeklyPlanStatus", id: "week-2026-11-23", menuStatus: "approved" }, approvedAt);
+    s = approveMenuFixture(s, "week-2026-11-23", approvedAt);
     expect(plans(s).find((p) => p.id === "week-2026-11-23")).toMatchObject({ menuStatus: "approved", menuApprovedAt: approvedAt.getTime() });
     for (const other of plans(s).filter((p) => p.id !== "week-2026-11-23")) expect(other).toMatchObject({ menuStatus: "not-started", menuApprovedAt: null, updatedAt: now.getTime() });
+  });
+
+  it("never approves a menu through a plain status update (approval runs the safety checks)", () => {
+    const s = create(initialState(), "2026-11-23");
+    expect(reducer(s, { type: "updateWeeklyPlanStatus", id: "week-2026-11-23", menuStatus: "approved" }, now)).toBe(s);
   });
 
   it("stamps and clears approval times and enforces menu-before-purchasing", () => {
@@ -102,7 +108,7 @@ describe("weekly plan reducer actions", () => {
     const id = "week-2026-11-23";
     const blocked = reducer(s, { type: "updateWeeklyPlanStatus", id, purchasingStatus: "approved" }, now);
     expect(blocked).toBe(s);
-    s = reducer(s, { type: "updateWeeklyPlanStatus", id, menuStatus: "approved" }, at(2026, 11, 13));
+    s = approveMenuFixture(s, id, at(2026, 11, 13));
     s = reducer(s, { type: "updateWeeklyPlanStatus", id, purchasingStatus: "approved" }, at(2026, 11, 17));
     expect(plans(s)[0]).toMatchObject({ menuApprovedAt: at(2026, 11, 13).getTime(), purchasingApprovedAt: at(2026, 11, 17).getTime() });
     // Re-sending "approved" keeps the original timestamp.
@@ -118,7 +124,7 @@ describe("weekly plan reducer actions", () => {
     s = migrateWeeklyPlans(s, at(2026, 12, 1));
     expect(plans(s)[0]).toMatchObject({ phase: "completed", menuStatus: "not-started", purchasingStatus: "not-started" });
     // Approving after the menu deadline (Nov 8) is allowed but recorded as late.
-    s = reducer(s, { type: "updateWeeklyPlanStatus", id: "week-2026-11-16", menuStatus: "approved" }, now);
+    s = approveMenuFixture(s, "week-2026-11-16", now);
     expect(approvalTiming(plans(s)[0] as WeeklyPlan)).toEqual({ menuApprovedLate: true, purchasingApprovedLate: false });
   });
 
@@ -133,7 +139,7 @@ describe("weekly plan reducer actions", () => {
   it("does not touch daily menus, approvals, residents, inventory or orders", () => {
     const base = { ...initialState(), scheduledPlans: { "2026-11-24": { lunch: "l-alfredo" } }, mealApprovals: { "2026-11-24": { lunch: { signature: "x", approvedAt: 1 } } } };
     let s = create(base, "2026-11-23");
-    s = reducer(s, { type: "updateWeeklyPlanStatus", id: "week-2026-11-23", menuStatus: "approved" }, now);
+    s = approveMenuFixture(s, "week-2026-11-23", now);
     const { weeklyPlans: _w, ...rest } = s;
     expect(rest).toEqual(base);
   });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DISHES, initialState } from "@/lib/kitchen/data";
 import { mealSignature, resolveMenuState } from "@/lib/kitchen/engine";
 import { reducer } from "@/lib/kitchen/store";
+import { approveMenuFixture } from "./weekly-fixtures";
 import { MEALS, type KitchenState, type Meal } from "@/lib/kitchen/types";
 import { weeklyMenu } from "@/lib/kitchen/weekly-menu";
 import { daysBetween } from "@/lib/kitchen/weekly-schedule";
@@ -119,7 +120,7 @@ describe("weekly menu generation", () => {
   it("refuses to generate over an approved week", () => {
     let s = generate(withWeeks(initialState(), "2026-11-23"));
     s = { ...s, scheduledPlans: {} };
-    s = reducer(s, { type: "updateWeeklyPlanStatus", id: WEEK, menuStatus: "approved" }, now);
+    s = approveMenuFixture(s, WEEK, now);
     expect(generate(s)).toBe(s);
   });
 });
@@ -154,7 +155,7 @@ describe("regenerating and revising single meals", () => {
 
   it("reopens an approved week, and its purchasing, only through revision", () => {
     let s = generate(withWeeks(initialState(), "2026-11-23"));
-    s = reducer(s, { type: "updateWeeklyPlanStatus", id: WEEK, menuStatus: "approved" }, now);
+    s = approveMenuFixture(s, WEEK, now);
     s = reducer(s, { type: "updateWeeklyPlanStatus", id: WEEK, purchasingStatus: "approved" }, now);
     const regen = { type: "regenerateWeeklyMeal", id: WEEK, date: "2026-11-27", meal: "dinner" } as const;
     expect(reducer(s, regen, now)).toBe(s);
@@ -166,7 +167,7 @@ describe("regenerating and revising single meals", () => {
 
   it("treats a daily-screen edit to an approved week as a revision", () => {
     let s = generate(withWeeks(initialState(), "2026-11-16", "2026-11-23"));
-    s = reducer(s, { type: "updateWeeklyPlanStatus", id: WEEK, menuStatus: "approved" }, now);
+    s = approveMenuFixture(s, WEEK, now);
     const lunch = DISHES.find((d) => d.meal === "lunch" && d.id !== slotOf(s, "2026-11-25", "lunch").dishId && !d.tags.includes("pureed"))!.id;
     const edited = reducer(s, { type: "setMealPlan", date: "2026-11-25", meal: "lunch", dishId: lunch, overrides: {} }, now);
     expect(edited.scheduledPlans?.["2026-11-25"]?.lunch).toBe(lunch);
