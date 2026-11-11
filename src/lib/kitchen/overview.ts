@@ -4,6 +4,9 @@ import { dateKey } from "./schedule";
 import { recipeLibrary } from "./recipes";
 import { MEALS } from "./types";
 
+/** Counts the screens themselves show, so Kitchen Pulse matches the sidebar, Approval Center and Inventory tabs. */
+export interface ActionCardCounts { approvals?: number; stockAlerts?: number }
+
 export type ActionCardId = "approvals" | "shortfalls" | "delivered" | "incoming" | "profiles";
 
 export interface ActionCard {
@@ -13,17 +16,17 @@ export interface ActionCard {
   to: "/approvals" | "/inventory" | "/residents" | "/profile-updates";
   actionLabel: string;
   clearLabel: string;
-  inventoryView?: "incoming" | "delivered";
+  inventoryView?: "incoming" | "delivered" | "alerts";
 }
 
 /** The four Command Center cards. Each counts something staff can still act on; 0 means peaceful. */
-export function actionCards(state: KitchenState, analysis: Analysis, reference = new Date()): ActionCard[] {
+export function actionCards(state: KitchenState, analysis: Analysis, reference = new Date(), counts: ActionCardCounts = {}): ActionCard[] {
   const pendingMeals = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
   const purchases = analysis.proposals.filter((p) => p.kind === "purchase");
   const incoming = (state.orders ?? []).filter((o) => o.status === "incoming");
   return [
-    { id: "approvals", label: "Awaiting approval", value: analysis.proposals.length + pendingMeals, to: "/approvals", actionLabel: "Review meals & orders", clearLabel: "Every meal signed off" },
-    { id: "shortfalls", label: "Ingredient shortfalls", value: purchases.reduce((n, p) => n + p.lines.length, 0), to: "/inventory", actionLabel: "Review orders", clearLabel: "Stock covers the forecast" },
+    { id: "approvals", label: "Awaiting approval", value: counts.approvals ?? analysis.proposals.length + pendingMeals, to: "/approvals", actionLabel: "Review meals & orders", clearLabel: "Every meal signed off" },
+    { id: "shortfalls", label: "Ingredient shortfalls", value: counts.stockAlerts ?? purchases.reduce((n, p) => n + p.lines.length, 0), to: "/inventory", inventoryView: "alerts", actionLabel: "Review orders", clearLabel: "Stock covers the forecast" },
     { id: "delivered", label: "Delivered orders", value: incoming.filter((o) => o.deliveryDate <= dateKey(reference)).length, to: "/inventory", inventoryView: "delivered", actionLabel: "Confirm deliveries", clearLabel: "All deliveries confirmed" },
     { id: "incoming", label: "Incoming orders", value: incoming.length, to: "/inventory", inventoryView: "incoming", actionLabel: "Check deliveries", clearLabel: "Nothing on the way" },
     { id: "profiles", label: "Resident profile updates", value: (state.profileUpdates ?? []).filter((u) => u.review === "open").length, to: "/profile-updates", actionLabel: "Review changes", clearLabel: "All profiles reviewed" },

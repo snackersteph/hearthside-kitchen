@@ -34,7 +34,7 @@ export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { ca
       </div>
       <div className="pulse-action-controls">
         <Link to={card.to} search={card.inventoryView ? { view: card.inventoryView } : {}} className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-primary hover:underline">
-          {clear && card.inventoryView ? "View orders" : card.actionLabel}
+          {clear && card.inventoryView && card.inventoryView !== "alerts" ? "View orders" : card.actionLabel}
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
         {!clear && onReview && (

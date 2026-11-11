@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClipboardCheck, CircleCheck, PackageCheck, PackageX, Truck, UserRound, Users, BookOpen, Utensils, Scale, DollarSign } from "lucide-react";
-import { useKitchen } from "@/lib/kitchen/store";
+import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
+import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
+import { stockOrderEstimate } from "@/lib/kitchen/stock-orders";
 import { dishById } from "@/lib/kitchen/data";
 import { MEALS } from "@/lib/kitchen/types";
 import { PageHeader } from "@/components/kitchen/app-shell";
@@ -36,7 +38,12 @@ export const Route = createFileRoute("/")({
 function CommandCenter() {
   const account = useAccountData(false);
   const { state, analysis, dispatch } = useKitchen();
-  const cards = actionCards(state, analysis);
+  const weeklyRequests = useWeeklyPurchasing().reduce((n, w) => n + w.proposals.length, 0);
+  // Same totals as the sidebar badge and the Inventory "Stock alert" tab.
+  const approvals = residentApprovalCount(alternativeOverview(state, new Date()).flatMap((d) => d.pending)) + analysis.proposals.filter((p) => p.kind === "purchase").length + weeklyRequests;
+  const forecast = analysis.forecast;
+  const stockAlerts = state.ingredients.filter((i) => Boolean(forecast?.firstShortDate[i.id]) || (stockOrderEstimate(state, i.id, forecast?.demand[i.id] ?? 0)?.qty ?? 0) > 0).length;
+  const cards = actionCards(state, analysis, new Date(), { approvals, stockAlerts });
   const snapshot = dailySnapshot(state, analysis);
   const money = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
   const quantity = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 1 });
