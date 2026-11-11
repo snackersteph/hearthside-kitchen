@@ -79,8 +79,10 @@ function RecipesPage() {
       {rows.length === 0 ? <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">No recipes match these filters.</div> :
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((r) => (
-            <button key={r.id} onClick={() => setOpen(r)} className={cn("overflow-hidden rounded-xl border text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
-              <img src={recipePhoto(r.id, r.name)} alt={r.name} loading="lazy" width={992} height={672} className="aspect-[16/9] w-full object-cover" />
+            <button key={r.id} onClick={() => setOpen(r)} className={cn("flex flex-col overflow-hidden rounded-xl border p-0 text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
+              <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+                <img src={recipePhoto(r.id, r.name)} alt={r.name} loading="lazy" width={992} height={672} className="absolute inset-0 block h-full w-full object-cover object-center" />
+              </div>
               <div className="p-5">
               <div className="flex items-start justify-between gap-2"><div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[r.meal]} · {recipeCategory(r)}</div><StockBadge recipe={r} servings={servings} compact /></div>
               <div className="mt-1 text-lg font-semibold leading-snug">{r.name}</div>
@@ -142,7 +144,9 @@ function RecipeDetail({ recipe, servings, onClose, onDelete, onEdit }: { recipe:
     <Dialog open={!!recipe} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         {recipe && n && <>
-          <img src={recipePhoto(recipe.id, recipe.name)} alt={recipe.name} width={992} height={672} className="aspect-[16/9] w-full rounded-lg object-cover" />
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg">
+            <img src={recipePhoto(recipe.id, recipe.name)} alt={recipe.name} width={992} height={672} className="absolute inset-0 block h-full w-full object-cover object-center" />
+          </div>
           <DialogHeader>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{MEAL_LABEL[recipe.meal]} · {recipeCategory(recipe)}</div>
             <DialogTitle className="text-2xl">{recipe.name}</DialogTitle>
