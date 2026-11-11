@@ -6,13 +6,14 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AgentAvatar } from "@/components/kitchen/agents";
-import { useKitchen } from "@/lib/kitchen/store";
+import { useKitchen, useWeeklyMenu } from "@/lib/kitchen/store";
+import { addDays } from "@/lib/kitchen/weekly-schedule";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   AGENT_INFO, AGENT_ORDER, GEN_STEPS, HANDOFFS, MEAL_NAMES, MEAL_ROWS, STAGE_REVEAL_STEP, STAGES,
-  SUBSTITUTIONS, TOTAL_MEALS, TOTAL_RESIDENTS, WEEK_DAYS, agentActivity, cellStatus, summaryCounts,
+  SCENARIO_WEEK_START, SUBSTITUTIONS, TOTAL_MEALS, WEEK_DAYS, agentActivity, cellStatus, summaryCounts,
   weekRangeLabel, type AgentActivity, type AgentId, type CellStatus, type Handoff, type HandoffStatus,
   type SubstitutionId, type WeeklyStatus, type WorkspaceState,
 } from "@/lib/kitchen/weekly-plan";
@@ -83,6 +84,10 @@ export function AgentWorkspace({
   const scenarioWeek = ws.weekOffset === 0;
   const planned = ws.status !== "not-started" && scenarioWeek;
   const counts = summaryCounts(ws);
+  // Real resident coverage for the displayed week, from the shared weekly menu selector.
+  const weekMenu = useWeeklyMenu(addDays(SCENARIO_WEEK_START, ws.weekOffset * 7));
+  const residentsTotal = weekMenu?.residentsTotal ?? 0;
+  const residentsCovered = planned ? weekMenu?.residentsCovered ?? 0 : 0;
   const activities = agentActivity(ws.genStep, ws.status);
   const handoff = HANDOFFS.find((h) => h.id === selectedHandoff) ?? HANDOFFS[2]!;
   const pendingDecisions = SUBSTITUTIONS.filter((s) => ws.decisions[s.id].state !== "approved");
@@ -133,7 +138,7 @@ export function AgentWorkspace({
       {/* Summary cards */}
       <section aria-label="Weekly summary" className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard label="Meals Planned" value={`${counts.planned} / ${TOTAL_MEALS}`} sub="Breakfast, lunch, dinner × 7 days" />
-        <SummaryCard label="Residents Covered" value={`${counts.residents} / ${TOTAL_RESIDENTS}`} sub="Resident meal assignments included" />
+        <SummaryCard label="Residents Covered" value={`${residentsCovered} / ${residentsTotal}`} sub="Resident meal assignments included" />
         <SummaryCard label="Issues Identified" value={String(counts.issues)} sub={counts.resolved ? `${counts.resolved} resolved · ${counts.issues - counts.resolved} unresolved` : "Dietary or inventory conflicts"} tone={counts.issues - counts.resolved > 0 ? "warn" : "ok"} />
         <SummaryCard label="Pending Approvals" value={String(counts.pending)} sub="Manager decisions required" tone={counts.pending > 0 ? "warn" : "ok"} />
       </section>

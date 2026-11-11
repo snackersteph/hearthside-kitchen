@@ -10,6 +10,7 @@ import { profileContentChanges } from "./profile-changes";
 import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orders";
 import { migrateDemoContent } from "./demo-content";
 import { applyWeeklyStatus, createWeeklyPlan, isDateKey, migrateWeeklyPlans, sortWeeklyPlans, weeklyPlanId, weekStartFor, type WeeklyMenuStatus, type WeeklyPurchasingStatus } from "./weekly-schedule";
+import { generateWeeklyMenu, regenerateWeeklyMeal, reopenApprovedWeekFor, reviseWeeklyMenu, weeklyMenu, type WeeklyMenu } from "./weekly-menu";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -45,7 +46,10 @@ type Action =
   | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string }
   | { type: "createWeeklyPlan"; date: string }
   | { type: "updateWeeklyPlanStatus"; id: string; menuStatus?: WeeklyMenuStatus; purchasingStatus?: WeeklyPurchasingStatus }
-  | { type: "selectServiceWeek"; id: string | null };
+  | { type: "selectServiceWeek"; id: string | null }
+  | { type: "generateWeeklyMenu"; id: string }
+  | { type: "regenerateWeeklyMeal"; id: string; date: string; meal: Meal }
+  | { type: "reviseWeeklyMenu"; id: string; date?: string; meal?: Meal };
 
 /** Which parts of a resident's care information a staff edit touched. */
 export function profileChangeSummary(previous: Resident, next: Resident): string | null {
@@ -69,7 +73,23 @@ function profileUpdateRecord(s: KitchenState, previous: Resident, next: Resident
   return { profileUpdates: [update, ...(s.profileUpdates ?? [])] };
 }
 
+/** Daily-menu edits that change a dated service's content. */
+function editedServiceDate(a: Action, reference: Date): string | undefined {
+  switch (a.type) {
+    case "setMealPlan": case "setScheduledMain": case "rejectMeal": return a.date;
+    case "approveSub": case "rejectSub": return a.serviceDate;
+    case "setMain": return dateKey(reference);
+    default: return undefined;
+  }
+}
+
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
+  const next = applyAction(s, a, reference);
+  // Editing an approved week through any daily screen is itself the explicit revision.
+  return next === s ? s : reopenApprovedWeekFor(next, editedServiceDate(a, reference), reference);
+}
+
+function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState {
   switch (a.type) {
     case "deleteResident": {
       if (!s.residents.some((r) => r.id === a.id)) return s;
@@ -316,6 +336,12 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       if (s.selectedWeekId === a.id || !s.weeklyPlans?.some((p) => p.id === a.id)) return s;
       return { ...s, selectedWeekId: a.id };
     }
+    case "generateWeeklyMenu": return generateWeeklyMenu(s, a.id, reference);
+    case "regenerateWeeklyMeal": return regenerateWeeklyMeal(s, a.id, a.date, a.meal, reference);
+    case "reviseWeeklyMenu": {
+      if ((a.date === undefined) !== (a.meal === undefined)) return s;
+      return reviseWeeklyMenu(s, a.id, a.date && a.meal ? { date: a.date, meal: a.meal } : undefined, reference);
+    }
   }
 }
 
@@ -385,7 +411,7 @@ export function migrateAdditionalResidents(s: KitchenState): KitchenState {
 export function mergeIngredientCatalog(s: KitchenState): KitchenState {
   return { ...s, ingredients: [...s.ingredients, ...[...INGREDIENTS, ...ADDITIONAL_INGREDIENTS].filter((i) => !s.ingredients.some((x) => x.id === i.id) && !s.deletedIngredientIds?.includes(i.id)).map((i) => ({ ...i }))] };
 }
-type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
+type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void; reference: Date };
 // Mixed component/function exports can refresh consumers before the mounted provider.
 // Preserve the context identity across hot updates so both generations share it.
 const Ctx: Context<KitchenContextValue | null> = import.meta.hot?.data?.["kitchenContext"] ?? createContext<KitchenContextValue | null>(null);
@@ -411,13 +437,27 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
   const analysis = useMemo(() => analyze(state, reference ?? new Date("2026-01-01T12:00:00Z")), [state, reference]);
   if (!reference) return <div className="min-h-screen bg-background" aria-busy="true" />;
-  return <Ctx.Provider value={{ state, analysis, dispatch }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ state, analysis, dispatch, reference }}>{children}</Ctx.Provider>;
 }
 
 export function useKitchen() {
   const c = useContext(Ctx);
   if (!c) throw new Error("useKitchen outside provider");
   return c;
+}
+
+/**
+ * Shared weekly menu selector for the Agent Workspace, calendar and approval screens.
+ * Pass a WeeklyPlan id or any date in the week; defaults to the selected service week.
+ */
+export function useWeeklyMenu(idOrDate?: string): WeeklyMenu | null {
+  const { state, reference } = useKitchen();
+  const target = idOrDate ?? state.selectedWeekId;
+  return useMemo(() => {
+    if (!target) return null;
+    if (!isDateKey(target) && !state.weeklyPlans?.some((p) => p.id === target)) return null;
+    return weeklyMenu(state, target, reference);
+  }, [state, target, reference]);
 }
 
 export const residentName = (s: KitchenState, id: string) => s.residents.find((r) => r.id === id)?.name ?? id;

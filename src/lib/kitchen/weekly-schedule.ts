@@ -76,6 +76,14 @@ export function weekStartFor(key: string): string {
 }
 
 export const weekEndFor = (key: string) => addDays(weekStartFor(key), 6);
+
+/** Whole calendar days from one date key to another (negative when `to` is earlier). */
+export function daysBetween(from: string, to: string): number {
+  const a = parseDateKey(from);
+  const b = parseDateKey(to);
+  if (!a || !b) throw new Error(`Invalid date key: ${a ? to : from}`);
+  return Math.round((b.getTime() - a.getTime()) / 86400000);
+}
 export const weeklyPlanId = (startDate: string) => `week-${startDate}`;
 
 // ---------- Lifecycle dates and phase ----------

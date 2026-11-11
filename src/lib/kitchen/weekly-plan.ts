@@ -11,6 +11,8 @@ export type HandoffStatus = "completed" | "warning" | "pending";
 export type SubstitutionId = "wed" | "fri";
 
 export const SCENARIO_WEEK_LABEL = "November 16–22, 2026";
+/** Monday of the scenario week; weekOffset counts whole weeks from here. */
+export const SCENARIO_WEEK_START = "2026-11-16";
 export const TOTAL_MEALS = 21;
 export const TOTAL_RESIDENTS = 12;
 export const GEN_STEPS = 9;
