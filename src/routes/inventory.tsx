@@ -74,11 +74,16 @@ function InventoryPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b pb-5">
         <div>
           <div className="mb-2 text-sm font-semibold">Consumption forecast</div>
-          <div className="flex gap-1" role="group" aria-label="Forecast period">
-            <Button variant={horizon === 7 ? "default" : "outline"} aria-pressed={horizon === 7} onClick={() => dispatch({ type: "setHorizon", days: 7 })}>7 days</Button>
-            <Button variant={horizon === 14 ? "default" : "outline"} aria-pressed={horizon === 14} onClick={() => dispatch({ type: "setHorizon", days: 14 })}>14 days</Button>
+          <div className="flex flex-wrap gap-3" role="tablist" aria-label="Forecast period">
+            {([7, 14] as const).map((days) => {
+              const selected = horizon === days;
+              const range = `${dateLabel(today)} – ${dateLabel(dateKey(dayAt(days - 1)))}`;
+              return <Button key={days} role="tab" aria-selected={selected} aria-label={`${days} days: ${range}`} variant={selected ? "default" : "outline"} onClick={() => dispatch({ type: "setHorizon", days })} className={cn("h-auto min-w-52 items-start justify-start gap-3 rounded-lg px-4 py-3 text-left", !selected && "border-primary/25 bg-card hover:border-primary/50")}>
+                <CalendarRange className="mt-0.5 h-5 w-5" aria-hidden="true" />
+                <span className="flex flex-col gap-0.5"><span className="text-base font-semibold">{days} days</span><span className={cn("text-sm font-medium", selected ? "text-primary-foreground/90" : "text-muted-foreground")}>{range}</span></span>
+              </Button>;
+            })}
           </div>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-primary/20 bg-accent px-3 py-2 text-base font-semibold text-accent-foreground"><CalendarRange className="h-5 w-5" aria-hidden="true" /><span>{dateLabel(today)} – {dateLabel(dateKey(dayAt(horizon - 1)))}</span></div>
         </div>
         <label className="text-sm font-medium">Supplier lead time
           <div className="mt-2 flex items-center gap-2"><Input aria-label="Supplier lead time" type="number" min={1} max={14} value={state.leadTimeDays ?? 2} onChange={(e) => dispatch({ type: "setLeadTime", days: Number(e.target.value) })} className="w-20 bg-background" /><span className="text-muted-foreground">days</span></div>
