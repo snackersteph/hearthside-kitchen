@@ -252,14 +252,17 @@
 }
 @media (min-width: 700px) {
   .pulse-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .pulse-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: space-between; gap: 10px 12px; min-height: 138px; padding: 14px; }
-  .pulse-action-heading { grid-column: 1 / -1; }
-  .pulse-action-value { grid-column: 1; align-self: center; font-size: 30px; }
-  .pulse-action-status { grid-column: 2; justify-self: end; }
-  .pulse-action-controls { grid-column: 1 / -1; }
+  .pulse-action { display: grid; grid-template-columns: minmax(0, 1fr); align-content: space-between; gap: 10px; min-height: 168px; padding: 14px; }
+  .pulse-action-heading, .pulse-action-value, .pulse-action-status, .pulse-action-controls { grid-column: 1; }
+  .pulse-action-value { align-self: center; font-size: 30px; }
+  .pulse-action-status { justify-self: start; }
 }
 @media (min-width: 1100px) {
   .pulse-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .pulse-actions { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .pulse-action-label { white-space: normal; line-height: 1.25; }
 }
 .pulse-service-link { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 16px; padding: 16px; border-radius: 8px; box-shadow: none; }
 .pulse-service-photo { width: 76px; height: 96px; object-fit: cover; border-radius: 5px; grid-row: 1 / 4; }

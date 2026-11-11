@@ -4,7 +4,7 @@ import type { ActionCard } from "@/lib/kitchen/overview";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/** One compact Kitchen Pulse card, with its label, count, status and action on one line when space allows. */
+/** One compact Kitchen Pulse card, with its status stacked below the count on wider screens. */
 export function ActionCardTile({ card, icon: Icon, reviewLabel, onReview }: { card: ActionCard; icon: LucideIcon; reviewLabel?: string | undefined; onReview?: (() => void) | undefined }) {
   const clear = card.value === 0;
   return (
