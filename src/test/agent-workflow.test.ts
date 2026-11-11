@@ -3,7 +3,7 @@ import { DISHES, initialState } from "@/lib/kitchen/data";
 import { reducer } from "@/lib/kitchen/store";
 import type { KitchenState } from "@/lib/kitchen/types";
 import {
-  WORKFLOW_STEPS, latestRunFor, migrateAgentWorkflow, pendingRevisions, projectWeekInventory, runEvents, weekShortages,
+  WORKFLOW_STEPS, agentActionHistory, latestRunFor, migrateAgentWorkflow, pendingRevisions, projectWeekInventory, runEvents, weekShortages,
   type AgentEvent,
 } from "@/lib/kitchen/agent-workflow";
 import { weeklyMenu } from "@/lib/kitchen/weekly-menu";
@@ -202,5 +202,23 @@ describe("weekly agent workflow", () => {
     expect(s.workflowRuns?.find((r) => r.workflowRunId === firstRun)?.status).toBe("superseded");
     expect(run(s).status).toBe("running");
     expect(start(initialState(), "2026-11-02")).toEqual(initialState());
+  });
+});
+
+describe("agentActionHistory", () => {
+  it("lists only events each agent sent, newest first", () => {
+    const s = finish(start(initialState()));
+    const all = s.agentEvents ?? [];
+    for (const agent of ["dietary", "menu", "inventory"] as const) {
+      const history = agentActionHistory(s, agent);
+      expect(history.length).toBe(all.filter((e) => e.sendingAgent === agent).length);
+      expect(history.every((e) => e.sendingAgent === agent)).toBe(true);
+      for (let i = 1; i < history.length; i++) expect(history[i - 1]!.timestamp).toBeGreaterThanOrEqual(history[i]!.timestamp);
+    }
+    expect(agentActionHistory(s, "dietary").map((e) => e.action)).toContain("share-dietary-constraints");
+  });
+
+  it("is empty before any workflow runs", () => {
+    expect(agentActionHistory(initialState(), "menu")).toEqual([]);
   });
 });

@@ -123,6 +123,10 @@ const slotLabel = (date: string, meal: Meal) => `${dayLabel(date)} ${meal}`;
 const money = (n: number) => `$${n.toFixed(2)}`;
 
 export const runEvents = (s: KitchenState, runId: string) => (s.agentEvents ?? []).filter((e) => e.workflowRunId === runId);
+
+/** Actions an agent itself took (events it sent), newest first; later-recorded events win timestamp ties. */
+export const agentActionHistory = (s: KitchenState, agent: AgentRole): AgentEvent[] =>
+  (s.agentEvents ?? []).filter((e) => e.sendingAgent === agent).reverse().sort((a, b) => b.timestamp - a.timestamp);
 export const latestRunFor = (s: KitchenState, weekId: string) =>
   (s.workflowRuns ?? []).filter((r) => r.serviceWeekId === weekId).sort((a, b) => b.startedAt - a.startedAt)[0];
 
