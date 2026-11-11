@@ -70,17 +70,19 @@ function MenuPage() {
     const range = weekRange(dateKey(monday), dateKey(sunday));
     return <tr {...props}>
       {info && <td className="col-span-7">
-        <Button type="button" variant="ghost" className="menu-week-status"
-          aria-label={`Service week ${range}: ${label}. Open in Agent Workspace`}
-          onClick={() => navigate({ to: "/dashboard", search: { week: dateKey(monday) } })}>
+        <div className="menu-week-status" aria-label={`Service week ${range}: ${label}`}>
           <span className="flex min-w-0 items-center gap-2">
             <span className="hidden whitespace-nowrap font-medium text-muted-foreground sm:inline">Week of {range}</span>
             <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold", info.status === "pending" || info.status === "unresolved" ? "bg-danger-soft text-destructive" : info.status === "past" ? "bg-muted text-muted-foreground" : "bg-success-soft text-success")}>
               {info.status === "pending" || info.status === "unresolved" ? <ClipboardCheck className="size-3 shrink-0" /> : info.status === "past" ? <History className="size-3 shrink-0" /> : <CheckCircle2 className="size-3 shrink-0" />}{label}
             </span>
           </span>
-          <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
-        </Button>
+          <Button type="button" variant="outline" size="sm" className="h-7 shrink-0 gap-1.5 text-xs"
+            onClick={() => navigate({ to: "/dashboard", search: { week: dateKey(monday), fromMenu: true } })}>
+            Open in Agent Workspace
+            <ArrowRight className="size-3.5" />
+          </Button>
+        </div>
       </td>}
       {children}
     </tr>;
@@ -96,7 +98,6 @@ function MenuPage() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5"><ClipboardCheck className="size-4 text-destructive" />Needs approval</span>
           <span className="flex items-center gap-1.5"><CheckCircle2 className="size-4 text-success" />Approved</span>
-          <span>Select a week's status to open it in the Agent Workspace</span>
         </div>
       </div>
       <Calendar mode="single" weekStartsOn={1} defaultMonth={reference} today={reference} startMonth={start} endMonth={end}

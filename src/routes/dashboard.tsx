@@ -1,11 +1,16 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { AgentWorkspace } from "@/components/kitchen/agent-workspace";
+import { Button } from "@/components/ui/button";
 import { isDateKey, weekStartFor } from "@/lib/kitchen/weekly-schedule";
 
 export const Route = createFileRoute("/dashboard")({
   // `week` is any date in a Monday–Sunday service week; it is snapped to that Monday.
-  validateSearch: (search: Record<string, unknown>): { week?: string } =>
-    isDateKey(search["week"]) ? { week: weekStartFor(search["week"]) } : {},
+  // `fromMenu` marks arrival from the menu calendar so a back link returns there.
+  validateSearch: (search: Record<string, unknown>): { week?: string; fromMenu?: boolean } => ({
+    ...(isDateKey(search["week"]) ? { week: weekStartFor(search["week"]) } : {}),
+    ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Agent Workspace · NutriSync" },
@@ -29,13 +34,23 @@ export const Route = createFileRoute("/dashboard")({
 
 function AgentWorkspacePage() {
   // Unvalidated keys can pass through from the root route, so check the date again.
-  const { week: raw } = Route.useSearch();
+  const { week: raw, fromMenu } = Route.useSearch();
   const week = isDateKey(raw) ? weekStartFor(raw) : undefined;
   const navigate = useNavigate({ from: "/dashboard" });
   return (
-    <AgentWorkspace
-      week={week}
-      onWeekChange={(next) => navigate({ search: { week: next }, replace: true })}
-    />
+    <>
+      {fromMenu && (
+        <Button asChild variant="ghost" size="sm" className="mb-4 gap-1.5">
+          <Link to="/menu">
+            <ArrowLeft className="size-4" />
+            Back to calendar
+          </Link>
+        </Button>
+      )}
+      <AgentWorkspace
+        week={week}
+        onWeekChange={(next) => navigate({ search: (prev) => ({ ...prev, week: next }), replace: true })}
+      />
+    </>
   );
 }
