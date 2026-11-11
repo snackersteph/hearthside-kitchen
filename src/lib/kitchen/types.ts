@@ -99,6 +99,7 @@ export interface AgentProfileEdit {
 }
 
 export interface KitchenState {
+  approvalCleanupVersion?: number;
   demoContentVersion?: number;
   orderSnapshotVersion?: number;
   recipes?: import("./recipes").Recipe[];

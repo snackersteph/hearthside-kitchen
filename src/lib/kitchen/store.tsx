@@ -16,6 +16,7 @@ import {
   startWeeklyWorkflow, weeklyApprovalChecks,
 } from "./agent-workflow";
 import { activeWeeklyPurchasing, openWeeklyPurchasing, settleWeeklyPurchasing, type WeeklyPurchasePlan } from "./weekly-purchasing";
+import { migrateApprovalCleanup } from "./approval-cleanup";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -485,7 +486,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateApprovalCleanup(migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState()))))))) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   // Never persist the placeholder initial state: if the provider remounts before the loaded state
