@@ -1,5 +1,6 @@
 # Project rules
 - Shared visual styling belongs in global semantic tokens and scoped shell selectors, with control variants in shared UI components; page behavior and kitchen state stay independent of theme changes.
+- Recipe types are derived by the shared recipeType helper unless staff save an explicit selection; they are separate from main/side/snack and never alter dietary analysis.
 - Showcase profile changes and observations use a one-time additive demo-content migration with internal demo flags; preserve staff reviews and resident records rather than fabricating care edits.
 - Account rules: src/components/AGENTS.md.
 - Agent logic (Dietary/Menu/Inventory) lives in the pure `analyze()` in src/lib/kitchen/engine.ts; proposals are derived from state, so pages never store them — keeps agents sharing one context and re-running on every change.

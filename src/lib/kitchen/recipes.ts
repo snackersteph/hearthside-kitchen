@@ -7,6 +7,8 @@ export type Texture = "regular" | "soft" | "minced" | "pureed";
 export const TEXTURES: Texture[] = ["regular", "soft", "minced", "pureed"];
 export type DishCategory = "main" | "side" | "snack";
 export const DISH_CATEGORIES: DishCategory[] = ["main", "side", "snack"];
+export const RECIPE_TYPES = ["rice", "soup", "pasta", "porridge", "eggs", "sandwiches & toast", "pancakes", "stews", "baked dishes", "vegetables", "protein dishes", "purées", "other"] as const;
+export type RecipeType = typeof RECIPE_TYPES[number];
 export type RecipeUnit = "g" | "kg" | "ml" | "L" | "each" | "portions" | "slices";
 
 export interface RecipeIngredient { id: string; qty: number; unit: RecipeUnit }
@@ -15,6 +17,7 @@ export interface Recipe {
   name: string;
   meal: Meal;
   category?: DishCategory;
+  recipeType?: RecipeType;
   dietGroup: DietGroup;
   texture: Texture;
   allergens: Allergen[];
@@ -83,12 +86,31 @@ export function recipeLibrary(state: KitchenState): Recipe[] {
 }
 
 export function isValidRecipe(r: Recipe, ingredients: Ingredient[]): boolean {
-  return !!r.name.trim() && ["breakfast", "lunch", "dinner"].includes(r.meal) && DIET_GROUPS.includes(r.dietGroup) && TEXTURES.includes(r.texture) && (!r.category || DISH_CATEGORIES.includes(r.category))
+  return !!r.name.trim() && ["breakfast", "lunch", "dinner"].includes(r.meal) && DIET_GROUPS.includes(r.dietGroup) && TEXTURES.includes(r.texture) && (!r.category || DISH_CATEGORIES.includes(r.category)) && (!r.recipeType || RECIPE_TYPES.includes(r.recipeType))
     && Number.isFinite(r.sodiumMg) && r.sodiumMg >= 0 && r.ingredients.length > 0
     && r.ingredients.every((l) => { const i = ingredients.find((x) => x.id === l.id); return !!i && Number.isFinite(l.qty) && l.qty > 0 && unitsFor(i.unit).includes(l.unit); });
 }
 
 export const recipeCategory = (r: Recipe): DishCategory => r.category ?? "main";
+
+/** Existing recipes are classified without rewriting saved records; staff selections take precedence. */
+export function recipeType(r: Recipe): RecipeType {
+  if (r.recipeType && RECIPE_TYPES.includes(r.recipeType)) return r.recipeType;
+  const name = r.name.toLowerCase();
+  if (/\b(soup|chowder)\b/.test(name)) return "soup";
+  if (/\b(pasta|penne|alfredo|primavera|scampi)\b/.test(name)) return "pasta";
+  if (/\b(rice|risotto|congee|pilaf)\b/.test(name)) return "rice";
+  if (/\b(purée|purée[d]?|puree[d]?)\b/.test(name)) return "purées";
+  if (/\b(oatmeal|oat|porridge)\b/.test(name)) return "porridge";
+  if (/\b(sandwich|toast)\b/.test(name)) return "sandwiches & toast";
+  if (/\bpancakes?\b/.test(name)) return "pancakes";
+  if (/\b(stew|dal)\b/.test(name)) return "stews";
+  if (/\b(omelette|scramble[d]?|frittata|eggs?|custard)\b/.test(name)) return "eggs";
+  if (/\b(bake|baked|gratin|pie|casserole)\b/.test(name)) return "baked dishes";
+  if (/\b(chicken|turkey|salmon|shrimp|tofu)\b/.test(name)) return "protein dishes";
+  if (/\b(potato|potatoes|vegetable[s]?|carrot|lentils?|quinoa)\b/.test(name)) return "vegetables";
+  return "other";
+}
 
 export type Availability = "available" | "low" | "unavailable";
 /**
