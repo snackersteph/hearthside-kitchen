@@ -54,7 +54,7 @@ function RecipesPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Kitchen library" title="Recipes">
+      <PageHeader title="Recipes">
         <div className="flex flex-wrap gap-2">
           <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Search recipes" placeholder="Search recipes or ingredients" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 pl-9" /></div>
           <Button onClick={() => setAdding(true)}><Plus />Add recipe</Button>

@@ -67,7 +67,7 @@ function InventoryPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Pantry & walk-in" title="Inventory"><div className="flex flex-wrap gap-2"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Search ingredients" placeholder="Search ingredients or vendors" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 pl-9" /></div><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div></PageHeader>
+      <PageHeader title="Inventory"><div className="flex flex-wrap gap-2"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Search ingredients" placeholder="Search ingredients or vendors" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 pl-9" /></div><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div></PageHeader>
 
       <div role="tablist" aria-label="Inventory views" className="inventory-view-tabs mb-6 flex flex-wrap gap-2 border-b pb-3">
         {([{ id: "stock", label: "Food stock" }, { id: "alerts", label: "Stock alert" }, { id: "delivered", label: "Delivered orders" }, { id: "incoming", label: "Incoming orders" }] as const).map((item) => <Button key={item.id} role="tab" aria-selected={view === item.id} variant={view === item.id ? "default" : "ghost"} onClick={() => setView(item.id)}>{item.label}{item.id === "alerts" && <span className="ml-1.5 rounded-full bg-danger-soft px-2 py-0.5 text-xs text-destructive">{alertRows.length}</span>}</Button>)}

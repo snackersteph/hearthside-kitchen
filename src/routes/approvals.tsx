@@ -98,7 +98,7 @@ function ApprovalsPage() {
     <>
       {origin && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu/$date" params={{ date: origin.date }} search={{ meal: origin.meal, focus: true }}><ArrowLeft />Back to {MEAL_LABEL[origin.meal].toLowerCase()} menu</Link></Button>}
       {!origin && fromInventory && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/inventory" search={{ view: fromInventory }}><ArrowLeft />Back to inventory</Link></Button>}
-      <PageHeader eyebrow="Human in the loop" title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
+      <PageHeader title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Proposal type">
         <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: {} })}>All proposals</Button>
         <Button variant={kind === "substitution" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "substitution" } })}>Meals only</Button>

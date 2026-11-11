@@ -87,7 +87,7 @@ function MenuPage() {
   }
 
   return <>
-    <PageHeader eyebrow="Menu calendar" title="Daily Menu">
+    <PageHeader title="Daily Menu">
       <Tag tone={daysPending ? "warn" : "ok"}>{daysPending} days need approval</Tag>
     </PageHeader>
     <section aria-label="Choose a menu date" className="border-y py-6">
