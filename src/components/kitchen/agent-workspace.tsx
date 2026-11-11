@@ -550,6 +550,21 @@ export function AgentWorkspace({
         today={today}
       />
 
+      {/* 6 · Handoff inspector (below the weekly lifecycle) */}
+      <section
+        aria-label="Handoff details"
+        className="mb-8 rounded-xl border bg-card p-5 shadow-soft"
+      >
+        <h2 className="mb-3 text-lg font-semibold">Handoff Inspector</h2>
+        {handoff ? (
+          <HandoffDetails handoff={handoff} events={events} run={activeRun} />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Select a handoff in the collaboration flow to inspect what the agents exchanged.
+          </p>
+        )}
+      </section>
+
       {/* 7 · Manager decisions (kept prominent, above the detail) */}
       {(activeRun || weekApproved) && (
         <ManagerDecisions
@@ -658,8 +673,8 @@ export function AgentWorkspace({
         </div>
       </section>
 
-      {/* 5 · Collaboration flow + 6 · Handoff inspector */}
-      <div className="mb-8 grid gap-6 lg:grid-cols-[65fr_35fr]">
+      {/* 5 · Collaboration flow */}
+      <div className="mb-8">
         <section aria-label="Collaboration flow">
           <h2 className="mb-4 text-lg font-semibold">Collaboration Flow</h2>
           {!activeRun ? (
@@ -756,25 +771,6 @@ export function AgentWorkspace({
             </ol>
           )}
         </section>
-
-        <aside
-          aria-label="Handoff inspector"
-          className="space-y-6 lg:sticky lg:top-6 lg:self-start"
-        >
-          <section
-            aria-label="Handoff details"
-            className="rounded-xl border bg-card p-5 shadow-soft"
-          >
-            <h2 className="mb-3 text-lg font-semibold">Handoff Inspector</h2>
-            {handoff ? (
-              <HandoffDetails handoff={handoff} events={events} run={activeRun} />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Select a handoff in the collaboration flow to inspect what the agents exchanged.
-              </p>
-            )}
-          </section>
-        </aside>
       </div>
 
       {/* Meal details */}
