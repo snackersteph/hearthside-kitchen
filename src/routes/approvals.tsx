@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, Check, ChevronDown, Pencil, X } from "lucide-react";
+import { ArrowLeft, Check, Search, ChevronDown, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen, residentName } from "@/lib/kitchen/store";
 import { DISHES, dishById } from "@/lib/kitchen/data";
@@ -46,9 +46,19 @@ function ApprovalsPage() {
   const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
   const today = dateKey(new Date());
   const overview = useMemo(() => alternativeOverview(state, new Date(), date ? [date] : undefined), [state, date, today]);
-  const reviews = kind === "purchase" ? [] : overview.flatMap((day) => day.pending).filter((p) => !meal || p.meal === meal).sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
-  const approved = kind === "purchase" ? [] : overview.flatMap((day) => day.approved).filter((p) => !meal || p.meal === meal);
-  const purchases = proposals.filter((p) => p.kind === "purchase");
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const ingredientNames = (ids: string[]) => ids.map((id) => state.ingredients.find((i) => i.id === id)?.name ?? id).join(" ");
+  const matches = (p: Proposal) => {
+    if (!q) return true;
+    const text = p.kind === "substitution"
+      ? [dishById(p.dishId)?.name, dishById(p.fromDishId)?.name, p.meal, p.serviceDate, ...p.residentIds.map((id) => residentName(state, id)), ...Object.values(p.reasons).flat()].join(" ")
+      : [p.vendor, p.deliveryDate, ingredientNames(p.lines.map((l) => l.ingredientId))].join(" ");
+    return text.toLowerCase().includes(q);
+  };
+  const reviews = kind === "purchase" ? [] : overview.flatMap((day) => day.pending).filter((p) => (!meal || p.meal === meal) && matches(p)).sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
+  const approved = kind === "purchase" ? [] : overview.flatMap((day) => day.approved).filter((p) => (!meal || p.meal === meal) && matches(p));
+  const purchases = proposals.filter((p): p is PurchaseProposal => p.kind === "purchase" && matches(p));
   const defaultTab = kind === "purchase" ? "orders" : "pending";
   const [tab, setTab] = useState(defaultTab);
   useEffect(() => { setTab(defaultTab); }, [defaultTab]);
@@ -66,23 +76,28 @@ function ApprovalsPage() {
   }, []);
   const [approvalRequest, setApprovalRequest] = useState<SubstitutionProposal | null>(null);
   const [range, setRange] = useState<7 | 14 | 30>(7);
+  const [historyKind, setHistoryKind] = useState<"all" | "substitution" | "purchase">("all");
   const now = Date.now();
-  const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000).sort((x, y) => y.at - x.at);
+  const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000 && (kind || historyKind === "all" || h.kind === historyKind) && (!q || h.summary.toLowerCase().includes(q))).sort((x, y) => y.at - x.at);
   return (
     <>
       {origin && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu/$date" params={{ date: origin.date }} search={{ meal: origin.meal, focus: true }}><ArrowLeft />Back to {MEAL_LABEL[origin.meal].toLowerCase()} menu</Link></Button>}
       <PageHeader eyebrow="Human in the loop" title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Proposal type">
         <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: {} })}>All proposals</Button>
-        <Button variant={kind === "purchase" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "purchase" } })}>Orders only</Button>
         <Button variant={kind === "substitution" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "substitution" } })}>Meals only</Button>
+        <Button variant={kind === "purchase" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "purchase" } })}>Orders only</Button>
+        <div className="relative ml-auto w-full sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search residents, dishes, vendors…" aria-label="Search approvals" className="pl-9" />
+        </div>
       </div>
       {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: kind ? { kind } : {} })}>All dates</Button></div>}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           {kind !== "purchase" && <TabsTrigger value="pending">Residents to approve ({residentApprovalCount(reviews)})</TabsTrigger>}
           {kind !== "purchase" && <TabsTrigger value="approved">Approved residents ({residentApprovalCount(approved)})</TabsTrigger>}
-          {kind !== "substitution" && <TabsTrigger value="orders">Purchase orders ({purchases.length})</TabsTrigger>}
+          {kind !== "substitution" && <TabsTrigger value="orders">Purchase orders to approve ({purchases.length})</TabsTrigger>}
           <TabsTrigger value="history">History ({history.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-6 space-y-3">
@@ -98,8 +113,13 @@ function ApprovalsPage() {
           {purchases.length ? purchases.map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} /></div>) : <Empty text="No purchase requests awaiting approval." />}
         </TabsContent>
         <TabsContent value="history" className="mt-6 space-y-3">
-          <div className="flex gap-2" role="group" aria-label="History range">
-            {([7, 14, 30] as const).map((d) => <Button key={d} size="sm" variant={range === d ? "default" : "outline"} onClick={() => setRange(d)}>{d === 7 ? "Past week" : d === 14 ? "Past 2 weeks" : "Past month"}</Button>)}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-2" role="group" aria-label="History range">
+              {([7, 14, 30] as const).map((d) => <Button key={d} size="sm" variant={range === d ? "default" : "outline"} onClick={() => setRange(d)}>{d === 7 ? "Past week" : d === 14 ? "Past 2 weeks" : "Past month"}</Button>)}
+            </div>
+            {!kind && <div className="ml-auto flex gap-1 rounded-lg border bg-muted p-1" role="group" aria-label="History type">
+              {([["all", "All"], ["substitution", "Meals"], ["purchase", "Orders"]] as const).map(([k, l]) => <Button key={k} size="sm" variant={historyKind === k ? "default" : "ghost"} onClick={() => setHistoryKind(k)}>{l}</Button>)}
+            </div>}
           </div>
           {history.length === 0 ? <Empty text="No decisions in this period." /> : (
             <ul className="divide-y rounded-xl border bg-card shadow-soft">

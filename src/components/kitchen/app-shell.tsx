@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge } from "lucide-react";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
+import { alternativeOverview, residentApprovalCount } from "./approval-rules";
 import { useKitchen } from "@/lib/kitchen/store";
 import { AGENTS, AgentAvatar } from "./agents";
 import type { AgentId } from "@/lib/kitchen/types";
@@ -19,9 +20,10 @@ const NAV = [
 const MOBILE_NAV = [...NAV, { to: "/dashboard", label: "Dashboard", icon: Gauge }] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { analysis, dispatch } = useKitchen();
+  const { state, analysis, dispatch } = useKitchen();
   const mealPending = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
-  const pending = analysis.proposals.length + mealPending;
+  const residentsToApprove = useMemo(() => residentApprovalCount(alternativeOverview(state, new Date()).flatMap((d) => d.pending)), [state]);
+  const pending = residentsToApprove + analysis.proposals.filter((p) => p.kind === "purchase").length;
   const busy: Record<AgentId, number> = {
     dietary: analysis.conflicts.length,
     menu: analysis.proposals.filter((p) => p.kind === "substitution").length + mealPending,
