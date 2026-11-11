@@ -380,8 +380,14 @@ function AgentCard({ id, activity, started, summary }: { id: AgentId; activity: 
   const info = AGENT_INFO[id];
   const a = ACTIVITY_LABEL[activity];
   return (
-    <article className="rounded-xl border bg-card p-5 shadow-soft">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <Link
+      to="/agents/$agentId"
+      params={{ agentId: id }}
+      aria-label={`View ${info.name} profile`}
+      className="group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <article className="h-full rounded-xl border bg-card p-5 shadow-soft transition-colors group-hover:border-primary">
+        <div className="mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-2 font-semibold">
           <AgentAvatar agent={id} />
           {info.name}
@@ -397,7 +403,8 @@ function AgentCard({ id, activity, started, summary }: { id: AgentId; activity: 
       ) : (
         <p className="text-xs text-muted-foreground">Idle until the weekly plan is generated.</p>
       )}
-    </article>
+      </article>
+    </Link>
   );
 }
 
