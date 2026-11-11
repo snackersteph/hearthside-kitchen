@@ -49,11 +49,11 @@ export const AGENT_INFO: Record<AgentId, { name: string; icon: LucideIcon; respo
 export const AGENT_ORDER: AgentId[] = ["dietary", "menu", "inventory"];
 
 export const STAGE_INFO: { id: 1 | 2 | 3 | 4 | 5; title: string; agents: string }[] = [
-  { id: 1, title: "Analyze Weekly Requirements", agents: "Dietary Agent → Menu Agent" },
-  { id: 2, title: "Generate Weekly Menu", agents: "Menu Agent → Inventory Agent" },
-  { id: 3, title: "Check Inventory and Identify Conflicts", agents: "Inventory Agent → Menu Agent" },
-  { id: 4, title: "Revise and Validate Weekly Plan", agents: "Menu Agent → Dietary Agent → Inventory Agent" },
-  { id: 5, title: "Human Review and Approval", agents: "AI Team → Kitchen Manager" },
+  { id: 1, title: "Dietary Requirements Shared", agents: "Dietary Agent → Menu Agent" },
+  { id: 2, title: "Weekly Menu Generated", agents: "Menu Agent → Inventory Agent" },
+  { id: 3, title: "Ingredient Requirements Checked", agents: "Inventory Agent → Menu Agent" },
+  { id: 4, title: "Conflicts Resolved", agents: "Menu Agent → Dietary Agent → Inventory Agent" },
+  { id: 5, title: "Manager Review", agents: "AI Team → Kitchen Manager" },
 ];
 
 export const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
