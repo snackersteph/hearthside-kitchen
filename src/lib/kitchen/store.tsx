@@ -15,6 +15,7 @@ import {
   advanceWeeklyWorkflow, approveWeeklyMenu, decideRevision, flagApprovedWeekChanges, migrateAgentWorkflow, requestAnotherRevision,
   startWeeklyWorkflow, weeklyApprovalChecks,
 } from "./agent-workflow";
+import { activeWeeklyPurchasing, openWeeklyPurchasing, settleWeeklyPurchasing, type WeeklyPurchasePlan } from "./weekly-purchasing";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -46,8 +47,9 @@ type Action =
   | { type: "setStock"; id: string; stock: number }
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
   | { type: "rejectSub"; proposalId: string; meal: Meal; dishId: string; fromDishId: string; residentIds: string[]; serviceDate?: string | undefined; summary: string }
-  | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
-  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string }
+  | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string; serviceWeekId?: string | undefined }
+  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string; serviceWeekId?: string | undefined }
+  | { type: "approveWeeklyPurchasing"; id: string }
   | { type: "createWeeklyPlan"; date: string }
   | { type: "updateWeeklyPlanStatus"; id: string; menuStatus?: WeeklyMenuStatus; purchasingStatus?: WeeklyPurchasingStatus }
   | { type: "selectServiceWeek"; id: string | null }
@@ -317,15 +319,22 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
         history: [{ proposalId: id, kind: "purchase", status: "approved", at: reference.getTime(), modified: true, summary: `Ordered ${qty} ${ingredient.unit} ${ingredient.name} from ${vendor} · Estimated $${(qty * ingredient.unitCost).toFixed(2)}` }, ...s.history],
       };
     }
-    case "approvePurchase":
-      return {
+    case "approvePurchase": {
+      // Approval places a (simulated) order that stays incoming until received; stock is unchanged.
+      const week = a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {};
+      const next: KitchenState = {
         ...s,
-        orders: [...(s.orders ?? []), { id: `${a.proposalId}-${s.history.length}`, vendor: a.vendor ?? s.ingredients.find((i) => i.id === a.lines[0]?.ingredientId)?.vendor ?? "Supplier", lines: a.lines, deliveryDate: a.deliveryDate ?? dateKey(dayAt(Math.max(1, s.leadTimeDays ?? 2))), status: "incoming" }],
+        orders: [...(s.orders ?? []), { id: `${a.proposalId}-${s.history.length}`, vendor: a.vendor ?? s.ingredients.find((i) => i.id === a.lines[0]?.ingredientId)?.vendor ?? "Supplier", lines: a.lines, deliveryDate: a.deliveryDate ?? dateKey(dayAt(Math.max(1, s.leadTimeDays ?? 2))), status: "incoming", ...week }],
         ingredients: s.ingredients.map((i) => { const l = a.lines.find((x) => x.ingredientId === i.id); return l ? { ...i, onOrder: i.onOrder + l.qty } : i; }),
-        history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified }, ...s.history],
+        history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified, ...week }, ...s.history],
       };
-    case "reject":
-      return { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}) }, ...s.history] };
+      return a.serviceWeekId ? settleWeeklyPurchasing(next, a.serviceWeekId, reference) : next;
+    }
+    case "reject": {
+      const next: KitchenState = { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}), ...(a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {}) }, ...s.history] };
+      return a.kind === "purchase" && a.serviceWeekId ? settleWeeklyPurchasing(next, a.serviceWeekId, reference) : next;
+    }
+    case "approveWeeklyPurchasing": return settleWeeklyPurchasing(s, a.id, reference, true);
     case "createWeeklyPlan": {
       // Any date in the week is accepted and snapped to its Monday; one record per week.
       if (!isDateKey(a.date) || s.weeklyPlans?.some((p) => p.id === weeklyPlanId(weekStartFor(a.date)))) return s;
@@ -365,7 +374,8 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
       for (const slot of weeklyMenu(s, a.id, reference).slots) {
         if (!slot.approved && slot.lock !== "past" && canApproveMeal(slot.date, reference)) next = applyAction(next, { type: "approveMeal", date: slot.date, meal: slot.meal }, reference);
       }
-      return approveWeeklyMenu(next, a.id, reference);
+      // Purchasing is reviewed separately: approval only opens the week's draft purchasing list.
+      return openWeeklyPurchasing(approveWeeklyMenu(next, a.id, reference), a.id, reference);
     }
   }
 }
@@ -446,10 +456,7 @@ if (import.meta.hot?.data) import.meta.hot.data["kitchenContext"] = Ctx;
 
 export function KitchenProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer((s: KitchenState, a: Action) => reducer(s, a), undefined, initialState);
-  // Persist only once the loaded state has committed: if this provider remounts before its load
-  // dispatch commits, saving the initial state would overwrite the browser save before it is re-read.
   const loaded = useRef(false);
-  const initial = useRef(state);
   const [reference, setReference] = useState<Date | null>(null);
   useEffect(() => {
     setReference(new Date());
@@ -461,11 +468,13 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))) }); } catch { loaded.current = true; }
+      dispatch({ type: "load", state: migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))) }); } catch { /* ignore */ }
+    loaded.current = true;
   }, []);
-  useEffect(() => {
-    if (!loaded.current) { if (state === initial.current) return; loaded.current = true; }
-    localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
+  // Never persist the placeholder initial state: if the provider remounts before the loaded state
+  // renders (e.g. during hydration), saving it would overwrite staff decisions with a fresh demo.
+  const placeholder = useRef(state);
+  useEffect(() => { if (loaded.current && state !== placeholder.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
   // Weekly agent workflows advance one persisted step at a time, so a run keeps going
   // across page navigation and resumes from its last saved step after a refresh.
   const runningRun = state.workflowRuns?.find((r) => r.status === "running");
@@ -497,6 +506,12 @@ export function useWeeklyMenu(idOrDate?: string): WeeklyMenu | null {
     if (!isDateKey(target) && !state.weeklyPlans?.some((p) => p.id === target)) return null;
     return weeklyMenu(state, target, reference);
   }, [state, target, reference]);
+}
+
+/** Week-specific purchasing for every service week that has not ended (derived, never stored). */
+export function useWeeklyPurchasing(): WeeklyPurchasePlan[] {
+  const { state, reference } = useKitchen();
+  return useMemo(() => activeWeeklyPurchasing(state, reference), [state, reference]);
 }
 
 export const residentName = (s: KitchenState, id: string) => s.residents.find((r) => r.id === id)?.name ?? id;

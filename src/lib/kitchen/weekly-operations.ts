@@ -10,6 +10,7 @@ import {
   type WorkflowRun,
 } from "./agent-workflow";
 import { weeklyMenu } from "./weekly-menu";
+import { weeklyPurchasePlan } from "./weekly-purchasing";
 import {
   DEFAULT_LEAD_TIME_DAYS,
   addDays,
@@ -273,8 +274,22 @@ export function weeklyWorkstreams(
         (e) => e.workflowRunId === run.workflowRunId && e.structuredPayload.kind === "purchase",
       )
     : undefined;
-  const recommended =
-    purchaseEvent?.structuredPayload.kind === "purchase"
+  // Once the menu is approved, the week-specific draft list replaces the agents' early estimate.
+  const weekPurchasing =
+    purchasingInfo.plan?.menuStatus === "approved"
+      ? weeklyPurchasePlan(s, purchasingInfo.plan, reference)
+      : null;
+  const recommended = weekPurchasing
+    ? {
+        lines: weekPurchasing.rows.filter((r) => r.shortfall > 0).length,
+        total: weekPurchasing.total,
+        orderByDate:
+          weekPurchasing.proposals
+            .map((p) => p.orderByDate ?? "")
+            .filter(Boolean)
+            .sort()[0] ?? "",
+      }
+    : purchaseEvent?.structuredPayload.kind === "purchase"
       ? {
           lines: purchaseEvent.structuredPayload.lines.length,
           total: purchaseEvent.structuredPayload.total,
@@ -307,7 +322,9 @@ export function weeklyWorkstreams(
       menuApproved: purchasingInfo.plan?.menuStatus === "approved",
       purchasingStatus: purchasingInfo.plan?.purchasingStatus ?? "not-started",
       recommended,
-      pendingOrders: analysis.proposals.filter((p) => p.kind === "purchase").length,
+      pendingOrders:
+        analysis.proposals.filter((p) => p.kind === "purchase").length +
+        (weekPurchasing?.proposals.length ?? 0),
       deliveries: {
         count: expected.length,
         next: expected[0]?.deliveryDate ?? null,
