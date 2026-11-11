@@ -54,6 +54,8 @@ function LiveAgentsPage() {
   );
   const chats = useSyncExternalStore(sim.subscribe, sim.snapshot, sim.snapshot);
   const joined = useRef(false);
+  // The "what changed" card only lists decisions made from the phones since the page opened (or Start over).
+  const [since, setSince] = useState(() => Date.now());
 
   useEffect(() => {
     if (joined.current) return;
@@ -69,6 +71,7 @@ function LiveAgentsPage() {
   }, [chats, sim]);
 
   const incoming = (state.orders ?? []).filter((o) => o.status === "incoming").length;
+  const changes = state.history.filter((h) => h.at >= since);
 
   return (
     <>
@@ -77,6 +80,7 @@ function LiveAgentsPage() {
           variant="outline"
           onClick={() => {
             sim.reset();
+            setSince(Date.now());
             void sim.join();
           }}
         >
@@ -152,9 +156,9 @@ function LiveAgentsPage() {
             </Link>
           </div>
         </div>
-        {state.history.length ? (
+        {changes.length ? (
           <ul className="space-y-1 text-sm text-muted-foreground">
-            {state.history.slice(0, 5).map((h, i) => (
+            {changes.slice(0, 5).map((h, i) => (
               <li key={`${h.proposalId}-${i}`}>{h.summary}</li>
             ))}
           </ul>

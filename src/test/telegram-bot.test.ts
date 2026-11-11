@@ -151,8 +151,13 @@ describe("telegram: asking and the shared room", () => {
     const mealButtons = to(asked, CHEF)!.buttons![0]!;
     expect(mealButtons.map((b) => b.text)).toEqual(["Breakfast", "Lunch", "Dinner"]);
 
-    const out = await handleUpdate(tap(CHEF, mealButtons[1]!.data), stores);
+    const out = await handleUpdate(tap(CHEF, mealButtons[1]!.data, "Which meal?"), stores);
     expect(out[0]).toMatchObject({ kind: "answer" });
+    // the picker stops looking tappable once a meal is chosen
+    expect(out.find((o) => o.kind === "edit")).toMatchObject({
+      chatId: CHEF,
+      text: "Which meal?\n\n✔ Chris chose: Lunch",
+    });
     expect(to(out, CHEF)?.text).toContain("Please plan lunch for Thu, Nov 12");
   });
 

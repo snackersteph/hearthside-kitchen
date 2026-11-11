@@ -258,7 +258,19 @@ async function handleCallback(
   const [kind, a, b] = (query.data ?? "").split("|");
 
   if (kind === "m" && a && b && MEAL_LETTER[b]) {
-    return [ack(), ...(await startAndShare(user, a, MEAL_LETTER[b]!, stores))];
+    const meal = MEAL_LETTER[b]!;
+    // The meal picker has done its job, so it stops looking tappable.
+    const picked: Outbound[] = query.message
+      ? [
+          {
+            kind: "edit",
+            chatId: query.message.chat.id,
+            messageId: query.message.message_id,
+            text: `${query.message.text ?? ""}\n\n✔ ${user.name} chose: ${meal[0]!.toUpperCase()}${meal.slice(1)}`,
+          },
+        ]
+      : [];
+    return [ack(), ...picked, ...(await startAndShare(user, a, meal, stores))];
   }
   if (kind !== "a" || !a || !b || !LETTER_OPTION[b])
     return [ack("I didn't understand that button.", true)];
