@@ -446,7 +446,10 @@ if (import.meta.hot?.data) import.meta.hot.data["kitchenContext"] = Ctx;
 
 export function KitchenProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer((s: KitchenState, a: Action) => reducer(s, a), undefined, initialState);
+  // Persist only once the loaded state has committed: if this provider remounts before its load
+  // dispatch commits, saving the initial state would overwrite the browser save before it is re-read.
   const loaded = useRef(false);
+  const initial = useRef(state);
   const [reference, setReference] = useState<Date | null>(null);
   useEffect(() => {
     setReference(new Date());
@@ -458,10 +461,11 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))) }); } catch { /* ignore */ }
-    loaded.current = true;
+      dispatch({ type: "load", state: migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))) }); } catch { loaded.current = true; }
   }, []);
-  useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
+  useEffect(() => {
+    if (!loaded.current) { if (state === initial.current) return; loaded.current = true; }
+    localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
   // Weekly agent workflows advance one persisted step at a time, so a run keeps going
   // across page navigation and resumes from its last saved step after a refresh.
   const runningRun = state.workflowRuns?.find((r) => r.status === "running");
