@@ -102,6 +102,10 @@ export interface KitchenState {
   orders?: PurchaseOrder[];
   profileUpdates?: ProfileUpdate[];
   observations?: Observation[];
+  /** Monday–Sunday service weeks moving through planning → purchasing → service. */
+  weeklyPlans?: import("./weekly-schedule").WeeklyPlan[];
+  /** The service week staff are currently focused on; must match a weeklyPlans id. */
+  selectedWeekId?: string;
   plan: Record<Meal, string>;
   scheduledPlans?: Record<string, Partial<Record<Meal, string>>>;
   scheduledOverrides?: Record<string, Partial<Record<Meal, Record<string, string>>>>;

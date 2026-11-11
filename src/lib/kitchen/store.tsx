@@ -9,6 +9,7 @@ import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 import { profileContentChanges } from "./profile-changes";
 import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orders";
 import { migrateDemoContent } from "./demo-content";
+import { applyWeeklyStatus, createWeeklyPlan, isDateKey, migrateWeeklyPlans, sortWeeklyPlans, weeklyPlanId, weekStartFor, type WeeklyMenuStatus, type WeeklyPurchasingStatus } from "./weekly-schedule";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -41,7 +42,10 @@ type Action =
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
   | { type: "rejectSub"; proposalId: string; meal: Meal; dishId: string; fromDishId: string; residentIds: string[]; serviceDate?: string | undefined; summary: string }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
-  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string };
+  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string }
+  | { type: "createWeeklyPlan"; date: string }
+  | { type: "updateWeeklyPlanStatus"; id: string; menuStatus?: WeeklyMenuStatus; purchasingStatus?: WeeklyPurchasingStatus }
+  | { type: "selectServiceWeek"; id: string | null };
 
 /** Which parts of a resident's care information a staff edit touched. */
 export function profileChangeSummary(previous: Resident, next: Resident): string | null {
@@ -292,6 +296,26 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
       };
     case "reject":
       return { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}) }, ...s.history] };
+    case "createWeeklyPlan": {
+      // Any date in the week is accepted and snapped to its Monday; one record per week.
+      if (!isDateKey(a.date) || s.weeklyPlans?.some((p) => p.id === weeklyPlanId(weekStartFor(a.date)))) return s;
+      return { ...s, weeklyPlans: sortWeeklyPlans([...(s.weeklyPlans ?? []), createWeeklyPlan(a.date, reference)]) };
+    }
+    case "updateWeeklyPlanStatus": {
+      const plan = s.weeklyPlans?.find((p) => p.id === a.id);
+      const next = plan && applyWeeklyStatus(plan, { menuStatus: a.menuStatus, purchasingStatus: a.purchasingStatus }, reference);
+      if (!plan || !next || next === plan) return s;
+      return { ...s, weeklyPlans: (s.weeklyPlans ?? []).map((p) => (p.id === a.id ? next : p)) };
+    }
+    case "selectServiceWeek": {
+      if (a.id === null) {
+        if (s.selectedWeekId === undefined) return s;
+        const { selectedWeekId: _cleared, ...rest } = s;
+        return rest;
+      }
+      if (s.selectedWeekId === a.id || !s.weeklyPlans?.some((p) => p.id === a.id)) return s;
+      return { ...s, selectedWeekId: a.id };
+    }
   }
 }
 
@@ -381,7 +405,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState()))))) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
