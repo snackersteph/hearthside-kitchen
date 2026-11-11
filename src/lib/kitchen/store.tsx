@@ -9,6 +9,13 @@ import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 import { profileContentChanges } from "./profile-changes";
 import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orders";
 import { migrateDemoContent } from "./demo-content";
+import { applyWeeklyStatus, createWeeklyPlan, isDateKey, migrateWeeklyPlans, sortWeeklyPlans, weeklyPlanId, weekStartFor, type WeeklyMenuStatus, type WeeklyPurchasingStatus } from "./weekly-schedule";
+import { generateWeeklyMenu, regenerateWeeklyMeal, reviseWeeklyMenu, weeklyMenu, type WeeklyMenu } from "./weekly-menu";
+import {
+  advanceWeeklyWorkflow, approveWeeklyMenu, decideRevision, flagApprovedWeekChanges, migrateAgentWorkflow, requestAnotherRevision,
+  startWeeklyWorkflow, weeklyApprovalChecks,
+} from "./agent-workflow";
+import { activeWeeklyPurchasing, openWeeklyPurchasing, settleWeeklyPurchasing, type WeeklyPurchasePlan } from "./weekly-purchasing";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -40,8 +47,20 @@ type Action =
   | { type: "setStock"; id: string; stock: number }
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
   | { type: "rejectSub"; proposalId: string; meal: Meal; dishId: string; fromDishId: string; residentIds: string[]; serviceDate?: string | undefined; summary: string }
-  | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string }
-  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string };
+  | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string; serviceWeekId?: string | undefined }
+  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string; serviceWeekId?: string | undefined }
+  | { type: "approveWeeklyPurchasing"; id: string }
+  | { type: "createWeeklyPlan"; date: string }
+  | { type: "updateWeeklyPlanStatus"; id: string; menuStatus?: WeeklyMenuStatus; purchasingStatus?: WeeklyPurchasingStatus }
+  | { type: "selectServiceWeek"; id: string | null }
+  | { type: "generateWeeklyMenu"; id: string }
+  | { type: "regenerateWeeklyMeal"; id: string; date: string; meal: Meal }
+  | { type: "reviseWeeklyMenu"; id: string; date?: string; meal?: Meal }
+  | { type: "startWeeklyWorkflow"; date: string }
+  | { type: "advanceWeeklyWorkflow"; runId: string }
+  | { type: "decideWeeklyRevision"; eventId: string; decision: "approve" | "decline" }
+  | { type: "requestAnotherWeeklyRevision"; eventId: string }
+  | { type: "approveWeeklyMenu"; id: string };
 
 /** Which parts of a resident's care information a staff edit touched. */
 export function profileChangeSummary(previous: Resident, next: Resident): string | null {
@@ -65,7 +84,34 @@ function profileUpdateRecord(s: KitchenState, previous: Resident, next: Resident
   return { profileUpdates: [update, ...(s.profileUpdates ?? [])] };
 }
 
+/** Daily-menu edits and decisions that touch a dated service (explicit revisions). */
+function editedService(a: Action, reference: Date): { date: string; meal?: Meal } | undefined {
+  switch (a.type) {
+    case "setMealPlan": case "setScheduledMain": case "rejectMeal": return { date: a.date, meal: a.meal };
+    case "approveSub": case "rejectSub": return a.serviceDate ? { date: a.serviceDate, meal: a.meal } : undefined;
+    case "setMain": return { date: dateKey(reference), meal: a.meal };
+    default: return undefined;
+  }
+}
+
 export function reducer(s: KitchenState, a: Action, reference = new Date()): KitchenState {
+  const next = applyAction(s, a, reference);
+  // Any change that alters an approved week's meals or resident requirements (or an explicit
+  // daily-screen edit of one) sends that week back for revalidation and renewed approval.
+  return next === s ? s : flagApprovedWeekChanges(next, editedService(a, reference), reference);
+}
+
+/**
+ * Guards against double approval (e.g. a double click): a weekly request is decided once, and a
+ * rolling request cannot be decided again while the order it created is still on its way.
+ */
+function purchaseAlreadyDecided(s: KitchenState, proposalId: string, serviceWeekId: string | undefined) {
+  const decided = s.history.some((h) => h.kind === "purchase" && h.proposalId === proposalId);
+  if (!decided) return false;
+  return Boolean(serviceWeekId) || (s.orders ?? []).some((o) => o.status === "incoming" && o.id.startsWith(`${proposalId}-`));
+}
+
+function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState {
   switch (a.type) {
     case "deleteResident": {
       if (!s.residents.some((r) => r.id === a.id)) return s;
@@ -283,15 +329,66 @@ export function reducer(s: KitchenState, a: Action, reference = new Date()): Kit
         history: [{ proposalId: id, kind: "purchase", status: "approved", at: reference.getTime(), modified: true, summary: `Ordered ${qty} ${ingredient.unit} ${ingredient.name} from ${vendor} · Estimated $${(qty * ingredient.unitCost).toFixed(2)}` }, ...s.history],
       };
     }
-    case "approvePurchase":
-      return {
+    case "approvePurchase": {
+      if (purchaseAlreadyDecided(s, a.proposalId, a.serviceWeekId)) return s;
+      // Approval places a (simulated) order that stays incoming until received; stock is unchanged.
+      const week = a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {};
+      const next: KitchenState = {
         ...s,
-        orders: [...(s.orders ?? []), { id: `${a.proposalId}-${s.history.length}`, vendor: a.vendor ?? s.ingredients.find((i) => i.id === a.lines[0]?.ingredientId)?.vendor ?? "Supplier", lines: a.lines, deliveryDate: a.deliveryDate ?? dateKey(dayAt(Math.max(1, s.leadTimeDays ?? 2))), status: "incoming" }],
+        orders: [...(s.orders ?? []), { id: `${a.proposalId}-${s.history.length}`, vendor: a.vendor ?? s.ingredients.find((i) => i.id === a.lines[0]?.ingredientId)?.vendor ?? "Supplier", lines: a.lines, deliveryDate: a.deliveryDate ?? dateKey(dayAt(Math.max(1, s.leadTimeDays ?? 2))), status: "incoming", ...week }],
         ingredients: s.ingredients.map((i) => { const l = a.lines.find((x) => x.ingredientId === i.id); return l ? { ...i, onOrder: i.onOrder + l.qty } : i; }),
-        history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified }, ...s.history],
+        history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified, ...week }, ...s.history],
       };
-    case "reject":
-      return { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}) }, ...s.history] };
+      return a.serviceWeekId ? settleWeeklyPurchasing(next, a.serviceWeekId, reference) : next;
+    }
+    case "reject": {
+      if (a.kind === "purchase" && purchaseAlreadyDecided(s, a.proposalId, a.serviceWeekId)) return s;
+      const next: KitchenState = { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}), ...(a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {}) }, ...s.history] };
+      return a.kind === "purchase" && a.serviceWeekId ? settleWeeklyPurchasing(next, a.serviceWeekId, reference) : next;
+    }
+    case "approveWeeklyPurchasing": return settleWeeklyPurchasing(s, a.id, reference, true);
+    case "createWeeklyPlan": {
+      // Any date in the week is accepted and snapped to its Monday; one record per week.
+      if (!isDateKey(a.date) || s.weeklyPlans?.some((p) => p.id === weeklyPlanId(weekStartFor(a.date)))) return s;
+      return { ...s, weeklyPlans: sortWeeklyPlans([...(s.weeklyPlans ?? []), createWeeklyPlan(a.date, reference)]) };
+    }
+    case "updateWeeklyPlanStatus": {
+      // Menu approval only goes through approveWeeklyMenu, which runs the safety checks.
+      if (a.menuStatus === "approved") return s;
+      const plan = s.weeklyPlans?.find((p) => p.id === a.id);
+      const next = plan && applyWeeklyStatus(plan, { menuStatus: a.menuStatus, purchasingStatus: a.purchasingStatus }, reference);
+      if (!plan || !next || next === plan) return s;
+      return { ...s, weeklyPlans: (s.weeklyPlans ?? []).map((p) => (p.id === a.id ? next : p)) };
+    }
+    case "selectServiceWeek": {
+      if (a.id === null) {
+        if (s.selectedWeekId === undefined) return s;
+        const { selectedWeekId: _cleared, ...rest } = s;
+        return rest;
+      }
+      if (s.selectedWeekId === a.id || !s.weeklyPlans?.some((p) => p.id === a.id)) return s;
+      return { ...s, selectedWeekId: a.id };
+    }
+    case "generateWeeklyMenu": return generateWeeklyMenu(s, a.id, reference);
+    case "regenerateWeeklyMeal": return regenerateWeeklyMeal(s, a.id, a.date, a.meal, reference);
+    case "reviseWeeklyMenu": {
+      if ((a.date === undefined) !== (a.meal === undefined)) return s;
+      return reviseWeeklyMenu(s, a.id, a.date && a.meal ? { date: a.date, meal: a.meal } : undefined, reference);
+    }
+    case "startWeeklyWorkflow": return startWeeklyWorkflow(s, a.date, reference);
+    case "advanceWeeklyWorkflow": return advanceWeeklyWorkflow(s, a.runId, reference);
+    case "decideWeeklyRevision": return decideRevision(s, a.eventId, a.decision, reference);
+    case "requestAnotherWeeklyRevision": return requestAnotherRevision(s, a.eventId, reference);
+    case "approveWeeklyMenu": {
+      if (!weeklyApprovalChecks(s, a.id, reference).ready) return s;
+      // Sign off each remaining meal with the existing per-meal approval, then the week.
+      let next = s;
+      for (const slot of weeklyMenu(s, a.id, reference).slots) {
+        if (!slot.approved && slot.lock !== "past" && canApproveMeal(slot.date, reference)) next = applyAction(next, { type: "approveMeal", date: slot.date, meal: slot.meal }, reference);
+      }
+      // Purchasing is reviewed separately: approval only opens the week's draft purchasing list.
+      return openWeeklyPurchasing(approveWeeklyMenu(next, a.id, reference), a.id, reference);
+    }
   }
 }
 
@@ -323,6 +420,8 @@ export function migrateResidentProfiles(s: KitchenState): KitchenState {
 }
 
 const KEY = "kitchen-command-v1";
+/** Pause between orchestration steps so staff can follow the handoffs as they happen. */
+const WORKFLOW_STEP_DELAY_MS = 900;
 /** Moves saved menus from the old sample dishes onto recipe-library dishes. */
 export function migrateMenuDishes(s: KitchenState): KitchenState {
   const id = currentDishId;
@@ -361,7 +460,7 @@ export function migrateAdditionalResidents(s: KitchenState): KitchenState {
 export function mergeIngredientCatalog(s: KitchenState): KitchenState {
   return { ...s, ingredients: [...s.ingredients, ...[...INGREDIENTS, ...ADDITIONAL_INGREDIENTS].filter((i) => !s.ingredients.some((x) => x.id === i.id) && !s.deletedIngredientIds?.includes(i.id)).map((i) => ({ ...i }))] };
 }
-type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void };
+type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: (a: Action) => void; reference: Date };
 // Mixed component/function exports can refresh consumers before the mounted provider.
 // Preserve the context identity across hot updates so both generations share it.
 const Ctx: Context<KitchenContextValue | null> = import.meta.hot?.data?.["kitchenContext"] ?? createContext<KitchenContextValue | null>(null);
@@ -381,19 +480,50 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
-  useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
+  // Never persist the placeholder initial state: if the provider remounts before the loaded state
+  // renders (e.g. during hydration), saving it would overwrite staff decisions with a fresh demo.
+  const placeholder = useRef(state);
+  useEffect(() => { if (loaded.current && state !== placeholder.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
+  // Weekly agent workflows advance one persisted step at a time, so a run keeps going
+  // across page navigation and resumes from its last saved step after a refresh.
+  const runningRun = state.workflowRuns?.find((r) => r.status === "running");
+  useEffect(() => {
+    if (!runningRun) return;
+    const timer = window.setTimeout(() => dispatch({ type: "advanceWeeklyWorkflow", runId: runningRun.workflowRunId }), WORKFLOW_STEP_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [runningRun?.workflowRunId, runningRun?.step]); // eslint-disable-line react-hooks/exhaustive-deps
   const analysis = useMemo(() => analyze(state, reference ?? new Date("2026-01-01T12:00:00Z")), [state, reference]);
   if (!reference) return <div className="min-h-screen bg-background" aria-busy="true" />;
-  return <Ctx.Provider value={{ state, analysis, dispatch }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ state, analysis, dispatch, reference }}>{children}</Ctx.Provider>;
 }
 
 export function useKitchen() {
   const c = useContext(Ctx);
   if (!c) throw new Error("useKitchen outside provider");
   return c;
+}
+
+/**
+ * Shared weekly menu selector for the Agent Workspace, calendar and approval screens.
+ * Pass a WeeklyPlan id or any date in the week; defaults to the selected service week.
+ */
+export function useWeeklyMenu(idOrDate?: string): WeeklyMenu | null {
+  const { state, reference } = useKitchen();
+  const target = idOrDate ?? state.selectedWeekId;
+  return useMemo(() => {
+    if (!target) return null;
+    if (!isDateKey(target) && !state.weeklyPlans?.some((p) => p.id === target)) return null;
+    return weeklyMenu(state, target, reference);
+  }, [state, target, reference]);
+}
+
+/** Week-specific purchasing for every service week that has not ended (derived, never stored). */
+export function useWeeklyPurchasing(): WeeklyPurchasePlan[] {
+  const { state, reference } = useKitchen();
+  return useMemo(() => activeWeeklyPurchasing(state, reference), [state, reference]);
 }
 
 export const residentName = (s: KitchenState, id: string) => s.residents.find((r) => r.id === id)?.name ?? id;

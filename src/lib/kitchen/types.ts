@@ -33,6 +33,8 @@ export interface Ingredient {
   vendor: string;
   packSize: number;
   unitCost: number;
+  /** Days a delivery stays usable in storage; when absent, a catalog planning assumption is used or the gap is flagged. */
+  shelfLifeDays?: number;
 }
 
 export interface Dish {
@@ -57,6 +59,8 @@ export interface Decision {
   modified: boolean;
   serviceDate?: string;
   note?: string;
+  /** Service week a weekly purchase decision belongs to. */
+  serviceWeekId?: string;
   alternativeScope?: { meal: Meal; fromDishId: string; dishId: string; residentSignatures: Record<string, string> };
 }
 
@@ -102,6 +106,13 @@ export interface KitchenState {
   orders?: PurchaseOrder[];
   profileUpdates?: ProfileUpdate[];
   observations?: Observation[];
+  /** Monday–Sunday service weeks moving through planning → purchasing → service. */
+  weeklyPlans?: import("./weekly-schedule").WeeklyPlan[];
+  /** The service week staff are currently focused on; must match a weeklyPlans id. */
+  selectedWeekId?: string;
+  /** Weekly agent orchestration runs and the structured handoffs they produced. */
+  workflowRuns?: import("./agent-workflow").WorkflowRun[];
+  agentEvents?: import("./agent-workflow").AgentEvent[];
   plan: Record<Meal, string>;
   scheduledPlans?: Record<string, Partial<Record<Meal, string>>>;
   scheduledOverrides?: Record<string, Partial<Record<Meal, Record<string, string>>>>;
@@ -144,6 +155,10 @@ export interface PurchaseProposal {
   vendor: string;
   lines: PurchaseLine[];
   total: number;
+  /** Set for weekly purchasing drafts generated from an approved weekly menu. */
+  serviceWeekId?: string;
+  /** Assumptions and missing information staff should check before approving. */
+  flags?: string[];
 }
 
 export type Proposal = SubstitutionProposal | PurchaseProposal;
@@ -155,6 +170,8 @@ export interface PurchaseOrder {
   deliveryDate: string;
   status: "incoming" | "received";
   receivedAt?: number;
+  /** Service week this order was approved for (weekly purchasing). */
+  serviceWeekId?: string;
 }
 
 export interface Conflict {

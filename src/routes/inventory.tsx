@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useKitchen } from "@/lib/kitchen/store";
+import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AgentAvatar, Tag } from "@/components/kitchen/agents";
+import { WeeklyPurchasingPanel } from "@/components/kitchen/weekly-purchasing";
 import { InventoryAgentPanel } from "@/components/kitchen/inventory-agent-panel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ function InventoryPage() {
   const [deleting, setDeleting] = useState<Ingredient | null>(null);
   const [query, setQuery] = useState("");
   const purchases = analysis.proposals.filter((p) => p.kind === "purchase");
+  const weekly = useWeeklyPurchasing().filter((w) => w.state !== "awaiting-menu" || w.invalidated);
   const forecast = analysis.forecast;
   const horizon = state.purchaseHorizonDays ?? 7;
   const incoming = (state.orders ?? []).filter((order) => order.status === "incoming");
@@ -93,6 +95,10 @@ function InventoryPage() {
       {(forecast?.unresolved ?? 0) > 0 && <div className="mb-5 border-l-4 border-warning bg-warning-soft p-4 text-sm">{forecast?.unresolved} resident-meal conflicts have no safe alternative on file in this period. Forecast is provisional until staff resolve them.</div>}
 
       <InventoryAgentPanel />
+
+      {weekly.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
+        {w.proposals.length > 0 && <Button asChild size="sm"><Link to="/approvals" search={{ kind: "purchase" }}>Review weekly purchasing</Link></Button>}
+      </WeeklyPurchasingPanel>)}
 
       {purchases.length > 0 && (
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-agent-inventory bg-agent-inventory-soft p-4">

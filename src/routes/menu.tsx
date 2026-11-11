@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { addMonths } from "date-fns";
-import { CheckCircle2, ClipboardCheck, CalendarDays, History } from "lucide-react";
-import { type DayButton } from "react-day-picker";
+import { ArrowRight, CheckCircle2, ClipboardCheck, CalendarDays, History } from "lucide-react";
+import { type DayButton, type WeekProps } from "react-day-picker";
 import { useKitchen } from "@/lib/kitchen/store";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
 import { PageHeader } from "@/components/kitchen/app-shell";
@@ -10,6 +10,8 @@ import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Tag } from "@/components/kitchen/agents";
 import { cn } from "@/lib/utils";
 import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
+import { WEEK_STATUS_LABEL, weekRange, weekStatus } from "@/lib/kitchen/weekly-operations";
+import { WeekStatusBadge } from "@/components/kitchen/week-status";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({ meta: [
@@ -57,6 +59,30 @@ function MenuPage() {
     </CalendarDayButton>;
   }
 
+  // Each calendar row is one Monday–Sunday service week; its status opens that week in the Agent Workspace.
+  function ServiceWeek({ week, children, ...props }: WeekProps) {
+    const monday = week.days[0]!.date;
+    const sunday = week.days[6]?.date ?? monday;
+    const inRange = sunday >= start && monday <= end;
+    const info = inRange ? weekStatus(state, dateKey(monday), reference!) : null;
+    const range = weekRange(dateKey(monday), dateKey(sunday));
+    return <tr {...props}>
+      {info && <td className="col-span-7">
+        <button type="button" className="menu-week-status"
+          aria-label={`Service week ${range}: ${WEEK_STATUS_LABEL[info.status]}${info.outstanding.length ? `, ${info.outstanding.map((o) => o.message).join("; ")}` : ""}. Open in Agent Workspace`}
+          title={[...info.outstanding.map((o) => o.message), info.note].filter(Boolean).join(" · ") || undefined}
+          onClick={() => navigate({ to: "/dashboard", search: { week: info.startDate } })}>
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="hidden whitespace-nowrap font-medium text-muted-foreground sm:inline">Week of {range}</span>
+            <WeekStatusBadge info={info} compact />
+          </span>
+          <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
+        </button>
+      </td>}
+      {children}
+    </tr>;
+  }
+
   return <>
     <PageHeader eyebrow="Menu calendar" title="Daily Menu">
       <Tag tone={daysPending ? "warn" : "ok"}>{daysPending} days need approval</Tag>
@@ -64,17 +90,18 @@ function MenuPage() {
     <section aria-label="Choose a menu date" className="border-y py-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-lg font-semibold"><CalendarDays className="size-5" />Choose a date</h2>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5"><ClipboardCheck className="size-4 text-destructive" />Needs approval</span>
           <span className="flex items-center gap-1.5"><CheckCircle2 className="size-4 text-success" />Approved</span>
+          <span>Select a week's status to open it in the Agent Workspace</span>
         </div>
       </div>
-      <Calendar mode="single" defaultMonth={reference} today={reference} startMonth={start} endMonth={end}
+      <Calendar mode="single" weekStartsOn={1} defaultMonth={reference} today={reference} startMonth={start} endMonth={end}
         disabled={[{ before: start }, { after: end }]}
         onSelect={(date) => { if (date) navigate({ to: "/menu/$date", params: { date: dateKey(date) } }); }}
         className="pointer-events-auto w-full bg-transparent p-0"
         classNames={{ root: "w-full", months: "relative w-full min-w-0", month: "flex w-full min-w-0 flex-col gap-4", table: "block w-full", month_caption: "flex h-10 items-center justify-center", caption_label: "text-lg font-semibold", weekdays: "grid w-full grid-cols-7 border-b pb-3", week: "mt-2 grid w-full grid-cols-7 gap-1", day: "relative w-full min-w-0 p-0 text-center", today: "bg-transparent text-foreground" }}
-        components={{ DayButton: MenuDay }} />
+        components={{ DayButton: MenuDay, Week: ServiceWeek }} />
     </section>
   </>;
 }

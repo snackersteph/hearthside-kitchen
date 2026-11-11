@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, MessageSquare } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 import { alternativeOverview, residentApprovalCount } from "./approval-rules";
-import { useKitchen } from "@/lib/kitchen/store";
+import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
 import { AGENTS, AgentAvatar } from "./agents";
 import type { AgentId } from "@/lib/kitchen/types";
 import logo from "@/assets/nutrisync-logo.png";
@@ -23,11 +23,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { state, analysis, dispatch } = useKitchen();
   const mealPending = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
   const residentsToApprove = useMemo(() => residentApprovalCount(alternativeOverview(state, new Date()).flatMap((d) => d.pending)), [state]);
-  const pending = residentsToApprove + analysis.proposals.filter((p) => p.kind === "purchase").length;
+  const weeklyRequests = useWeeklyPurchasing().reduce((n, w) => n + w.proposals.length, 0);
+  const pending = residentsToApprove + analysis.proposals.filter((p) => p.kind === "purchase").length + weeklyRequests;
   const busy: Record<AgentId, number> = {
     dietary: analysis.conflicts.length,
     menu: analysis.proposals.filter((p) => p.kind === "substitution").length + mealPending,
-    inventory: analysis.proposals.filter((p) => p.kind === "purchase").length,
+    inventory: analysis.proposals.filter((p) => p.kind === "purchase").length + weeklyRequests,
   };
   return (
     <div className="app-shell flex min-h-screen bg-background">

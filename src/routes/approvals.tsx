@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, Check, Search, ChevronDown, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
-import { useKitchen, residentName } from "@/lib/kitchen/store";
+import { useKitchen, useWeeklyPurchasing, residentName } from "@/lib/kitchen/store";
 import { DISHES, dishById } from "@/lib/kitchen/data";
 import { conflictReasons, lineCost } from "@/lib/kitchen/engine";
 import { MEALS, type Meal, type Proposal, type PurchaseProposal, type SubstitutionProposal } from "@/lib/kitchen/types";
@@ -14,9 +14,12 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { canApproveMeal, dateKey } from "@/lib/kitchen/schedule";
+import { addDays } from "@/lib/kitchen/weekly-schedule";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-dialog";
+import { WeeklyPurchasingPanel } from "@/components/kitchen/weekly-purchasing";
+import { weekRange } from "@/lib/kitchen/weekly-operations";
 
 export const Route = createFileRoute("/approvals")({
   validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; fromMenu?: boolean } => {
@@ -59,6 +62,10 @@ function ApprovalsPage() {
   const reviews = kind === "purchase" ? [] : overview.flatMap((day) => day.pending).filter((p) => (!meal || p.meal === meal) && matches(p)).sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
   const approved = kind === "purchase" ? [] : overview.flatMap((day) => day.approved).filter((p) => (!meal || p.meal === meal) && matches(p));
   const purchases = proposals.filter((p): p is PurchaseProposal => p.kind === "purchase" && matches(p));
+  // Week-specific drafts from approved weekly menus, shown with their stock breakdown.
+  const weekly = useWeeklyPurchasing().filter((w) => w.state !== "awaiting-menu" || w.invalidated);
+  const weeklyShown = kind === "substitution" || date ? [] : weekly;
+  const weeklyCount = weeklyShown.reduce((n, w) => n + w.proposals.filter(matches).length, 0);
   const defaultTab = kind === "purchase" ? "orders" : "pending";
   const [tab, setTab] = useState(defaultTab);
   useEffect(() => { setTab(defaultTab); }, [defaultTab]);
@@ -97,7 +104,7 @@ function ApprovalsPage() {
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           {kind !== "purchase" && <TabsTrigger value="pending">Residents to approve ({residentApprovalCount(reviews)})</TabsTrigger>}
           {kind !== "purchase" && <TabsTrigger value="approved">Approved residents ({residentApprovalCount(approved)})</TabsTrigger>}
-          {kind !== "substitution" && <TabsTrigger value="orders">Purchase orders to approve ({purchases.length})</TabsTrigger>}
+          {kind !== "substitution" && <TabsTrigger value="orders">Purchase orders to approve ({purchases.length + weeklyCount})</TabsTrigger>}
           <TabsTrigger value="history">History ({history.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-6 space-y-3">
@@ -110,7 +117,13 @@ function ApprovalsPage() {
           {approved.length ? approved.map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />) : <Empty text="No approved alternatives for this selection." />}
         </TabsContent>
         <TabsContent value="orders" className="mt-6 space-y-3">
-          {purchases.length ? purchases.map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} /></div>) : <Empty text="No purchase requests awaiting approval." />}
+          {weeklyShown.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
+            {w.proposals.filter(matches).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}
+            {w.rejected.map((p) => <p key={p.id} className="text-sm text-muted-foreground">Rejected: {p.vendor} · {p.lines.length} item{p.lines.length === 1 ? "" : "s"} · ${p.total.toFixed(2)}</p>)}
+            {w.state === "ready-to-confirm" && <ConfirmWeeklyPurchasing weekId={w.weekId} title={`service week ${weekRange(w.startDate, w.endDate)}`} rejected={w.rejected.length} />}
+          </WeeklyPurchasingPanel>)}
+          {weeklyShown.length > 0 && purchases.length > 0 && <h3 className="pt-2 text-sm font-semibold text-muted-foreground">Rolling {state.purchaseHorizonDays ?? 7}-day forecast requests</h3>}
+          {purchases.length ? purchases.map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} /></div>) : !weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
         </TabsContent>
         <TabsContent value="history" className="mt-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -215,14 +228,26 @@ function SubBody({ p, onDishChange, onApprove, onReject }: { p: SubstitutionProp
   );
 }
 
+function ConfirmWeeklyPurchasing({ weekId, title, rejected }: { weekId: string; title: string; rejected: number }) {
+  const { dispatch } = useKitchen();
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/60 p-3 text-sm">
+      <span>{rejected ? "Every request is decided, but rejected items leave a shortfall." : "Nothing left to order for this week."} Approving purchasing does not mark anything delivered.</span>
+      <ApproveButton onClick={() => { dispatch({ type: "approveWeeklyPurchasing", id: weekId }); toast.success(`Approved purchasing for ${title}`); }}>Approve weekly purchasing</ApproveButton>
+    </div>
+  );
+}
+
 function PurchaseBody({ p }: { p: PurchaseProposal }) {
   const { state } = useKitchen();
+  const week = p.serviceWeekId ? p.serviceWeekId.slice(5) : null;
   return (
     <>
       <h3 className="mt-1 text-xl font-semibold">Order from {p.vendor} · ${p.total.toFixed(2)}</h3>
-      <div className="mt-1 text-sm text-muted-foreground">{p.horizonDays ?? 7}-day consumption · dietary alternatives included</div>
+      <div className="mt-1 text-sm text-muted-foreground">{week ? `For service week ${weekRange(week, addDays(week, 6))} · approved menu with resident alternatives` : `${p.horizonDays ?? 7}-day consumption · dietary alternatives included`}</div>
       <div className="mt-2 flex flex-wrap gap-2 text-xs"><Tag tone="warn">First needed {p.neededDate}</Tag><Tag>Order by {p.orderByDate}</Tag><Tag>Expected delivery {p.deliveryDate}</Tag></div>
       {p.neededDate && p.deliveryDate && p.neededDate < p.deliveryDate && <div className="mt-3 text-sm font-medium text-destructive">Delivery is too late for the first shortage. Arrange available-stock alternatives or an emergency transfer.</div>}
+      {p.flags && p.flags.length > 0 && <ul className="mt-3 space-y-0.5 text-xs text-warning">{p.flags.map((f) => <li key={f}>{f}</li>)}</ul>}
       <table className="mt-4 w-full max-w-lg text-sm">
         <tbody className="divide-y">
           {p.lines.map((l) => { const i = state.ingredients.find((x) => x.id === l.ingredientId); if (!i) return null; return (
@@ -246,12 +271,12 @@ function Actions({ p, onModify, onApprove }: { p: Proposal; onModify: () => void
   const approve = () => {
     const summary = summarize(state, p, "Approved");
     if (p.kind === "substitution") { onApprove(p); return; }
-    else dispatch({ type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary, vendor: p.vendor, ...(p.deliveryDate ? { deliveryDate: p.deliveryDate } : {}) });
+    else dispatch({ type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary, vendor: p.vendor, ...(p.deliveryDate ? { deliveryDate: p.deliveryDate } : {}), serviceWeekId: p.serviceWeekId });
     toast.success(summary);
   };
   const reject = () => {
     const summary = summarize(state, p, "Rejected");
-    dispatch({ type: "reject", proposalId: p.id, kind: p.kind, summary, ...(p.kind === "substitution" ? { serviceDate: p.serviceDate } : {}) });
+    dispatch({ type: "reject", proposalId: p.id, kind: p.kind, summary, ...(p.kind === "substitution" ? { serviceDate: p.serviceDate } : { serviceWeekId: p.serviceWeekId }) });
     toast(summary);
   };
   return (
@@ -305,7 +330,7 @@ function PurchaseEditor({ p, onClose }: { p: PurchaseProposal; onClose: () => vo
   const save = () => {
     const kept = lines.filter((l) => l.qty > 0);
     const summary = `Approved (modified) ${p.vendor} order ($${total.toFixed(2)})`;
-    dispatch({ type: "approvePurchase", proposalId: p.id, lines: kept, modified: true, summary, vendor: p.vendor, deliveryDate });
+    dispatch({ type: "approvePurchase", proposalId: p.id, lines: kept, modified: true, summary, vendor: p.vendor, deliveryDate, serviceWeekId: p.serviceWeekId });
     toast.success(summary); onClose();
   };
   return (

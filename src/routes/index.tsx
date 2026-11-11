@@ -11,6 +11,7 @@ import { dateKey, scheduledState } from "@/lib/kitchen/schedule";
 import { actionCards, dailySnapshot, openObservations, reviewedObservations } from "@/lib/kitchen/overview";
 import { ActionCardTile } from "@/components/kitchen/action-card";
 import { ObservationDialog } from "@/components/kitchen/observation-dialog";
+import { WeeklyWorkstreams } from "@/components/kitchen/weekly-workstreams";
 import { ResidentPhoto } from "@/components/kitchen/resident-photo";
 import { cn } from "@/lib/utils";
 import { useAccountData } from "@/lib/account";
@@ -66,6 +67,8 @@ function CommandCenter() {
           <dd className="mt-1 text-[11px] text-muted-foreground">{fact.detail}</dd>
         </div>)}</dl>
       </section>
+
+      <WeeklyWorkstreams />
 
       <section className="pulse-actions" aria-label="Kitchen action items">
         <h2 className="text-xl font-semibold">Needs your attention</h2>

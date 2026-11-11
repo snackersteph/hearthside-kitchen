@@ -1,69 +1,41 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AgentWorkspace } from "@/components/kitchen/agent-workspace";
-import { GEN_STEPS, INITIAL_WORKSPACE, type SubstitutionId, type WorkspaceState } from "@/lib/kitchen/weekly-plan";
+import { isDateKey, weekStartFor } from "@/lib/kitchen/weekly-schedule";
 
 export const Route = createFileRoute("/dashboard")({
+  // `week` is any date in a Monday–Sunday service week; it is snapped to that Monday.
+  validateSearch: (search: Record<string, unknown>): { week?: string } =>
+    isDateKey(search["week"]) ? { week: weekStartFor(search["week"]) } : {},
   head: () => ({
     meta: [
       { title: "Agent Workspace · NutriSync" },
-      { name: "description", content: "See how your AI team collaborates to plan meals for the week: handoffs, decisions, and approvals." },
+      {
+        name: "description",
+        content:
+          "See how your AI team collaborates to plan meals for the week: handoffs, decisions, and approvals.",
+      },
       { property: "og:title", content: "Agent Workspace · NutriSync" },
-      { property: "og:description", content: "See how your AI team collaborates to plan meals for the week: handoffs, decisions, and approvals." },
+      {
+        property: "og:description",
+        content:
+          "See how your AI team collaborates to plan meals for the week: handoffs, decisions, and approvals.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: DashboardPage,
+  component: AgentWorkspacePage,
 });
 
-function DashboardPage() {
-  const [ws, setWs] = useState<WorkspaceState>(INITIAL_WORKSPACE);
-
-  // Simulated generation: advance one step at a time until the plan needs review.
-  useEffect(() => {
-    if (ws.status !== "generating") return;
-    if (ws.genStep >= GEN_STEPS) {
-      setWs((s) => ({ ...s, status: "needs-review" }));
-      return;
-    }
-    const timer = window.setTimeout(() => setWs((s) => ({ ...s, genStep: s.genStep + 1 })), 800);
-    return () => window.clearTimeout(timer);
-  }, [ws.status, ws.genStep]);
-
-  const generate = () =>
-    setWs((s) => ({ ...INITIAL_WORKSPACE, weekOffset: s.weekOffset, status: "generating", genStep: 1 }));
-
-  const changeWeek = (offset: number) =>
-    setWs({ ...INITIAL_WORKSPACE, weekOffset: offset });
-
-  const approveDecision = (id: SubstitutionId) =>
-    setWs((s) => ({ ...s, decisions: { ...s.decisions, [id]: { ...s.decisions[id], state: "approved" } } }));
-
-  const requestAnother = (id: SubstitutionId) => {
-    setWs((s) => ({ ...s, decisions: { ...s.decisions, [id]: { ...s.decisions[id], state: "revalidating" } } }));
-    window.setTimeout(() => {
-      setWs((s) => {
-        const d = s.decisions[id];
-        if (d.state !== "revalidating") return s;
-        return {
-          ...s,
-          decisions: { ...s.decisions, [id]: { proposalIndex: (d.proposalIndex + 1) % 2, state: "pending" } },
-        };
-      });
-    }, 1500);
-  };
-
-  const approveWeekly = () => setWs((s) => ({ ...s, status: "approved" }));
-
+function AgentWorkspacePage() {
+  // Unvalidated keys can pass through from the root route, so check the date again.
+  const { week: raw } = Route.useSearch();
+  const week = isDateKey(raw) ? weekStartFor(raw) : undefined;
+  const navigate = useNavigate({ from: "/dashboard" });
   return (
     <AgentWorkspace
-      ws={ws}
-      onGenerate={generate}
-      onWeekChange={changeWeek}
-      onApproveDecision={approveDecision}
-      onRequestAnother={requestAnother}
-      onApproveWeekly={approveWeekly}
+      week={week}
+      onWeekChange={(next) => navigate({ search: { week: next }, replace: true })}
     />
   );
 }
