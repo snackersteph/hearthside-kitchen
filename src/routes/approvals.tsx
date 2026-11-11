@@ -20,6 +20,7 @@ import { alternativeOverview, residentApprovalCount } from "@/components/kitchen
 import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-dialog";
 import { WeeklyPurchasingPanel } from "@/components/kitchen/weekly-purchasing";
 import { weekRange } from "@/lib/kitchen/weekly-operations";
+import { WeeklyWorkstreams } from "@/components/kitchen/weekly-workstreams";
 
 const PAGE_SIZE = 50;
 
@@ -99,6 +100,7 @@ function ApprovalsPage() {
       {origin && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu/$date" params={{ date: origin.date }} search={{ meal: origin.meal, focus: true }}><ArrowLeft />Back to {MEAL_LABEL[origin.meal].toLowerCase()} menu</Link></Button>}
       {!origin && fromInventory && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/inventory" search={{ view: fromInventory }}><ArrowLeft />Back to inventory</Link></Button>}
       <PageHeader title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
+      <div className="mb-6"><WeeklyWorkstreams /></div>
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Proposal type">
         <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: {} })}>All proposals</Button>
         <Button variant={kind === "substitution" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "substitution" } })}>Meals only</Button>
