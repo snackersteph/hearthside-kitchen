@@ -1,4 +1,5 @@
 # Visual refresh
+- [x] Try a soft-sage visual style and reorganize Kitchen Pulse into a compact dashboard; preserve warning colors and behavior and verify layouts.
 - [x] Try an editorial font pairing, forest-green navigation and cool secondary neutrals; preserve warning colors and behavior and verify layouts.
 - [x] Refresh shared colors, navigation, typography and controls to complement the logo without changing behavior; verify pages and existing workflows.
 
