@@ -13,17 +13,17 @@ function query(table: string) {
   const run = async () => {
     const rows = load(table);
     if (op === "insert") {
-      const id = (rows.reduce((m, r) => Math.max(m, Number(r.id ?? 0)), 0) as number) + 1;
+      const id = (rows.reduce((m, r) => Math.max(m, Number(r['id'] ?? 0)), 0) as number) + 1;
       rows.push({ id, ...payload }); save(table, rows); return { data: null, error: null };
     }
     if (op === "upsert") {
-      const i = rows.findIndex((r) => r.id === payload!.id);
+      const i = rows.findIndex((r) => r['id'] === payload!['id']);
       if (i < 0) rows.push({ ...payload }); else if (!ignoreDup) rows[i] = { ...rows[i], ...payload };
       save(table, rows); return { data: null, error: null };
     }
     const hit = rows.filter((r) => filters.every((f) => f(r)));
     if (op === "update") { save(table, rows.map((r) => hit.includes(r) ? { ...r, ...payload } : r)); return { data: null, error: null }; }
-    hit.sort((a, b) => Number(a.id) - Number(b.id));
+    hit.sort((a, b) => Number(a['id']) - Number(b['id']));
     return { data: single ? hit[0] ?? null : hit, error: null };
   };
   const b: Record<string, unknown> = {

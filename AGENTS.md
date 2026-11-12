@@ -5,7 +5,6 @@
 - Showcase profile changes and observations use a one-time additive demo-content migration with internal demo flags; preserve staff reviews and resident records rather than fabricating care edits.
 - Account rules: src/components/AGENTS.md.
 - Agent logic (Dietary/Menu/Inventory) lives in the pure `analyze()` in src/lib/kitchen/engine.ts; proposals are derived from state, so pages never store them — keeps agents sharing one context and re-running on every change.
-- Kitchen state is shared by all visitors: KitchenProvider replays an append-only database action log over a single snapshot (replayAt pins the action's clock) with realtime catch-up; localStorage is only a cache/first-seed, so reducer actions must stay deterministic and JSON-serializable.
 - Engine rules are covered by src/test/kitchen-engine.test.ts; update it when safety rules change.
 - Menu and inventory use the shared schedule helpers; analyze derives horizon demand and purchasing requests so forecasts cannot diverge from the displayed sample rotation.
 - Date-specific future main dishes are staff decisions stored in KitchenState.scheduledPlans; the shared schedule resolves them before the sample rotation so editing one day changes only that day's forecast.
@@ -34,4 +33,3 @@
 - Resident meal history derives only from dated staff menus, resident overrides and meal observations; never present generated rotation or current dietary decisions as historical consumption.
 - Recipe library seeds from generated recipe-catalog.ts; state.recipes override by id, deletions tombstoned; g/ml convert to kg/L. Menu DISHES derive from catalog main recipes; legacy ids map via currentDishId/migrateMenuDishes; halal/vegan needs come from careProfile Diet Type.
 - Calendar week tags use calendarWeekApproval to match day-level resident decisions; workstreams and Agent Workspace retain weekStatus for weekly sign-off, so calendar labels never authorize purchasing or clear overdue work.
-- Weekly purchasing is derived by weeklyPurchasePlan (src/lib/kitchen/weekly-purchasing.ts) only from an approved weekly menu; requests carry serviceWeekId, approve through the existing approvePurchase/reject actions, and orders for a week are reserved for it. Shortfalls respect ingredient shelf life (own value, then labelled catalog assumption, else flagged), stock changes only on receipt, and menu changes withdraw the draft until re-approval.
