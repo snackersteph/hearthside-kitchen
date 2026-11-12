@@ -18,6 +18,7 @@ import { ResidentPhoto } from "@/components/kitchen/resident-photo";
 import { cn } from "@/lib/utils";
 import { useAccountData } from "@/lib/account";
 import { recipePhoto } from "@/lib/kitchen/recipe-photos";
+import { WeeklyWorkstreams } from "@/components/kitchen/weekly-workstreams";
 
 const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: DiningOutlinedIcon, delivered: PackageCheck, incoming: Truck, profiles: UserRound } as const;
 
@@ -74,6 +75,8 @@ function CommandCenter() {
           <dd className="font-display text-[15px] font-semibold">{fact.value}</dd>
         </div>)}</dl>
       </section>
+
+      <div className="mb-6"><WeeklyWorkstreams /></div>
 
       <section className="pulse-actions" aria-label="Kitchen action items">
         <h2 className="text-xl font-semibold">Needs your attention</h2>

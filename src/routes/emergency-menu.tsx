@@ -27,7 +27,7 @@ function EmergencyMenuPage() {
   const { week } = Route.useSearch();
   const current = emergencyMenuDemo(state, reference);
   const request = current && (!week || current.week === week) ? current : null;
-  const back = <Button asChild variant="outline"><Link to="/approvals" search={{}} hash="current-service-week"><ArrowLeft />Back to current service week</Link></Button>;
+  const back = <Button asChild variant="outline"><Link to="/" hash="current-service-week"><ArrowLeft />Back to current service week</Link></Button>;
   return <>
     <div className="mb-5">{back}</div>
     <PageHeader title="Emergency menu review" />
