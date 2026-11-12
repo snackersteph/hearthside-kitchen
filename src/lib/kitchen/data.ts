@@ -36,7 +36,8 @@ export const INGREDIENTS: Ingredient[] = [
 
 const SUGARY = /pancake|french toast|syrup|compote|cake|muffin|crumble|pudding|cobbler|waffle/i;
 /** Daily menus use the main dishes from the recipe library (uploaded catalog). */
-export const DISHES: Dish[] = [];
+export const DISHES: Dish[] = import.meta.hot?.data?.["kitchenDishes"] ?? [];
+if (import.meta.hot?.data) import.meta.hot.data["kitchenDishes"] = DISHES;
 export function installKitchenCatalog(recipes: Recipe[], residents: Resident[]) {
   RECIPE_CATALOG.splice(0, RECIPE_CATALOG.length, ...recipes);
   RESIDENTS.splice(0, RESIDENTS.length, ...residents);
@@ -63,7 +64,14 @@ export const currentDishId = (id: string) => (DISHES.some((d) => d.id === id) ? 
 
 export const RESIDENT_PROFILE_VERSION = 1;
 
-export const RESIDENTS: Resident[] = [];
+export const RESIDENTS: Resident[] = import.meta.hot?.data?.["residentCatalog"] ?? [];
+if (import.meta.hot?.data) import.meta.hot.data["residentCatalog"] = RESIDENTS;
+
+/** Mounted providers retain their full table records even if refreshed modules lost their indexes. */
+export function restoreKitchenCatalog(state: KitchenState) {
+  const saved = state.recipes ?? [];
+  installKitchenCatalog([...RECIPE_CATALOG.filter((r) => !saved.some((record) => record.id === r.id)), ...saved], state.residents);
+}
 
 export function initialState(): KitchenState {
   return {

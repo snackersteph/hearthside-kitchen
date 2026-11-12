@@ -1,9 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { loadKitchenCatalogs, withKitchenCatalogs } from "@/lib/kitchen/catalog-storage";
-import { dishById, initialState } from "@/lib/kitchen/data";
+import { DISHES, dishById, initialState, restoreKitchenCatalog } from "@/lib/kitchen/data";
+import { RECIPE_CATALOG } from "@/lib/kitchen/recipe-catalog";
+import { analyze } from "@/lib/kitchen/engine";
 import { recipeLibrary } from "@/lib/kitchen/recipes";
 
 describe("dedicated kitchen catalog storage", () => {
+  it("restores BRK-REG-02 from mounted state after refreshed catalog indexes are cleared", async () => {
+    const catalogs = await loadKitchenCatalogs();
+    const state = withKitchenCatalogs(initialState(), catalogs);
+    state.plan.breakfast = "BRK-REG-02";
+    DISHES.splice(0);
+    RECIPE_CATALOG.splice(0);
+    restoreKitchenCatalog(state);
+    expect(dishById("BRK-REG-02").name).toBe("Turkey & Potato Hash");
+    expect(() => analyze(state, new Date("2026-11-12T12:00:00"))).not.toThrow();
+    expect(RECIPE_CATALOG).toHaveLength(135);
+  });
   it("loads 135 recipes and 20 complete residents from their separate tables", async () => {
     const catalogs = await loadKitchenCatalogs();
     expect(catalogs.recipes).toHaveLength(135);

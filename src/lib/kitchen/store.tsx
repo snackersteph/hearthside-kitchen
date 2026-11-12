@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from "react";
-import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS, installKitchenCatalog } from "./data";
+import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS, restoreKitchenCatalog } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
 import type { AgentId, Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
@@ -22,7 +22,6 @@ import { migrateApprovalCleanup } from "./approval-cleanup";
 import { migrateInventoryReplenishment } from "./inventory-replenishment";
 import { rebuild, replayAt } from "./shared-sync";
 import { supabase } from "@/integrations/supabase/client";
-import { RECIPE_CATALOG } from "./recipe-catalog";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -511,13 +510,15 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(timer);
   }, []);
   const show = () => { if (confirmed.current) {
+    restoreKitchenCatalog(confirmed.current.state);
     const next = rebuild(confirmed.current.state, pending.current, sharedReduce);
-    installKitchenCatalog([...RECIPE_CATALOG.filter((r) => !next.recipes?.some((saved) => saved.id === r.id)), ...(next.recipes ?? [])], next.residents);
+    restoreKitchenCatalog(next);
     setState(next);
   } };
   // Pull every shared action this browser has not applied yet, in database order.
   const catchUp = () => { queue.current = queue.current.then(async () => {
     const base = confirmed.current; if (!base) return;
+    restoreKitchenCatalog(base.state);
     const { data, error } = await supabase.from("kitchen_actions").select("id, client_id, action, acted_at").gt("id", base.lastId).order("id").limit(1000);
     if (error || !data?.length) return;
     let next = base.state;
@@ -586,7 +587,11 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     const timer = window.setTimeout(() => dispatch({ type: "advanceWeeklyWorkflow", runId: runningRun.workflowRunId, step: runningRun.step }), WORKFLOW_STEP_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [runningRun?.workflowRunId, runningRun?.step]); // eslint-disable-line react-hooks/exhaustive-deps
-  const analysis = useMemo(() => state ? analyze(state, reference ?? new Date("2026-01-01T12:00:00Z")) : null, [state, reference]);
+  const analysis = useMemo(() => {
+    if (!state) return null;
+    restoreKitchenCatalog(state);
+    return analyze(state, reference ?? new Date("2026-01-01T12:00:00Z"));
+  }, [state, reference]);
   if (loadError) return <div className="min-h-screen bg-background p-8 text-destructive" role="alert">Kitchen records could not be loaded. Please refresh to try again.</div>;
   if (!reference || !state || !analysis) return <div className="min-h-screen bg-background" aria-busy="true" />;
   return <Ctx.Provider value={{ state, analysis, dispatch, reference }}>{children}</Ctx.Provider>;
