@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, MessageSquare } from "lucide-react";
+import { UtensilsCrossed, CalendarDays, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, MessageSquare } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 import { alternativeOverview, residentApprovalCount } from "./approval-rules";
 import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
@@ -10,8 +10,8 @@ import { AccountMenu } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
-  { to: "/", label: "Kitchen Pulse", icon: LayoutDashboard },
-  { to: "/menu", label: "Calendar", icon: UtensilsCrossed },
+  { to: "/", label: "Kitchen Pulse", icon: UtensilsCrossed },
+  { to: "/menu", label: "Calendar", icon: CalendarDays },
   { to: "/recipes", label: "Recipes", icon: BookOpen },
   { to: "/residents", label: "Residents", icon: Users },
   { to: "/inventory", label: "Inventory", icon: Boxes },
