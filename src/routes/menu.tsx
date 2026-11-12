@@ -95,7 +95,7 @@ function MenuPage() {
     <PageHeader title="Calendar">
       <Tag tone={daysPending ? "warn" : "ok"}>{daysPending} days need approval</Tag>
     </PageHeader>
-    <section aria-label="Choose a menu date" className="border-y py-6">
+    <section aria-label="Choose a menu date" className="border-b py-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-lg font-semibold"><CalendarDays className="size-5" />Choose a date</h2>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
