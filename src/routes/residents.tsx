@@ -35,6 +35,7 @@ function ResidentsPage() {
     (letter === "All" || r.name.trim().toUpperCase().startsWith(letter)) &&
     (r.name.toLowerCase().includes(q.toLowerCase()) || r.room.includes(q))
   ).sort(compareByFirstName);
+  const openUpdates = new Set((state.profileUpdates ?? []).filter((u) => u.review === "open").map((u) => u.residentId));
   return <>
     <PageHeader eyebrow="" title="Residents">
       <div className="flex flex-wrap gap-2"><Input aria-label="Search name or room" placeholder="Search name or room" value={q} onChange={(e) => setQ(e.target.value)} className="w-56 bg-card" /><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div>
@@ -56,7 +57,7 @@ function ResidentsPage() {
         <TableBody>{list.map((r) => {
           const allergies = r.careProfile?.["Food Allergies"] ?? r.allergens.join(", ");
           const values = [r.name, r.careProfile?.["Gender"] ?? "Not specified", r.room, medicalConditions(r), r.careProfile?.["Diet Type"] ?? (r.diets.join(", ") || "Regular"), /^none( known)?$/i.test(allergies.trim()) ? "" : allergies];
-          return <TableRow key={r.id} className="group"><TableCell className="p-0 align-middle"><Link to="/residents/$residentId" params={{ residentId: r.id }} tabIndex={-1} className="block p-3"><ResidentPhoto resident={r} /></Link></TableCell>{values.map((value, i) => <TableCell key={i} className="p-0 align-middle"><Link to="/residents/$residentId" params={{ residentId: r.id }} aria-label={i === 0 ? `View ${r.name}` : undefined} tabIndex={i === 0 ? 0 : -1} className={cn("flex min-h-16 items-center px-3 py-4 group-hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring", i === 0 && "font-semibold")}>{i === 5 ? value : value || "—"}</Link></TableCell>)}</TableRow>;
+          return <TableRow key={r.id} className="group"><TableCell className="p-0 align-middle"><Link to="/residents/$residentId" params={{ residentId: r.id }} tabIndex={-1} className="block p-3"><ResidentPhoto resident={r} /></Link></TableCell>{values.map((value, i) => <TableCell key={i} className="p-0 align-middle">{i === 0 ? <div className="flex min-h-16 items-center gap-2 px-3 py-4"><Link to="/residents/$residentId" params={{ residentId: r.id }} aria-label={`View ${r.name}`} className={cn("font-semibold group-hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring")}>{value}</Link>{openUpdates.has(r.id) && <Link to="/profile-updates" aria-label={`Review profile update for ${r.name}`} className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-semibold text-warning hover:underline"><span className="size-1.5 rounded-full bg-warning" />New update</Link>}</div> : <Link to="/residents/$residentId" params={{ residentId: r.id }} tabIndex={-1} className={cn("flex min-h-16 items-center px-3 py-4 group-hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring")}>{i === 5 ? value : value || "—"}</Link>}</TableCell>)}</TableRow>;
         })}{!list.length && <TableRow><TableCell colSpan={7} className="p-8 text-center text-muted-foreground">No residents found.</TableCell></TableRow>}</TableBody>
       </Table>
     </div>

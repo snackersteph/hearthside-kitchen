@@ -160,3 +160,5 @@
 ## January 2027 calendar reset
 - [x] Clear all proposed meals (scheduled plans/overrides) for January 2027.
 - [x] Add "Not started" pill on calendar view with AddCircleOutlineOutlined icon for dates with no planned meals.
+- [x] Delete the record column from resident meal history
+- [x] Residents page: show an indicator when a resident has profile updates to review
