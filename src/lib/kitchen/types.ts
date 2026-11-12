@@ -99,6 +99,7 @@ export interface AgentProfileEdit {
 }
 
 export interface KitchenState {
+  inventoryReplenishmentVersion?: number;
   approvalCleanupVersion?: number;
   demoContentVersion?: number;
   mealHistoryVersion?: number;

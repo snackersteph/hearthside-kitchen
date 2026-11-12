@@ -13,6 +13,7 @@
 - [x] Refresh shared colors, navigation, typography and controls to complement the logo without changing behavior; verify pages and existing workflows.
 
 # Inventory operations
+- [x] Remove the pictured Resident care label and replenish demo stored ingredients for at least eleven days; test coverage and verify persistence in Inventory.
 - [x] Combine the 7- and 14-day forecast periods with their exact date ranges in larger tabs and verify period switching.
 - [x] Remove the Today column and resident/meal summary, emphasize forecast dates, and verify every filtered ingredient row remains accessible with matching counts.
 - [x] Move Stock alert out of the food-category tabs into a clearer main inventory view and verify its counts and ordering actions.

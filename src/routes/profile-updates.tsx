@@ -34,7 +34,7 @@ function ProfileUpdates() {
   }));
   return <>
     <Button asChild variant="ghost" className="mb-5">{from === "residents" ? <Link to="/residents"><ArrowLeft />Residents</Link> : <Link to="/"><ArrowLeft />Kitchen Pulse</Link>}</Button>
-    <PageHeader eyebrow="Resident care" title="Profile updates" />
+    <PageHeader title="Profile updates" />
     {residentFilter && <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-card px-4 py-3 text-sm">
       <span>Showing updates for <strong>{filteredName ?? residentFilter}</strong></span>
       <Link to="/profile-updates" search={{}} className="font-semibold text-primary hover:underline">Show all residents</Link>
