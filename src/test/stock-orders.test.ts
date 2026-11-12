@@ -7,12 +7,14 @@ const reference = new Date("2026-11-10T12:00:00");
 describe("stock alert orders", () => {
   it("suggests pack-rounded quantities after accounting for stock and incoming orders", () => {
     const s = initialState();
+    s.ingredients = s.ingredients.map((i) => (i.id === "chicken" ? { ...i, stock: 6 } : i));
     expect(stockOrderEstimate(s, "chicken", 15, reference)?.qty).toBe(12);
     const next = reducer(s, { type: "placeStockOrder", ingredientId: "chicken", vendor: "Sysco", qty: 12 }, reference);
     expect(stockOrderEstimate(next, "chicken", 15, reference)?.qty).toBe(0);
   });
   it("records the selected vendor, quantity and delivery estimate without adding stock", () => {
     const s = initialState();
+    s.ingredients = s.ingredients.map((i) => (i.id === "chicken" ? { ...i, stock: 6 } : i));
     const next = reducer(s, { type: "placeStockOrder", ingredientId: "chicken", vendor: "Valley Farms", qty: 12 }, reference);
     expect(next.orders?.at(-1)).toMatchObject({ vendor: "Valley Farms", deliveryDate: "2026-11-12", status: "incoming", lines: [{ ingredientId: "chicken", qty: 12 }] });
     expect(next.ingredients.find((i) => i.id === "chicken")).toMatchObject({ stock: 6, onOrder: 12 });

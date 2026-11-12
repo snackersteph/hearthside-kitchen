@@ -171,6 +171,7 @@ describe("kitchen agents", () => {
 
   it("approving a purchase adds incoming quantities without changing stock", () => {
     const s = initialState();
+    s.ingredients = s.ingredients.map((i) => i.id === "chicken" ? { ...i, stock: 6 } : i);
     const approved = reducer(s, { type: "approvePurchase", proposalId: "test", vendor: "Sysco", deliveryDate: "2026-11-10", lines: [{ ingredientId: "chicken", qty: 8, shortage: 8 }], modified: false, summary: "Order" });
     expect(approved.ingredients.find((i) => i.id === "chicken")?.stock).toBe(6);
     expect(approved.ingredients.find((i) => i.id === "chicken")?.onOrder).toBe(8);
@@ -178,7 +179,9 @@ describe("kitchen agents", () => {
   });
 
   it("receiving a delivery transfers incoming quantities to stock only once", () => {
-    let s = reducer(initialState(), { type: "approvePurchase", proposalId: "test", lines: [{ ingredientId: "chicken", qty: 8, shortage: 8 }], modified: false, summary: "Order" });
+    const base = initialState();
+    base.ingredients = base.ingredients.map((i) => i.id === "chicken" ? { ...i, stock: 6 } : i);
+    let s = reducer(base, { type: "approvePurchase", proposalId: "test", lines: [{ ingredientId: "chicken", qty: 8, shortage: 8 }], modified: false, summary: "Order" });
     const id = s.orders?.[0]?.id;
     if (!id) throw new Error("No order created");
     s = reducer(s, { type: "receiveOrder", id });

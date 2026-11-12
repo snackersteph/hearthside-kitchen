@@ -424,7 +424,8 @@ export function seedDemo(base: KitchenState, reference = new Date()): KitchenSta
   const past = [1, 2, 4, 6, 9, 12, 18, 25].map((ago, i): KitchenState["history"][number] => {
     const date = dateKey(dayAt(-ago, reference));
     const meal = (["breakfast", "lunch", "dinner"] as Meal[])[i % 3]!;
-    return i % 4 === 3
+    // The $122 Sysco order is not seeded as approved: it stays a pending purchase request.
+    return i % 4 === 3 && ago !== 6
       ? { proposalId: `seed-${ago}`, kind: "purchase", status: "approved", at: reference.getTime() - ago * day, summary: `Approved Sysco produce order ($${(80 + ago * 7).toFixed(2)})`, modified: false }
       : { proposalId: `seed-${ago}`, kind: "substitution", status: i % 5 === 4 ? "rejected" : "approved", at: reference.getTime() - (ago + 1) * day, serviceDate: date, summary: `${i % 5 === 4 ? "Rejected" : "Approved"} ${meal} menu for ${date}`, modified: i % 3 === 1 };
   });

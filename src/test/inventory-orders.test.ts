@@ -4,7 +4,9 @@ import { reducer } from "@/lib/kitchen/store";
 
 const reference = new Date("2026-11-09T12:00:00");
 function ordered() {
-  return reducer(initialState(), { type: "approvePurchase", proposalId: "order-test", vendor: "Sysco", deliveryDate: "2026-11-09", lines: [{ ingredientId: "chicken", qty: 8, shortage: 8 }], modified: false, summary: "Order" }, reference);
+  const base = initialState();
+  base.ingredients = base.ingredients.map((i) => (i.id === "chicken" ? { ...i, stock: 6 } : i));
+  return reducer(base, { type: "approvePurchase", proposalId: "order-test", vendor: "Sysco", deliveryDate: "2026-11-09", lines: [{ ingredientId: "chicken", qty: 8, shortage: 8 }], modified: false, summary: "Order" }, reference);
 }
 function orderId(s: ReturnType<typeof ordered>) { const id = s.orders?.[0]?.id; if (!id) throw new Error("Missing order"); return id; }
 
