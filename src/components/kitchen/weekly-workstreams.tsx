@@ -64,10 +64,7 @@ function Workstream({
     <article
       id={id}
       aria-label={`${eyebrow}: ${weekRange(info.startDate, info.endDate)}`}
-      className={cn(
-        "pulse-week rounded-xl border bg-card shadow-soft",
-        info.outstanding.length > 0 && "border-destructive/40",
-      )}
+      className="pulse-week rounded-xl border bg-card shadow-soft"
     >
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div>
