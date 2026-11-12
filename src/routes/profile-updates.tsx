@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { draftProfileChanges } from "@/lib/kitchen/profile-changes";
 
 export const Route = createFileRoute("/profile-updates")({
+  validateSearch: (search: Record<string, unknown>): { resident?: string; from?: string } => ({
+    ...(typeof search["resident"] === "string" ? { resident: search["resident"] } : {}),
+    ...(typeof search["from"] === "string" ? { from: search["from"] } : {}),
+  }),
   head: () => ({ meta: [
     { title: "Resident profile changes · NutriSync" },
     { name: "description", content: "Review previous and updated resident profile content and acknowledge each change." },
@@ -20,15 +24,21 @@ export const Route = createFileRoute("/profile-updates")({
 
 function ProfileUpdates() {
   const { state, dispatch } = useKitchen();
+  const { resident: residentFilter, from } = Route.useSearch();
   const [view, setView] = useState<"open" | "seen">("open");
-  const updates = (state.profileUpdates ?? []).filter((u) => u.review === view).sort((a, b) => b.at - a.at).map((u) => ({
+  const filteredName = residentFilter ? residentName(state, residentFilter) : null;
+  const updates = (state.profileUpdates ?? []).filter((u) => u.review === view && (!residentFilter || u.residentId === residentFilter)).sort((a, b) => b.at - a.at).map((u) => ({
     ...u,
     isDraft: !u.changes?.length,
     changes: u.changes?.length ? u.changes : draftProfileChanges(u.residentId),
   }));
   return <>
-    <Button asChild variant="ghost" className="mb-5"><Link to="/"><ArrowLeft />Kitchen Pulse</Link></Button>
+    <Button asChild variant="ghost" className="mb-5">{from === "residents" ? <Link to="/residents"><ArrowLeft />Residents</Link> : <Link to="/"><ArrowLeft />Kitchen Pulse</Link>}</Button>
     <PageHeader eyebrow="Resident care" title="Profile updates" />
+    {residentFilter && <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-card px-4 py-3 text-sm">
+      <span>Showing updates for <strong>{filteredName ?? residentFilter}</strong></span>
+      <Link to="/profile-updates" search={{}} className="font-semibold text-primary hover:underline">Show all residents</Link>
+    </div>}
     <div className="mb-6 flex gap-2 border-b pb-4">
       <Button variant={view === "open" ? "default" : "outline"} onClick={() => setView("open")}>Needs acknowledgment ({(state.profileUpdates ?? []).filter((u) => u.review === "open").length})</Button>
       <Button variant={view === "seen" ? "default" : "outline"} onClick={() => setView("seen")}>Acknowledged</Button>
