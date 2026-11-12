@@ -191,7 +191,7 @@ export function WeeklyWorkstreams() {
         icon={ShoppingCart}
         info={purchasing}
         action={
-          <Link to="/approvals" search={{ kind: "purchase" }} className={actionClass}>
+          <Link to="/approvals" search={{ kind: "purchase", week: "next" }} className={actionClass}>
             Review Purchasing
             <ArrowRight className="size-3.5" />
           </Link>

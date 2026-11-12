@@ -23,6 +23,7 @@ import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-d
 import { WeeklyPurchasingPanel } from "@/components/kitchen/weekly-purchasing";
 import { rollingServiceWeeks, weekRange } from "@/lib/kitchen/weekly-operations";
 import { WeeklyWorkstreams } from "@/components/kitchen/weekly-workstreams";
+import { pendingPurchasingWeeks } from "@/lib/kitchen/purchasing-review";
 
 const PAGE_SIZE = 50;
 
@@ -74,6 +75,7 @@ function ApprovalsPage() {
   const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
   const today = dateKey(new Date());
   const weekStart = week ? weekFilterStart(week) : undefined;
+  const scopedPurchasing = kind === "purchase" && !!weekStart;
   const inWeek = (key: string | undefined) => !weekStart || (!!key && weekStartFor(key) === weekStart);
   const overview = useMemo(() => alternativeOverview(state, new Date(), date ? [date] : undefined), [state, date, today]);
   const [query, setQuery] = useState("");
@@ -92,7 +94,7 @@ function ApprovalsPage() {
   const purchases = proposals.filter((p): p is PurchaseProposal => p.kind === "purchase" && matches(p));
   // Week-specific drafts from approved weekly menus, shown with their stock breakdown.
   const weekly = useWeeklyPurchasing().filter((w) => w.state !== "awaiting-menu" || w.invalidated);
-  const weeklyShown = kind === "substitution" || date ? [] : weekly.filter((w) => inWeek(w.startDate));
+  const weeklyShown = kind === "substitution" || date ? [] : scopedPurchasing && weekStart ? pendingPurchasingWeeks(weekly, weekStart) : weekly.filter((w) => inWeek(w.startDate));
   const weeklyCount = weeklyShown.reduce((n, w) => n + w.proposals.filter(matches).length, 0);
   const defaultTab = kind === "purchase" ? "orders" : "pending";
   const [tab, setTab] = useState(defaultTab);
@@ -201,7 +203,7 @@ function ApprovalsPage() {
         </TabsContent>
         <TabsContent value="orders" className="mt-6 space-y-3">
           {bulkToolbar}
-          {weeklyShown.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
+          {scopedPurchasing ? weeklyShown.flatMap((w) => w.proposals.filter(matches)).map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} {...selectionProps(p)} /></div>) : weeklyShown.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
             {w.proposals.filter(matches).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} {...selectionProps(p)} />)}
             {w.rejected.map((p) => <p key={p.id} className="text-sm text-muted-foreground">Rejected: {p.vendor} · {p.lines.length} item{p.lines.length === 1 ? "" : "s"} · ${p.total.toFixed(2)}</p>)}
             {w.state === "ready-to-confirm" && <ConfirmWeeklyPurchasing weekId={w.weekId} title={`service week ${weekRange(w.startDate, w.endDate)}`} rejected={w.rejected.length} />}
