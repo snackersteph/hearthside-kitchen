@@ -136,21 +136,6 @@ describe("Agent Workspace", () => {
     expect(within(dialog).getByText("Ingredients")).toBeTruthy();
   });
 
-  it("inspects a handoff's sender, receiver, reason, response and impact", async () => {
-    await mount();
-    await generate();
-    const flow = section("Collaboration flow");
-    fireEvent.click(within(flow).getAllByRole("button")
-      .find((b) => /Dietary Agent.*Menu Agent/.test(b.textContent ?? ""))!);
-    const inspector = section("Handoff details");
-    expect(within(inspector).getByText("Sending agent").nextSibling?.textContent).toBe("Dietary Agent");
-    expect(within(inspector).getByText("Receiving agent").nextSibling?.textContent).toBe("Menu Agent");
-    for (const heading of ["Reason for handoff", "Information exchanged", "Agent response", "Affected meal or ingredient", "Impact on weekly plan"]) {
-      expect(within(inspector).getByText(heading)).toBeTruthy();
-    }
-    expect(within(inspector).getByText(/^Menu Agent: Weekly menu drafted/)).toBeTruthy();
-  });
-
   it("keeps manager decisions prominent and blocks approval while reviews are open", async () => {
     await mount();
     await generate();

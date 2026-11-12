@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, CirclePlus } from "lucide-react";
 import { differenceInCalendarDays, isValid, parseISO , addMonths } from "date-fns";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { MealSection, PlannedMeal } from "@/components/kitchen/menu-meals";
@@ -8,6 +8,7 @@ import { MEAL_LABEL, Tag } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { dateKey, dayAt } from "@/lib/kitchen/schedule";
+import { isMenuCleared } from "@/lib/kitchen/menu-reset";
 import { useKitchen } from "@/lib/kitchen/store";
 import { MEALS } from "@/lib/kitchen/types";
 import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
@@ -57,6 +58,15 @@ function DatedMenuPage() {
     <Button asChild variant="outline"><Link to="/menu"><ArrowLeft />Back to dates</Link></Button>
   </>;
   const status = alternativeOverview(state, reference, [date])[0];
+  if (offset > 0 && isMenuCleared(state, date)) return <>
+    <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu"><ArrowLeft />All dates</Link></Button>
+    <PageHeader eyebrow="Daily Menu" title={selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} />
+    <section aria-label="Menu not started" className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
+      <CirclePlus className="size-10 text-muted-foreground" />
+      <h2 className="font-display text-xl font-semibold">Not started</h2>
+      <p className="max-w-md text-sm text-muted-foreground">Menu planning for this month has not started yet, so there are no proposed meals for this date.</p>
+    </section>
+  </>;
   return <>
     <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu"><ArrowLeft />All dates</Link></Button>
     <PageHeader eyebrow="Daily Menu" title={selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}>

@@ -9,6 +9,8 @@ import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 import { profileContentChanges } from "./profile-changes";
 import { stockOrderSchema, stockVendors, stockOrderEstimate } from "./stock-orders";
 import { migrateDemoContent } from "./demo-content";
+import { migrateMealHistory } from "./meal-history-demo";
+import { migrateMenuReset } from "./menu-reset";
 import { applyWeeklyStatus, createWeeklyPlan, isDateKey, migrateWeeklyPlans, sortWeeklyPlans, weeklyPlanId, weekStartFor, type WeeklyMenuStatus, type WeeklyPurchasingStatus } from "./weekly-schedule";
 import { generateWeeklyMenu, regenerateWeeklyMeal, reviseWeeklyMenu, weeklyMenu, type WeeklyMenu } from "./weekly-menu";
 import {
@@ -486,7 +488,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       // Catalog grows over time: merge ingredients the saved state doesn't know yet.
       const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
       const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      dispatch({ type: "load", state: migrateApprovalCleanup(migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState()))))))) }); } catch { /* ignore */ }
+      dispatch({ type: "load", state: migrateMenuReset(migrateMealHistory(migrateApprovalCleanup(migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState()))))))))) }); } catch { /* ignore */ }
     loaded.current = true;
   }, []);
   // Never persist the placeholder initial state: if the provider remounts before the loaded state

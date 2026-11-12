@@ -153,3 +153,10 @@
 ## Agent profile back and edit
 - [x] Add a back button returning to the previous screen on each agent profile.
 - [x] Add an edit button for "What it does" and "Configuration" on each agent profile.
+
+## Resident meal history seed
+- [x] One-time additive migration seeding 30 days of past dated menus per resident (diet-compatible); tests; verify profile history.
+
+## January 2027 calendar reset
+- [x] Clear all proposed meals (scheduled plans/overrides) for January 2027.
+- [x] Add "Not started" pill on calendar view with AddCircleOutlineOutlined icon for dates with no planned meals.

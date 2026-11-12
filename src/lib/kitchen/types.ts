@@ -101,6 +101,10 @@ export interface AgentProfileEdit {
 export interface KitchenState {
   approvalCleanupVersion?: number;
   demoContentVersion?: number;
+  mealHistoryVersion?: number;
+  menuResetVersion?: number;
+  /** Year-month keys (e.g. "2027-01") whose proposed menus were cleared; planning has not started. */
+  clearedMonths?: string[];
   orderSnapshotVersion?: number;
   recipes?: import("./recipes").Recipe[];
   deletedRecipeIds?: string[];
