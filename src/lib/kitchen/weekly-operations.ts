@@ -153,6 +153,16 @@ export function rollingServiceWeeks(reference = new Date()) {
   return { service, purchasing: addDays(service, 7), planning: addDays(service, 14) };
 }
 
+/**
+ * Approval Center `week` search value for a service week: the rolling filter name when the week is
+ * one of the three rolling weeks, otherwise the week's Monday so any week can be deep-linked.
+ */
+export function approvalWeekFilter(weekStart: string, reference = new Date()): string {
+  const start = weekStartFor(weekStart);
+  const weeks = rollingServiceWeeks(reference);
+  return start === weeks.service ? "current" : start === weeks.purchasing ? "next" : start === weeks.planning ? "two" : start;
+}
+
 // ---------- Kitchen Pulse workstreams ----------
 
 export interface WorkstreamAlert {

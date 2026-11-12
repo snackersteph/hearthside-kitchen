@@ -58,7 +58,7 @@ import {
   type WeeklyPlan,
 } from "@/lib/kitchen/weekly-schedule";
 import { dateKey } from "@/lib/kitchen/schedule";
-import { weekStatus } from "@/lib/kitchen/weekly-operations";
+import { approvalWeekFilter, weekStatus } from "@/lib/kitchen/weekly-operations";
 import { WeekStatusBadge } from "@/components/kitchen/week-status";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -938,12 +938,22 @@ function ManagerDecisions({
                           {b.link && (
                             <>
                               {" "}
-                              <Link
-                                to={b.link}
-                                className="font-medium text-primary underline-offset-2 hover:underline"
-                              >
-                                Review
-                              </Link>
+                              {b.link === "/approvals" ? (
+                                <Link
+                                  to="/approvals"
+                                  search={{ week: approvalWeekFilter(weekStart), fromDashboard: weekStart }}
+                                  className="font-medium text-primary underline-offset-2 hover:underline"
+                                >
+                                  Review
+                                </Link>
+                              ) : (
+                                <Link
+                                  to={b.link}
+                                  className="font-medium text-primary underline-offset-2 hover:underline"
+                                >
+                                  Review
+                                </Link>
+                              )}
                             </>
                           )}
                           {b.observationIds && (
