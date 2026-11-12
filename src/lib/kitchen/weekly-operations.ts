@@ -118,14 +118,13 @@ export function weekStatus(s: KitchenState, date: string, reference = new Date()
   if (phase === "completed") {
     if (!menuApproved) note = "Served without a weekly menu approval";
   } else if (!menuApproved) {
-    if (today > dates.menuDueDate)
+    // A week already being served is not flagged for its lapsed menu deadline; only upcoming
+    // weeks report the overdue approval.
+    if (phase !== "service" && today > dates.menuDueDate)
       outstanding.push({
         kind: "menu",
         dueDate: dates.menuDueDate,
-        message:
-          phase === "service"
-            ? `Serving without an approved weekly menu (due ${shortDate(dates.menuDueDate)})`
-            : `Menu approval overdue since ${shortDate(dates.menuDueDate)}`,
+        message: `Menu approval overdue since ${shortDate(dates.menuDueDate)}`,
       });
   } else if (!purchasingApproved && today > dates.purchasingDueDate) {
     outstanding.push({

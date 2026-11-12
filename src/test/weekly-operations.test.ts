@@ -100,10 +100,11 @@ describe("weekly status", () => {
     const review = weekStatus(withPlan(base, "2026-11-16", "needs-review"), "2026-11-16", now);
     expect(review.status).toBe("needs-review");
     expect(review.outstanding.map((o) => o.kind)).toEqual(["menu"]);
-    // The current week is being served without weekly sign-off: not "In Service".
+    // The current week is being served without weekly sign-off: not "In Service", and the
+    // lapsed menu deadline no longer raises a warning on the week already in service.
     const serving = weekStatus(base, "2026-11-09", now);
     expect(serving.status).toBe("not-started");
-    expect(serving.outstanding[0]?.message).toMatch(/Serving without an approved weekly menu/);
+    expect(serving.outstanding).toEqual([]);
     // Approved menu but purchase approval past due (lead time 2 → due Sat Nov 14).
     const late = weekStatus(
       withPlan(base, "2026-11-16", "approved"),
