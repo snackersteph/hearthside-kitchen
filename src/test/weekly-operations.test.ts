@@ -218,5 +218,7 @@ describe("week navigation", () => {
     expect(router.matchRoutes("/approvals", { week: "2026-12-03" }).at(-1)?.search).toEqual({ week: "2026-11-30" });
     // Invalid values are not normalized into a week (the page also ignores them).
     expect(router.matchRoutes("/approvals", { week: "someday" }).at(-1)?.routeId).toBe("/approvals");
+    // The dashboard week to return to is normalized to its Monday.
+    expect(router.matchRoutes("/approvals", { week: "two", fromDashboard: "2026-11-25" }).at(-1)?.search).toEqual({ week: "two", fromDashboard: "2026-11-23" });
   });
 });

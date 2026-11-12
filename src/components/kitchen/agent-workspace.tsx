@@ -941,7 +941,7 @@ function ManagerDecisions({
                               {b.link === "/approvals" ? (
                                 <Link
                                   to="/approvals"
-                                  search={{ week: approvalWeekFilter(weekStart) }}
+                                  search={{ week: approvalWeekFilter(weekStart), fromDashboard: weekStart }}
                                   className="font-medium text-primary underline-offset-2 hover:underline"
                                 >
                                   Review

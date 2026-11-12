@@ -52,7 +52,7 @@ function proposalWeekDate(p: Proposal): string | undefined {
 }
 
 export const Route = createFileRoute("/approvals")({
-  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming"; fromBoard?: string } => {
+  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming"; fromBoard?: string; fromDashboard?: string } => {
     const kind = search["kind"];
     const date = typeof search["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search["date"]) ? search["date"] : undefined;
     const meal = MEALS.find((m) => m === search["meal"]);
@@ -61,7 +61,10 @@ export const Route = createFileRoute("/approvals")({
     const rawWeek = search["week"];
     const week = WEEK_FILTERS.find((w) => w.value === rawWeek)?.value
       ?? (typeof rawWeek === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawWeek) ? weekFilterStart(rawWeek) : undefined);
-    return { ...boardReturnSearch(search), ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}) };
+    // Agent Dashboard week the staff member came from, so they can return to it once reviews are done.
+    const rawDashboard = search["fromDashboard"];
+    const fromDashboard = typeof rawDashboard === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawDashboard) ? weekStartFor(rawDashboard) : undefined;
+    return { ...boardReturnSearch(search), ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}), ...(fromDashboard ? { fromDashboard } : {}) };
   },
   head: () => ({
     meta: [
@@ -78,8 +81,10 @@ export const Route = createFileRoute("/approvals")({
 
 function ApprovalsPage() {
   const { state, analysis, dispatch } = useKitchen();
-  const { kind, date, meal, week, fromMenu, fromInventory } = Route.useSearch();
+  const { kind, date, meal, week, fromMenu, fromInventory, fromDashboard } = Route.useSearch();
   const [origin] = useState(() => fromMenu && date && meal ? { date, meal } : null);
+  // Kept from arrival so changing filters on this page doesn't lose the way back.
+  const [dashboardWeek] = useState(() => fromDashboard);
   const navigate = Route.useNavigate();
   const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
   const today = dateKey(new Date());
@@ -202,7 +207,9 @@ function ApprovalsPage() {
         </TabsList>
         <TabsContent value="pending" className="mt-6 space-y-3">
           {bulkToolbar}
-          {reviews.length === 0 ? <Empty text="No alternatives awaiting approval." /> : <>
+          {reviews.length === 0 ? (dashboardWeek
+            ? <div className="rounded-xl border border-dashed bg-card p-10 text-center"><Button asChild><Link to="/dashboard" search={{ week: dashboardWeek }}><ArrowLeft />Return to Agent Dashboard</Link></Button></div>
+            : <Empty text="No alternatives awaiting approval." />) : <>
             <p className="text-sm text-muted-foreground">Most urgent first</p>
             {reviews.slice(0, limit("pending")).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} {...selectionProps(p)} />)}
             {more("pending", reviews.length)}

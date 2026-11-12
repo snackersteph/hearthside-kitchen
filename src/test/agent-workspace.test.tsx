@@ -149,7 +149,8 @@ describe("Agent Workspace", () => {
     // Review opens the Approval Center filtered to the week being worked on (two weeks out by default).
     const review = within(alternativesBlocker).getByText("Review");
     expect(review.getAttribute("data-to")).toBe("/approvals");
-    expect(JSON.parse(review.getAttribute("data-search")!)).toEqual({ week: "two" });
+    // fromDashboard carries the dashboard week so the Approval Center can offer a way back.
+    expect(JSON.parse(review.getAttribute("data-search")!)).toEqual({ week: "two", fromDashboard: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
     expect(within(decisions).getByText(/Purchasing doesn't block menu approval/)).toBeTruthy();
     fireEvent.click(approve);
     expect(screen.queryByText("Weekly Menu Approved")).toBeNull();
