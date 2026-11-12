@@ -91,10 +91,10 @@ describe("weekly lifecycle in the Agent Workspace", () => {
     expect(screen.getByText(/Stage 5 — Manager Review/)).toBeTruthy();
   });
 
-  it("persists staff changes across a refresh instead of reseeding the demo", async () => {
+  it("loads the shared kitchen after a refresh instead of reseeding the demo", async () => {
     const view = await mount();
-    const before = JSON.parse(localStorage.getItem("kitchen-command-v1")!) as KitchenState;
-    localStorage.setItem("kitchen-command-v1", JSON.stringify({ ...before, leadTimeDays: 9 }));
+    const [snap] = JSON.parse(localStorage.getItem("mock-db:kitchen_snapshot")!) as { state: KitchenState }[];
+    localStorage.setItem("mock-db:kitchen_snapshot", JSON.stringify([{ ...snap, state: { ...snap!.state, leadTimeDays: 9 } }]));
     view.unmount();
     await mount();
     expect(

@@ -18,3 +18,6 @@ if (typeof window !== "undefined") Object.defineProperty(window, "matchMedia", {
     dispatchEvent: () => {},
   }),
 });
+
+import { vi } from "vitest";
+vi.mock("@/integrations/supabase/client", async () => ({ supabase: (await import("./supabase-memory")).memorySupabase }));

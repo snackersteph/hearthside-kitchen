@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Context, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from "react";
 import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
 import type { AgentId, Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
@@ -20,6 +20,8 @@ import {
 import { activeWeeklyPurchasing, openWeeklyPurchasing, settleWeeklyPurchasing, type WeeklyPurchasePlan } from "./weekly-purchasing";
 import { migrateApprovalCleanup } from "./approval-cleanup";
 import { migrateInventoryReplenishment } from "./inventory-replenishment";
+import { rebuild, replayAt } from "./shared-sync";
+import { supabase } from "@/integrations/supabase/client";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -62,7 +64,7 @@ type Action =
   | { type: "regenerateWeeklyMeal"; id: string; date: string; meal: Meal }
   | { type: "reviseWeeklyMenu"; id: string; date?: string; meal?: Meal }
   | { type: "startWeeklyWorkflow"; date: string }
-  | { type: "advanceWeeklyWorkflow"; runId: string }
+  | { type: "advanceWeeklyWorkflow"; runId: string; step?: number }
   | { type: "decideWeeklyRevision"; eventId: string; decision: "approve" | "decline" }
   | { type: "requestAnotherWeeklyRevision"; eventId: string }
   | { type: "approveWeeklyMenu"; id: string };
@@ -385,7 +387,11 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
       return reviseWeeklyMenu(s, a.id, a.date && a.meal ? { date: a.date, meal: a.meal } : undefined, reference);
     }
     case "startWeeklyWorkflow": return startWeeklyWorkflow(s, a.date, reference);
-    case "advanceWeeklyWorkflow": return advanceWeeklyWorkflow(s, a.runId, reference);
+    case "advanceWeeklyWorkflow": {
+      const run = s.workflowRuns?.find((r) => r.workflowRunId === a.runId);
+      if (a.step !== undefined && run && run.step !== a.step) return s;
+      return advanceWeeklyWorkflow(s, a.runId, reference);
+    }
     case "decideWeeklyRevision": return decideRevision(s, a.eventId, a.decision, reference);
     case "requestAnotherWeeklyRevision": return requestAnotherRevision(s, a.eventId, reference);
     case "approveWeeklyMenu": {
@@ -475,38 +481,101 @@ type KitchenContextValue = { state: KitchenState; analysis: Analysis; dispatch: 
 const Ctx: Context<KitchenContextValue | null> = import.meta.hot?.data?.["kitchenContext"] ?? createContext<KitchenContextValue | null>(null);
 if (import.meta.hot?.data) import.meta.hot.data["kitchenContext"] = Ctx;
 
+function localSeedState(): KitchenState {
+  let saved: KitchenState | null = null;
+  try { const raw = localStorage.getItem(KEY); saved = raw ? JSON.parse(raw) as KitchenState : null; } catch { /* ignore */ }
+  return prepareState(saved);
+}
+/** Versioned, idempotent migrations applied to any loaded state (local seed or shared snapshot). */
+export function prepareState(saved: KitchenState | null): KitchenState {
+  // Catalog grows over time: merge ingredients the saved state doesn't know yet.
+  const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
+  const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
+  const migrated = migrateMenuReset(migrateMealHistory(migrateApprovalCleanup(migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))))));
+  return migrateInventoryReplenishment(migrated);
+}
+const sharedReduce = (s: KitchenState, a: Action, ref: Date) => reducer(s, a, ref);
+const COMPACT_EVERY = 200;
+type ActionRow = { id: number; client_id: string; action: unknown; acted_at: string };
+
 export function KitchenProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer((s: KitchenState, a: Action) => reducer(s, a), undefined, initialState);
-  const loaded = useRef(false);
+  const [state, setState] = useState<KitchenState | null>(null);
+  const confirmed = useRef<{ state: KitchenState; lastId: number; snapshotId: number } | null>(null);
+  const pending = useRef<{ key: string; action: Action; at: number }[]>([]);
+  const queue = useRef<Promise<void>>(Promise.resolve());
   const [reference, setReference] = useState<Date | null>(null);
   useEffect(() => {
     setReference(new Date());
     const timer = window.setInterval(() => setReference(new Date()), 60000);
     return () => window.clearInterval(timer);
   }, []);
+  const show = () => { if (confirmed.current) setState(rebuild(confirmed.current.state, pending.current, sharedReduce)); };
+  // Pull every shared action this browser has not applied yet, in database order.
+  const catchUp = () => { queue.current = queue.current.then(async () => {
+    const base = confirmed.current; if (!base) return;
+    const { data, error } = await supabase.from("kitchen_actions").select("id, client_id, action, acted_at").gt("id", base.lastId).order("id").limit(1000);
+    if (error || !data?.length) return;
+    let next = base.state;
+    for (const row of data as ActionRow[]) {
+      next = replayAt(next, row.action as Action, new Date(row.acted_at).getTime(), sharedReduce);
+      pending.current = pending.current.filter((p) => p.key !== row.client_id);
+    }
+    const lastId = (data[data.length - 1] as ActionRow).id;
+    confirmed.current = { ...base, state: next, lastId };
+    show();
+    if (lastId - base.snapshotId >= COMPACT_EVERY) {
+      const { error: compactError } = await supabase.from("kitchen_snapshot").update({ state: next as never, through_action_id: lastId, updated_at: new Date().toISOString() }).eq("id", 1).lt("through_action_id", lastId);
+      if (!compactError && confirmed.current) confirmed.current.snapshotId = lastId;
+    }
+    if (data.length === 1000) catchUp();
+  }).catch(() => undefined); };
+
   useEffect(() => {
-    try { const raw = localStorage.getItem(KEY); const saved = raw ? JSON.parse(raw) as KitchenState : null;
-      // Catalog grows over time: merge ingredients the saved state doesn't know yet.
-      const withIngredients = saved ? mergeIngredientCatalog(saved) : null;
-      const merged = withIngredients ? migrateAdditionalResidents(migrateResidentProfiles(withIngredients)) : null;
-      const migrated = migrateMenuReset(migrateMealHistory(migrateApprovalCleanup(migrateAgentWorkflow(migrateWeeklyPlans(migrateDemoContent(migrateMenuDishes(migrateOrderSnapshot(merged?.seeded ? merged : seedDemo(merged ?? initialState())))))))));
-      dispatch({ type: "load", state: migrateInventoryReplenishment(migrated) }); } catch { /* ignore */ }
-    loaded.current = true;
-  }, []);
-  // Never persist the placeholder initial state: if the provider remounts before the loaded state
-  // renders (e.g. during hydration), saving it would overwrite staff decisions with a fresh demo.
-  const placeholder = useRef(state);
-  useEffect(() => { if (loaded.current && state !== placeholder.current) localStorage.setItem(KEY, JSON.stringify(state)); }, [state]);
-  // Weekly agent workflows advance one persisted step at a time, so a run keeps going
-  // across page navigation and resumes from its last saved step after a refresh.
-  const runningRun = state.workflowRuns?.find((r) => r.status === "running");
+    let cancelled = false;
+    (async () => {
+      let { data: snap } = await supabase.from("kitchen_snapshot").select("state, through_action_id").eq("id", 1).maybeSingle();
+      if (!snap) {
+        // First visit ever: this browser's kitchen becomes the shared starting point.
+        await supabase.from("kitchen_snapshot").upsert({ id: 1, state: localSeedState() as never, through_action_id: 0 }, { onConflict: "id", ignoreDuplicates: true });
+        ({ data: snap } = await supabase.from("kitchen_snapshot").select("state, through_action_id").eq("id", 1).maybeSingle());
+      }
+      if (cancelled) return;
+      const base = prepareState((snap?.state as unknown as KitchenState) ?? null);
+      const through = snap?.through_action_id ?? 0;
+      confirmed.current = { state: base, lastId: through, snapshotId: through };
+      show();
+      catchUp();
+    })();
+    const channel = supabase.channel(`kitchen-actions-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "kitchen_actions" }, () => catchUp())
+      .subscribe();
+    const poll = window.setInterval(catchUp, 30000);
+    return () => { cancelled = true; supabase.removeChannel(channel); window.clearInterval(poll); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const dispatch = useCallback((a: Action) => {
+    if (!confirmed.current || a.type === "load") return;
+    const entry = { key: crypto.randomUUID(), action: a, at: Date.now() };
+    pending.current = [...pending.current, entry];
+    show();
+    void supabase.from("kitchen_actions").insert({ client_id: entry.key, action: a as never, acted_at: new Date(entry.at).toISOString() }).then(({ error }) => {
+      if (error) { pending.current = pending.current.filter((p) => p.key !== entry.key); show(); console.error("Could not save change", error.message); }
+      else catchUp();
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep a local copy so a brand-new shared kitchen can start from this browser's data.
+  useEffect(() => { if (state) try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota */ } }, [state]);
+  // Weekly agent workflows advance one shared step at a time; the step guard means several open
+  // browsers advancing together still move the run forward only once.
+  const runningRun = state?.workflowRuns?.find((r) => r.status === "running");
   useEffect(() => {
     if (!runningRun) return;
-    const timer = window.setTimeout(() => dispatch({ type: "advanceWeeklyWorkflow", runId: runningRun.workflowRunId }), WORKFLOW_STEP_DELAY_MS);
+    const timer = window.setTimeout(() => dispatch({ type: "advanceWeeklyWorkflow", runId: runningRun.workflowRunId, step: runningRun.step }), WORKFLOW_STEP_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [runningRun?.workflowRunId, runningRun?.step]); // eslint-disable-line react-hooks/exhaustive-deps
-  const analysis = useMemo(() => analyze(state, reference ?? new Date("2026-01-01T12:00:00Z")), [state, reference]);
-  if (!reference) return <div className="min-h-screen bg-background" aria-busy="true" />;
+  const analysis = useMemo(() => state ? analyze(state, reference ?? new Date("2026-01-01T12:00:00Z")) : null, [state, reference]);
+  if (!reference || !state || !analysis) return <div className="min-h-screen bg-background" aria-busy="true" />;
   return <Ctx.Provider value={{ state, analysis, dispatch, reference }}>{children}</Ctx.Provider>;
 }
 

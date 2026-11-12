@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      kitchen_actions: {
+        Row: {
+          acted_at: string
+          action: Json
+          client_id: string
+          created_at: string
+          id: number
+        }
+        Insert: {
+          acted_at: string
+          action: Json
+          client_id: string
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          acted_at?: string
+          action?: Json
+          client_id?: string
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      kitchen_snapshot: {
+        Row: {
+          id: number
+          state: Json
+          through_action_id: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          state: Json
+          through_action_id?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          state?: Json
+          through_action_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_path: string | null

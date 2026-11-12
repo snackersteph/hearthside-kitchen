@@ -22,6 +22,13 @@
       "when": 1794445698604,
       "tag": "0002_scope_avatar_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794445954768,
+      "tag": "0003_shared_kitchen_state",
+      "breakpoints": true
     }
   ]
 }
