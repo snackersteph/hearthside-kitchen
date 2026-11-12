@@ -29,6 +29,13 @@
       "when": 1794445954768,
       "tag": "0003_shared_kitchen_state",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794446257519,
+      "tag": "0004_tighten_shared_kitchen_policies",
+      "breakpoints": true
     }
   ]
 }

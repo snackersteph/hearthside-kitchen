@@ -495,7 +495,6 @@ export function prepareState(saved: KitchenState | null): KitchenState {
   return migrateInventoryReplenishment(migrated);
 }
 const sharedReduce = (s: KitchenState, a: Action, ref: Date) => reducer(s, a, ref);
-const COMPACT_EVERY = 200;
 type ActionRow = { id: number; client_id: string; action: unknown; acted_at: string };
 
 export function KitchenProvider({ children }: { children: ReactNode }) {
@@ -523,10 +522,6 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     const lastId = (data[data.length - 1] as ActionRow).id;
     confirmed.current = { ...base, state: next, lastId };
     show();
-    if (lastId - base.snapshotId >= COMPACT_EVERY) {
-      const { error: compactError } = await supabase.from("kitchen_snapshot").update({ state: next as never, through_action_id: lastId, updated_at: new Date().toISOString() }).eq("id", 1).lt("through_action_id", lastId);
-      if (!compactError && confirmed.current) confirmed.current.snapshotId = lastId;
-    }
     if (data.length === 1000) catchUp();
   }).catch(() => undefined); };
 
