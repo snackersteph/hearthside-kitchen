@@ -1,7 +1,13 @@
 // In-memory stand-in for the shared kitchen tables, kept in (per-test) localStorage so a remount
 // behaves like another browser loading the same shared kitchen.
 type Row = Record<string, unknown>;
-const load = (t: string): Row[] => JSON.parse(globalThis.localStorage?.getItem(`mock-db:${t}`) ?? "[]");
+import fixtures from "./fixtures/catalogs.json";
+const load = (t: string): Row[] => {
+  const saved = globalThis.localStorage?.getItem(`mock-db:${t}`);
+  if (saved) return JSON.parse(saved);
+  const catalog = t === "recipes" ? fixtures.recipes : t === "residents" ? fixtures.residents : [];
+  return catalog.map((data, sort_order) => ({ id: data.id, data, sort_order, deleted: false }));
+};
 const save = (t: string, rows: Row[]) => globalThis.localStorage?.setItem(`mock-db:${t}`, JSON.stringify(rows));
 
 function query(table: string) {

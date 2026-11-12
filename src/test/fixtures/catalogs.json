@@ -1,0 +1,5236 @@
+{
+  "recipes": [
+    {
+      "id": "BRK-REG-01",
+      "name": "Turkey & Egg Sandwich",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "egg",
+        "dairy",
+        "gluten"
+      ],
+      "halal": false,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "bread",
+          "qty": 2,
+          "unit": "slices"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-02",
+      "name": "Turkey & Potato Hash",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [],
+      "halal": false,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-03",
+      "name": "Salmon Scramble",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [
+        "fish",
+        "egg",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-04",
+      "name": "Salmon & Potato Hash",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-05",
+      "name": "Salmon Congee",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-06",
+      "name": "Salmon Toast",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "bread",
+          "qty": 2,
+          "unit": "slices"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-07",
+      "name": "Turkey Omelette",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [
+        "egg"
+      ],
+      "halal": false,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-08",
+      "name": "Turkey & Rice Congee",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-09",
+      "name": "Turkey & Sweet Potato Hash",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-10",
+      "name": "Salmon Fried Rice",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish",
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-11",
+      "name": "Salmon & Egg Rice Bowl",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish",
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-12",
+      "name": "Salmon & Carrot Hash",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-13",
+      "name": "Turkey & Egg Fried Rice",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": false,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-14",
+      "name": "Pur\u00e9ed Salmon & Sweet Potato",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "pureed",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 100,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-REG-15",
+      "name": "Pur\u00e9ed Eggs & Sweet Potato",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "pureed",
+      "allergens": [
+        "egg",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-01",
+      "name": "Buttermilk Pancakes & Berries",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy",
+        "gluten",
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "flour",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 80,
+          "unit": "ml"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "berries",
+          "qty": 50,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-02",
+      "name": "Soft Scrambled Eggs & Toast",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "egg",
+        "dairy",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "milk",
+          "qty": 30,
+          "unit": "ml"
+        },
+        {
+          "id": "bread",
+          "qty": 2,
+          "unit": "slices"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-03",
+      "name": "Veggie Omelette",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-04",
+      "name": "Banana Pancakes",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "gluten",
+        "egg",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "flour",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "banana",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "milk",
+          "qty": 60,
+          "unit": "ml"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-05",
+      "name": "Egg & Veggie Fried Rice",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-06",
+      "name": "Creamy Banana Oatmeal",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "oats",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 120,
+          "unit": "ml"
+        },
+        {
+          "id": "banana",
+          "qty": 1,
+          "unit": "each"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-07",
+      "name": "Berry Cream Oatmeal",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "oats",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 100,
+          "unit": "ml"
+        },
+        {
+          "id": "berries",
+          "qty": 50,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-08",
+      "name": "Potato & Egg Skillet",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-09",
+      "name": "Sweet Potato & Egg Scramble",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "egg",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "sweet-potato",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-10",
+      "name": "French Toast with Berries",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "gluten",
+        "egg",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "bread",
+          "qty": 2,
+          "unit": "slices"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "milk",
+          "qty": 60,
+          "unit": "ml"
+        },
+        {
+          "id": "berries",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-11",
+      "name": "Egg Congee",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-12",
+      "name": "Carrot Egg Custard",
+      "meal": "breakfast",
+      "category": "snack",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "egg",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "carrots",
+          "qty": 30,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 60,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-13",
+      "name": "Buttered Toast & Berries",
+      "meal": "breakfast",
+      "category": "snack",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "gluten",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "bread",
+          "qty": 2,
+          "unit": "slices"
+        },
+        {
+          "id": "butter",
+          "qty": 10,
+          "unit": "g"
+        },
+        {
+          "id": "berries",
+          "qty": 50,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-14",
+      "name": "Baked Berry Oat Bake",
+      "meal": "breakfast",
+      "category": "snack",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "egg",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "oats",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "milk",
+          "qty": 80,
+          "unit": "ml"
+        },
+        {
+          "id": "berries",
+          "qty": 50,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VEG-15",
+      "name": "Pur\u00e9ed Eggs & Carrot",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "pureed",
+      "allergens": [
+        "egg",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "carrots",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-01",
+      "name": "Steel-Cut Oatmeal & Berries",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "oats",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "oat-milk",
+          "qty": 120,
+          "unit": "ml"
+        },
+        {
+          "id": "berries",
+          "qty": 50,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-02",
+      "name": "Tofu Scramble & GF Toast",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 30,
+          "unit": "g"
+        },
+        {
+          "id": "gf-bread",
+          "qty": 2,
+          "unit": "slices"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-03",
+      "name": "Banana-Oat Breakfast Pur\u00e9e",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "oats",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "oat-milk",
+          "qty": 100,
+          "unit": "ml"
+        },
+        {
+          "id": "banana",
+          "qty": 1,
+          "unit": "each"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-04",
+      "name": "Banana Berry Oatmeal",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "oats",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "oat-milk",
+          "qty": 100,
+          "unit": "ml"
+        },
+        {
+          "id": "banana",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "berries",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-05",
+      "name": "Quinoa Breakfast Bowl",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "quinoa",
+          "qty": 70,
+          "unit": "g"
+        },
+        {
+          "id": "oat-milk",
+          "qty": 100,
+          "unit": "ml"
+        },
+        {
+          "id": "banana",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "berries",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-06",
+      "name": "Warm Quinoa & Berry Porridge",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "quinoa",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "oat-milk",
+          "qty": 120,
+          "unit": "ml"
+        },
+        {
+          "id": "berries",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-07",
+      "name": "Tofu & Potato Hash",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-08",
+      "name": "Tofu & Sweet Potato Scramble",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-09",
+      "name": "Tofu Rice Congee",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "tofu",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-10",
+      "name": "Lentil & Vegetable Breakfast Stew",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-11",
+      "name": "Sweet Potato & Banana Mash",
+      "meal": "breakfast",
+      "category": "snack",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "sweet-potato",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "banana",
+          "qty": 1,
+          "unit": "each"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-12",
+      "name": "Garlic Toast with Vegetables",
+      "meal": "breakfast",
+      "category": "side",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "bread",
+          "qty": 2,
+          "unit": "slices"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-13",
+      "name": "Berry Rice Pudding",
+      "meal": "breakfast",
+      "category": "snack",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "oat-milk",
+          "qty": 120,
+          "unit": "ml"
+        },
+        {
+          "id": "berries",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-14",
+      "name": "Carrot & Lentil Pur\u00e9e",
+      "meal": "breakfast",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 80,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "BRK-VGN-15",
+      "name": "Berry-Oat Pur\u00e9e",
+      "meal": "breakfast",
+      "category": "snack",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "oats",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "oat-milk",
+          "qty": 100,
+          "unit": "ml"
+        },
+        {
+          "id": "berries",
+          "qty": 50,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-01",
+      "name": "Creamy Chicken Alfredo",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "dairy",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 60,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-02",
+      "name": "Dairy-Free Chicken Primavera",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "gf-pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "vegetables",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 10,
+          "unit": "ml"
+        },
+        {
+          "id": "garlic",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-03",
+      "name": "Turkey Club Sandwich",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "gluten"
+      ],
+      "halal": false,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "bread",
+          "qty": 3,
+          "unit": "slices"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-04",
+      "name": "Pur\u00e9ed Chicken & Sweet Potato",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 150,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-05",
+      "name": "Chicken & Rice Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-06",
+      "name": "Lemon Garlic Chicken & Rice",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-07",
+      "name": "Turkey & Potato Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-08",
+      "name": "Turkey Rice Bowl",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-09",
+      "name": "Turkey & Veggie Pasta",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "gluten"
+      ],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 10,
+          "unit": "ml"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-10",
+      "name": "Salmon & Quinoa Bowl",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "quinoa",
+          "qty": 70,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-11",
+      "name": "Salmon & Potato Chowder",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [
+        "fish",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 100,
+          "unit": "ml"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-12",
+      "name": "Garlic Salmon Pasta",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 10,
+          "unit": "ml"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-13",
+      "name": "Shrimp & Rice Bowl",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "shellfish"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "shrimp",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-14",
+      "name": "Pur\u00e9ed Salmon & Potato",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "pureed",
+      "allergens": [
+        "fish",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-REG-15",
+      "name": "Pur\u00e9ed Turkey & Carrot",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "carrots",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 80,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-01",
+      "name": "Egg Fried Rice",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-02",
+      "name": "Cheesy Veggie Pasta",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "dairy",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-03",
+      "name": "Creamy Vegetable Pasta",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "dairy",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 50,
+          "unit": "ml"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 10,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-04",
+      "name": "Creamy Potato Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "potatoes",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 120,
+          "unit": "ml"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-05",
+      "name": "Vegetable Frittata",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 3,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-06",
+      "name": "Egg & Vegetable Sandwich",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg",
+        "gluten",
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "bread",
+          "qty": 2,
+          "unit": "slices"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-07",
+      "name": "Cheesy Lentil Bake",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-08",
+      "name": "Sweet Potato & Egg Bowl",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "sweet-potato",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-09",
+      "name": "Quinoa & Parmesan Bowl",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "quinoa",
+          "qty": 70,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-10",
+      "name": "Creamy Carrot Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "carrots",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 40,
+          "unit": "ml"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-11",
+      "name": "Egg Drop Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "rice",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-12",
+      "name": "Baked Potato with Butter & Vegetables",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "potatoes",
+          "qty": 200,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 10,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-13",
+      "name": "Garlic Parmesan Rice",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-14",
+      "name": "Pur\u00e9ed Potato & Cheese Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "pureed",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "potatoes",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 100,
+          "unit": "ml"
+        },
+        {
+          "id": "parmesan",
+          "qty": 10,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VEG-15",
+      "name": "Pur\u00e9ed Sweet Potato & Cream Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "pureed",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "sweet-potato",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 30,
+          "unit": "ml"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-01",
+      "name": "Lentil & Vegetable Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 120,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-02",
+      "name": "Quinoa Vegetable Bowl",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "quinoa",
+          "qty": 70,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-03",
+      "name": "Tofu & Vegetable Rice Bowl",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-04",
+      "name": "Garlic Tofu Stir-Fry",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-05",
+      "name": "Lentil & Rice Pilaf",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-06",
+      "name": "Garlic Olive Oil Pasta",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 10,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-07",
+      "name": "Sweet Potato & Lentil Stew",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "sweet-potato",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-08",
+      "name": "Potato & Vegetable Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "potatoes",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-09",
+      "name": "Tofu Vegetable Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "rice",
+          "qty": 30,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-10",
+      "name": "Quinoa & Sweet Potato Bowl",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "quinoa",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-11",
+      "name": "Garlic Tofu Sandwich",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "gf-bread",
+          "qty": 2,
+          "unit": "slices"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-12",
+      "name": "Vegetable Fried Rice",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-13",
+      "name": "Pur\u00e9ed Carrot & Lentil Soup",
+      "meal": "lunch",
+      "category": "side",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 100,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-14",
+      "name": "Pur\u00e9ed Sweet Potato & Carrot",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "sweet-potato",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "LUN-VGN-15",
+      "name": "Pur\u00e9ed Tofu & Vegetables",
+      "meal": "lunch",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 60,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-01",
+      "name": "Herb-Baked Salmon & Rice",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-02",
+      "name": "Roast Chicken & Mashed Potatoes",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 200,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 40,
+          "unit": "ml"
+        },
+        {
+          "id": "butter",
+          "qty": 10,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-03",
+      "name": "Garlic Shrimp Scampi",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "shellfish",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "shrimp",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 5,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 10,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-04",
+      "name": "Pur\u00e9ed Salmon & Carrot",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "pureed",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "carrots",
+          "qty": 100,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-05",
+      "name": "Roast Turkey & Mashed Potatoes",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 200,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 10,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 40,
+          "unit": "ml"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-06",
+      "name": "Chicken & Vegetable Stew",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-07",
+      "name": "Garlic Chicken & Sweet Potato",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-08",
+      "name": "Salmon & Potato Bake",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "potatoes",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-09",
+      "name": "Creamy Salmon Pasta",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "fish",
+        "dairy",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 50,
+          "unit": "ml"
+        },
+        {
+          "id": "parmesan",
+          "qty": 10,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-10",
+      "name": "Shrimp Fried Rice",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "shellfish",
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "shrimp",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-11",
+      "name": "Turkey & Vegetable Rice Casserole",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-12",
+      "name": "Garlic Chicken Pasta",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "regular",
+      "allergens": [
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "chicken",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 10,
+          "unit": "ml"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-13",
+      "name": "Salmon & Rice Congee",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "soft",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 30,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-14",
+      "name": "Pur\u00e9ed Turkey & Sweet Potato",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "pureed",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": false,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "turkey",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-REG-15",
+      "name": "Pur\u00e9ed Salmon & Rice",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "regular",
+      "texture": "pureed",
+      "allergens": [
+        "fish"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "salmon",
+          "qty": 1,
+          "unit": "portions"
+        },
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-01",
+      "name": "Parmesan Vegetable Risotto",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-02",
+      "name": "Vegetable & Potato Frittata",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 3,
+          "unit": "each"
+        },
+        {
+          "id": "potatoes",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-03",
+      "name": "Parmesan Cream Penne with Vegetables",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "dairy",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 50,
+          "unit": "ml"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 10,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-04",
+      "name": "Cheesy Potato Gratin",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "potatoes",
+          "qty": 200,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 50,
+          "unit": "ml"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-05",
+      "name": "Egg & Vegetable Rice Bowl",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-06",
+      "name": "Sweet Potato & Parmesan Bake",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "sweet-potato",
+          "qty": 200,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-07",
+      "name": "Lentil & Cheese Shepherd\u2019s Pie",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 10,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 5,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-08",
+      "name": "Quinoa Egg Bowl",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "quinoa",
+          "qty": 70,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-09",
+      "name": "Buttery Carrot & Potato Mash",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "carrots",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 10,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 40,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-10",
+      "name": "Garlic Butter Parmesan Pasta",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "dairy",
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 900,
+      "ingredients": [
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 10,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "parmesan",
+          "qty": 15,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-11",
+      "name": "Vegetable & Egg Congee",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "eggs",
+          "qty": 1,
+          "unit": "each"
+        },
+        {
+          "id": "carrots",
+          "qty": 30,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 30,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-12",
+      "name": "Baked Eggs with Sweet Potato",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "regular",
+      "allergens": [
+        "egg"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "eggs",
+          "qty": 2,
+          "unit": "each"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-13",
+      "name": "Creamy Lentil Soup",
+      "meal": "dinner",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "soft",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 30,
+          "unit": "ml"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-14",
+      "name": "Pur\u00e9ed Potato & Carrot with Butter",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegetarian",
+      "texture": "pureed",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "potatoes",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "butter",
+          "qty": 10,
+          "unit": "g"
+        },
+        {
+          "id": "milk",
+          "qty": 40,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VEG-15",
+      "name": "Pur\u00e9ed Lentil & Cream Soup",
+      "meal": "dinner",
+      "category": "side",
+      "dietGroup": "vegetarian",
+      "texture": "pureed",
+      "allergens": [
+        "dairy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "cream",
+          "qty": 30,
+          "unit": "ml"
+        },
+        {
+          "id": "carrots",
+          "qty": 60,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-01",
+      "name": "Roasted Vegetable Quinoa Bowl",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "quinoa",
+          "qty": 70,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 150,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-02",
+      "name": "Pur\u00e9ed Lentil Dal",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 70,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-03",
+      "name": "Garlic Lentil Stew",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-04",
+      "name": "Tofu & Rice Stir-Fry",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-05",
+      "name": "Roasted Sweet Potato & Lentils",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "sweet-potato",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-06",
+      "name": "Vegetable Penne Primavera",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "gluten"
+      ],
+      "halal": true,
+      "sodiumMg": 600,
+      "ingredients": [
+        {
+          "id": "pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 10,
+          "unit": "ml"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-07",
+      "name": "Lentil Shepherd\u2019s Pie",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 150,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-08",
+      "name": "Tofu & Potato Stew",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 40,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-09",
+      "name": "Gluten-Free Vegetable Penne",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "gf-pasta",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 10,
+          "unit": "ml"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-10",
+      "name": "Rice & Lentil Bowl",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "rice",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-11",
+      "name": "Baked Tofu with Quinoa",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "regular",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 100,
+          "unit": "g"
+        },
+        {
+          "id": "quinoa",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 60,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-12",
+      "name": "Vegetable & Quinoa Soup",
+      "meal": "dinner",
+      "category": "side",
+      "dietGroup": "vegan",
+      "texture": "soft",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "quinoa",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "vegetables",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "garlic",
+          "qty": 3,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-13",
+      "name": "Pur\u00e9ed Potato & Carrot",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "potatoes",
+          "qty": 120,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "olive-oil",
+          "qty": 5,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-14",
+      "name": "Pur\u00e9ed Tofu & Sweet Potato",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [
+        "soy"
+      ],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "tofu",
+          "qty": 80,
+          "unit": "g"
+        },
+        {
+          "id": "sweet-potato",
+          "qty": 100,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "id": "DIN-VGN-15",
+      "name": "Pur\u00e9ed Rice & Lentil",
+      "meal": "dinner",
+      "category": "main",
+      "dietGroup": "vegan",
+      "texture": "pureed",
+      "allergens": [],
+      "halal": true,
+      "sodiumMg": 300,
+      "ingredients": [
+        {
+          "id": "lentils",
+          "qty": 50,
+          "unit": "g"
+        },
+        {
+          "id": "rice",
+          "qty": 40,
+          "unit": "g"
+        },
+        {
+          "id": "carrots",
+          "qty": 60,
+          "unit": "g"
+        }
+      ]
+    }
+  ],
+  "residents": [
+    {
+      "id": "R001",
+      "name": "Margaret Wilson",
+      "age": 82,
+      "room": "104",
+      "allergens": [],
+      "diets": [
+        "diabetic"
+      ],
+      "likes": [
+        "Oatmeal",
+        "salmon",
+        "blueberries",
+        "roasted chicken",
+        "green vegetables"
+      ],
+      "notes": "Medical conditions: Type 2 diabetes\nNutritional priority: Support consistent carbohydrate intake and balanced blood glucose management\nDistribute carbohydrate intake consistently throughout the day according to her approved meal plan.\nPrefer whole grains and fiber-rich vegetables.\nOffer unsweetened beverages by default.\nAvoid unnecessarily large servings of sugary desserts.",
+      "careProfile": {
+        "Gender": "Female",
+        "Mobility": "Walks independently",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Consistent carbohydrate diet",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Mushrooms, spicy dishes, overly sweet desserts",
+        "Preferred Cuisine": "American, Mediterranean",
+        "Preferred Beverages": "Water, unsweetened tea",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Distribute carbohydrate intake consistently throughout the day according to her approved meal plan.",
+        "Prefer whole grains and fiber-rich vegetables.",
+        "Offer unsweetened beverages by default.",
+        "Avoid unnecessarily large servings of sugary desserts."
+      ]
+    },
+    {
+      "id": "R002",
+      "name": "Robert Chen",
+      "age": 78,
+      "room": "105",
+      "allergens": [],
+      "diets": [
+        "low-sodium"
+      ],
+      "likes": [
+        "Steamed fish",
+        "rice",
+        "bok choy",
+        "tofu",
+        "vegetable soup"
+      ],
+      "notes": "Medical conditions: Hypertension\nNutritional priority: Limit sodium intake while maintaining balanced nutrition\nAvoid high-sodium sauces and broths.\nUse herbs, ginger, garlic, and other seasonings for flavor.\nOffer steamed or baked dishes more frequently than fried dishes.\nKeep sodium within the resident's approved dietary target.",
+      "careProfile": {
+        "Gender": "Male",
+        "Mobility": "Independent",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Low sodium",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Cheese-heavy dishes, fried food, very sweet desserts",
+        "Preferred Cuisine": "Chinese, East Asian",
+        "Preferred Beverages": "Green tea, warm water",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Avoid high-sodium sauces and broths.",
+        "Use herbs, ginger, garlic, and other seasonings for flavor.",
+        "Offer steamed or baked dishes more frequently than fried dishes.",
+        "Keep sodium within the resident's approved dietary target."
+      ]
+    },
+    {
+      "id": "R003",
+      "name": "Eleanor Davis",
+      "age": 89,
+      "room": "106",
+      "allergens": [],
+      "diets": [
+        "soft"
+      ],
+      "likes": [
+        "Mashed potatoes",
+        "scrambled eggs",
+        "tender fish",
+        "oatmeal",
+        "soft cooked carrots"
+      ],
+      "notes": "Medical conditions: Arthritis, difficulty chewing\nNutritional priority: Maintain adequate food intake with easily chewed meals\nServe foods at the prescribed texture and piece size.\nAvoid hard, dry, and difficult-to-chew foods.\nProvide tender, moist protein options.\nEnsure meals are comfortable to eat.",
+      "careProfile": {
+        "Gender": "Female",
+        "Mobility": "Uses a walker",
+        "Eating Assistance": "Independent with meal setup",
+        "Diet Type": "Soft and bite-sized foods",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Soft and bite-sized, per approved care plan",
+        "Swallowing Difficulties": "No diagnosed swallowing disorder",
+        "Disliked Foods": "Tough meat, nuts, raw carrots, crunchy bread",
+        "Preferred Cuisine": "Traditional American",
+        "Preferred Beverages": "Warm milk, herbal tea",
+        "Portion Preference": "Small to medium"
+      },
+      "mealInstructions": [
+        "Serve foods at the prescribed texture and piece size.",
+        "Avoid hard, dry, and difficult-to-chew foods.",
+        "Provide tender, moist protein options.",
+        "Ensure meals are comfortable to eat."
+      ]
+    },
+    {
+      "id": "R004",
+      "name": "James Thompson",
+      "age": 85,
+      "room": "107",
+      "allergens": [],
+      "diets": [],
+      "likes": [
+        "Roasted chicken",
+        "white rice",
+        "green beans",
+        "apples",
+        "pasta"
+      ],
+      "notes": "Medical conditions: Chronic kidney disease\nNutritional priority: Follow clinician-defined sodium, potassium, phosphorus, protein, and fluid guidance as applicable\nCheck meals against James's approved renal nutrition plan.\nDo not assume that all potassium-rich or phosphorus-rich foods must be excluded.\nFollow individualized protein and fluid guidance.\nFlag dishes when required clinical limits are missing or cannot be verified.",
+      "careProfile": {
+        "Gender": "Male",
+        "Mobility": "Uses a cane",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Individualized renal diet",
+        "Food Allergies": "Oranges, Mangoes",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Spicy dishes, heavily seasoned food, organ meats",
+        "Preferred Cuisine": "American",
+        "Preferred Beverages": "Water",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Check meals against James's approved renal nutrition plan.",
+        "Do not assume that all potassium-rich or phosphorus-rich foods must be excluded.",
+        "Follow individualized protein and fluid guidance.",
+        "Flag dishes when required clinical limits are missing or cannot be verified."
+      ]
+    },
+    {
+      "id": "R005",
+      "name": "Maria Gonzalez",
+      "age": 76,
+      "room": "108",
+      "allergens": [
+        "dairy"
+      ],
+      "diets": [],
+      "likes": [
+        "Chicken tacos",
+        "beans",
+        "avocado",
+        "rice",
+        "grilled vegetables",
+        "salsa"
+      ],
+      "notes": "Medical conditions: Lactose intolerance\nNutritional priority: Maintain adequate calcium and overall nutrition while minimizing lactose-related symptoms\nOffer lactose-free milk or suitable alternatives.\nAvoid regular dairy products that cause symptoms.\nUse lactose-free ingredients in creamy recipes when appropriate.\nInclude familiar Mexican-inspired flavors.",
+      "careProfile": {
+        "Gender": "Female",
+        "Mobility": "Independent",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Lactose-restricted",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Cream-based sauces, plain boiled vegetables",
+        "Preferred Cuisine": "Mexican, Latin American",
+        "Preferred Beverages": "Water, fruit-infused water",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Offer lactose-free milk or suitable alternatives.",
+        "Avoid regular dairy products that cause symptoms.",
+        "Use lactose-free ingredients in creamy recipes when appropriate.",
+        "Include familiar Mexican-inspired flavors."
+      ]
+    },
+    {
+      "id": "R006",
+      "name": "Bill Parker",
+      "age": 91,
+      "room": "109",
+      "allergens": [],
+      "diets": [],
+      "likes": [
+        "Pancakes",
+        "scrambled eggs",
+        "mashed potatoes",
+        "chicken soup",
+        "pudding"
+      ],
+      "notes": "Medical conditions: Unintentional weight loss, reduced appetite\nNutritional priority: Support adequate calorie and protein intake\nOffer smaller, energy-dense portions.\nInclude protein-rich snacks between meals.\nOffer approved fortified foods and beverages when appropriate.\nMonitor acceptance of meals and report poor intake to staff.",
+      "careProfile": {
+        "Gender": "Male",
+        "Mobility": "Uses a wheelchair",
+        "Eating Assistance": "Needs meal setup and occasional assistance",
+        "Diet Type": "Energy-dense, protein-rich diet",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None reported",
+        "Disliked Foods": "Large salads, spicy food, dry meats",
+        "Preferred Cuisine": "Traditional American",
+        "Preferred Beverages": "Milk, smoothies",
+        "Portion Preference": "Small, frequent meals"
+      },
+      "mealInstructions": [
+        "Offer smaller, energy-dense portions.",
+        "Include protein-rich snacks between meals.",
+        "Offer approved fortified foods and beverages when appropriate.",
+        "Monitor acceptance of meals and report poor intake to staff."
+      ]
+    },
+    {
+      "id": "R007",
+      "name": "Susan Miller",
+      "age": 80,
+      "room": "110",
+      "allergens": [
+        "gluten"
+      ],
+      "diets": [],
+      "likes": [
+        "Quinoa",
+        "roasted vegetables",
+        "grilled chicken",
+        "sweet potatoes",
+        "fruit"
+      ],
+      "notes": "Medical conditions: Celiac disease\nNutritional priority: Maintain adequate nutrition while avoiding gluten exposure\nExclude wheat, barley, rye, and gluten-containing ingredients.\nVerify sauces, seasonings, and processed ingredients.\nPrevent gluten cross-contact during preparation and serving.\nUse certified gluten-free ingredients where needed.",
+      "careProfile": {
+        "Gender": "Female",
+        "Mobility": "Independent",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Strict gluten-free",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Fried food, overly salty dishes",
+        "Preferred Cuisine": "Mediterranean, American",
+        "Preferred Beverages": "Herbal tea, water",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Exclude wheat, barley, rye, and gluten-containing ingredients.",
+        "Verify sauces, seasonings, and processed ingredients.",
+        "Prevent gluten cross-contact during preparation and serving.",
+        "Use certified gluten-free ingredients where needed."
+      ]
+    },
+    {
+      "id": "R008",
+      "name": "David Kim",
+      "age": 83,
+      "room": "111",
+      "allergens": [],
+      "diets": [],
+      "likes": [
+        "Rice",
+        "tofu",
+        "steamed eggs",
+        "Korean-style soups",
+        "grilled fish"
+      ],
+      "notes": "Medical conditions: Mild cognitive impairment\nNutritional priority: Encourage consistent meal intake and hydration\nProvide familiar foods and predictable meal routines.\nAvoid overly complicated meal presentations.\nOffer gentle reminders and encouragement during meals.\nMonitor meal completion and hydration.",
+      "careProfile": {
+        "Gender": "Male",
+        "Mobility": "Walks with supervision",
+        "Eating Assistance": "Requires occasional verbal prompting",
+        "Diet Type": "Regular",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None reported",
+        "Disliked Foods": "Heavy cream sauces, very sweet foods",
+        "Preferred Cuisine": "Korean, East Asian",
+        "Preferred Beverages": "Warm barley tea, water",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Provide familiar foods and predictable meal routines.",
+        "Avoid overly complicated meal presentations.",
+        "Offer gentle reminders and encouragement during meals.",
+        "Monitor meal completion and hydration."
+      ]
+    },
+    {
+      "id": "R009",
+      "name": "Patricia Johnson",
+      "age": 87,
+      "room": "112",
+      "allergens": [],
+      "diets": [
+        "low-sodium"
+      ],
+      "likes": [
+        "Grilled salmon",
+        "vegetables",
+        "oatmeal",
+        "berries",
+        "lentil soup"
+      ],
+      "notes": "Medical conditions: Cardiovascular disease, high cholesterol\nNutritional priority: Support cardiovascular health through balanced meals lower in saturated fat and sodium\nPrioritize vegetables, whole grains, and appropriate lean proteins.\nFavor unsaturated fats over saturated fats.\nLimit high-sodium processed foods.\nOffer baked, grilled, or steamed options.",
+      "careProfile": {
+        "Gender": "Female",
+        "Mobility": "Uses a walker",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Heart-healthy",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Fried chicken, bacon, creamy pasta",
+        "Preferred Cuisine": "Mediterranean, American",
+        "Preferred Beverages": "Water, unsweetened tea",
+        "Portion Preference": "Small to medium"
+      },
+      "mealInstructions": [
+        "Prioritize vegetables, whole grains, and appropriate lean proteins.",
+        "Favor unsaturated fats over saturated fats.",
+        "Limit high-sodium processed foods.",
+        "Offer baked, grilled, or steamed options."
+      ]
+    },
+    {
+      "id": "R010",
+      "name": "George Anderson",
+      "age": 79,
+      "room": "113",
+      "allergens": [
+        "nuts"
+      ],
+      "diets": [],
+      "likes": [
+        "Chicken",
+        "pasta",
+        "potatoes",
+        "beef stew",
+        "roasted vegetables"
+      ],
+      "notes": "Medical conditions: None requiring a therapeutic diet\nNutritional priority: Maintain balanced nutrition while strictly avoiding peanut exposure\nStrictly avoid peanuts and peanut-containing ingredients.\nCheck packaged foods, sauces, dressings, and desserts for allergens.\nFollow facility allergen cross-contact protocols.\nFlag any menu item with unknown peanut safety status.",
+      "careProfile": {
+        "Gender": "Male",
+        "Mobility": "Independent",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Regular, peanut-free",
+        "Food Allergies": "Peanuts",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Spicy dishes, tofu",
+        "Preferred Cuisine": "American, Italian",
+        "Preferred Beverages": "Water, lemonade",
+        "Portion Preference": "Large"
+      },
+      "mealInstructions": [
+        "Strictly avoid peanuts and peanut-containing ingredients.",
+        "Check packaged foods, sauces, dressings, and desserts for allergens.",
+        "Follow facility allergen cross-contact protocols.",
+        "Flag any menu item with unknown peanut safety status."
+      ]
+    },
+    {
+      "id": "R011",
+      "name": "Linda Martinez",
+      "age": 84,
+      "room": "114",
+      "allergens": [],
+      "diets": [
+        "vegetarian"
+      ],
+      "likes": [
+        "Lentils",
+        "tofu",
+        "vegetable soup",
+        "eggs",
+        "cheese",
+        "bean burritos"
+      ],
+      "notes": "Medical conditions: None requiring a therapeutic diet\nNutritional priority: Maintain adequate protein, vitamin B12, iron, and overall nutrition\nDo not include meat, poultry, fish, or meat-based broths.\nEggs and dairy products are acceptable.\nProvide varied vegetarian protein sources.\nAvoid offering only side dishes as vegetarian meals.",
+      "careProfile": {
+        "Gender": "Female",
+        "Mobility": "Uses a cane",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Lacto-ovo vegetarian",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Meat, fish, very spicy dishes",
+        "Preferred Cuisine": "Mediterranean, Mexican, Vegetarian",
+        "Preferred Beverages": "Tea, water",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Do not include meat, poultry, fish, or meat-based broths.",
+        "Eggs and dairy products are acceptable.",
+        "Provide varied vegetarian protein sources.",
+        "Avoid offering only side dishes as vegetarian meals."
+      ]
+    },
+    {
+      "id": "R012",
+      "name": "Thomas Brown",
+      "age": 92,
+      "room": "115",
+      "allergens": [],
+      "diets": [
+        "pureed"
+      ],
+      "likes": [
+        "Chicken dishes",
+        "mashed vegetables",
+        "fruit purees",
+        "smooth desserts"
+      ],
+      "notes": "Medical conditions: Dysphagia\nNutritional priority: Support adequate nutrition and hydration while following the prescribed swallowing care plan\nProvide foods that meet the prescribed IDDSI texture level.\nAll liquids must meet the prescribed consistency.\nAvoid mixed textures, lumps, and unsuitable garnishes.\nRequire trained staff verification of texture and liquid consistency before serving.\nFollow the individualized positioning, pacing, and supervision plan.",
+      "careProfile": {
+        "Gender": "Male",
+        "Mobility": "Wheelchair user",
+        "Eating Assistance": "Requires staff assistance and supervision",
+        "Diet Type": "Texture-modified diet",
+        "Food Allergies": "None known",
+        "Texture Requirement": "IDDSI Level 4 \u2014 Pureed",
+        "Liquid Consistency": "IDDSI Level 2 \u2014 Mildly Thick, per fictional care plan",
+        "Disliked Foods": "Bitter vegetables, heavily spiced dishes",
+        "Preferred Cuisine": "Traditional American",
+        "Preferred Beverages": "Thickened apple juice, thickened water as prescribed",
+        "Portion Preference": "Small"
+      },
+      "mealInstructions": [
+        "Provide foods that meet the prescribed IDDSI texture level.",
+        "All liquids must meet the prescribed consistency.",
+        "Avoid mixed textures, lumps, and unsuitable garnishes.",
+        "Require trained staff verification of texture and liquid consistency before serving.",
+        "Follow the individualized positioning, pacing, and supervision plan."
+      ]
+    },
+    {
+      "id": "R013",
+      "name": "Helen Wong",
+      "age": 81,
+      "room": "116",
+      "allergens": [
+        "shellfish"
+      ],
+      "diets": [
+        "diabetic",
+        "low-sodium"
+      ],
+      "likes": [
+        "Congee",
+        "steamed vegetables",
+        "tofu",
+        "fish",
+        "brown rice"
+      ],
+      "notes": "Medical conditions: Type 2 diabetes, hypertension\nNutritional priority: Support consistent carbohydrate intake while keeping sodium within prescribed limits\nBalance carbohydrate portions across meals.\nUse lower-sodium sauces and broths.\nAccount for rice and congee portions when planning carbohydrates.\nCheck meals against both dietary requirements rather than treating them independently.",
+      "careProfile": {
+        "Gender": "Female",
+        "Mobility": "Independent",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Consistent carbohydrate, low sodium",
+        "Food Allergies": "Shrimp",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Fried food, heavy desserts, overly salty dishes",
+        "Preferred Cuisine": "Chinese",
+        "Preferred Beverages": "Warm water, unsweetened tea",
+        "Portion Preference": "Small to medium"
+      },
+      "mealInstructions": [
+        "Balance carbohydrate portions across meals.",
+        "Use lower-sodium sauces and broths.",
+        "Account for rice and congee portions when planning carbohydrates.",
+        "Check meals against both dietary requirements rather than treating them independently."
+      ]
+    },
+    {
+      "id": "R014",
+      "name": "Richard Evans",
+      "age": 86,
+      "room": "117",
+      "allergens": [],
+      "diets": [],
+      "likes": [
+        "Yogurt",
+        "soup",
+        "sandwiches",
+        "scrambled eggs",
+        "bananas"
+      ],
+      "notes": "Medical conditions: Reduced appetite\nNutritional priority: Encourage adequate daily calorie and protein intake\nOffer smaller portions more frequently.\nInclude appealing snacks between meals.\nPrioritize nutrient-dense foods.\nAvoid overwhelming the resident with large plates.\nRecord consistently low meal intake for staff follow-up.",
+      "careProfile": {
+        "Gender": "Male",
+        "Mobility": "Uses a walker",
+        "Eating Assistance": "Independent with occasional encouragement",
+        "Diet Type": "Regular, small frequent meals",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Large meals, very spicy food, dry chicken",
+        "Preferred Cuisine": "American, British",
+        "Preferred Beverages": "Tea, milk",
+        "Portion Preference": "Small"
+      },
+      "mealInstructions": [
+        "Offer smaller portions more frequently.",
+        "Include appealing snacks between meals.",
+        "Prioritize nutrient-dense foods.",
+        "Avoid overwhelming the resident with large plates.",
+        "Record consistently low meal intake for staff follow-up."
+      ]
+    },
+    {
+      "id": "R015",
+      "name": "Fatima Hassan",
+      "age": 77,
+      "room": "118",
+      "allergens": [],
+      "diets": [],
+      "likes": [
+        "Lentil soup",
+        "chicken",
+        "couscous",
+        "chickpeas",
+        "grilled vegetables"
+      ],
+      "notes": "Medical conditions: None requiring a therapeutic diet\nNutritional priority: Maintain balanced nutrition while respecting religious dietary requirements\nProvide halal-certified meat when serving meat dishes.\nExclude pork, pork-derived ingredients, and alcohol-containing ingredients.\nVerify ingredient sourcing and preparation practices.\nOffer vegetarian alternatives when halal meat is unavailable.\nRespect individual preferences regarding food preparation.",
+      "careProfile": {
+        "Gender": "Female",
+        "Mobility": "Independent",
+        "Eating Assistance": "Independent",
+        "Diet Type": "Halal",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Disliked Foods": "Pork, overly sweet dishes, heavy cream sauces",
+        "Preferred Cuisine": "Middle Eastern, Mediterranean",
+        "Preferred Beverages": "Mint tea, water",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Provide halal-certified meat when serving meat dishes.",
+        "Exclude pork, pork-derived ingredients, and alcohol-containing ingredients.",
+        "Verify ingredient sourcing and preparation practices.",
+        "Offer vegetarian alternatives when halal meat is unavailable.",
+        "Respect individual preferences regarding food preparation."
+      ]
+    },
+    {
+      "id": "R016",
+      "name": "Dorothy Campbell",
+      "age": 88,
+      "room": "119",
+      "allergens": [],
+      "diets": [],
+      "likes": [
+        "Prunes",
+        "oatmeal",
+        "yogurt",
+        "spinach",
+        "baked salmon",
+        "whole-grain toast"
+      ],
+      "notes": "Medical conditions: Osteoporosis, chronic constipation\nNutritional priority: Support bone health and digestive regularity through adequate calcium, vitamin D, fiber, and hydration\nInclude fiber-rich foods throughout the day.\nIncorporate calcium-rich foods and appropriate vitamin D sources.\nEncourage adequate hydration according to her care plan.\nIncrease fiber gradually if dietary changes are needed.\nOffer prunes or other fiber-rich snacks when appropriate.",
+      "careProfile": {
+        "Resident ID": "R016",
+        "Age": "88",
+        "Gender": "Female",
+        "Room Number": "119",
+        "Mobility": "Uses a walker",
+        "Eating Assistance": "Independent with meal setup",
+        "Medical Conditions": "Osteoporosis, chronic constipation",
+        "Diet Type": "Fiber-rich, calcium-supportive diet",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Nutritional Priority": "Support bone health and digestive regularity through adequate calcium, vitamin D, fiber, and hydration",
+        "Favorite Foods": "Prunes, oatmeal, yogurt, spinach, baked salmon, whole-grain toast",
+        "Disliked Foods": "Fried food, heavily processed meats, spicy dishes",
+        "Preferred Cuisine": "American, Mediterranean",
+        "Preferred Beverages": "Warm water, herbal tea, milk",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Include fiber-rich foods throughout the day.",
+        "Incorporate calcium-rich foods and appropriate vitamin D sources.",
+        "Encourage adequate hydration according to her care plan.",
+        "Increase fiber gradually if dietary changes are needed.",
+        "Offer prunes or other fiber-rich snacks when appropriate."
+      ]
+    },
+    {
+      "id": "R017",
+      "name": "Samuel Brooks",
+      "age": 90,
+      "room": "120",
+      "allergens": [],
+      "diets": [],
+      "likes": [
+        "Scrambled eggs",
+        "pasta",
+        "meatloaf",
+        "mashed sweet potatoes",
+        "banana bread"
+      ],
+      "notes": "Medical conditions: Parkinson's disease, hand tremors\nNutritional priority: Support independent eating and maintain adequate calorie and protein intake\nCut foods into manageable pieces as needed.\nProvide adaptive utensils and spill-resistant cups.\nPrioritize meals that are easy to handle with tremors.\nAllow additional time for eating.\nFlag any newly observed coughing or swallowing difficulties for clinical assessment.",
+      "careProfile": {
+        "Resident ID": "R017",
+        "Age": "90",
+        "Gender": "Male",
+        "Room Number": "120",
+        "Mobility": "Wheelchair user",
+        "Eating Assistance": "Requires assistance with cutting food and opening packaging",
+        "Medical Conditions": "Parkinson's disease, hand tremors",
+        "Diet Type": "Regular, with adaptive meal presentation",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None currently documented",
+        "Nutritional Priority": "Support independent eating and maintain adequate calorie and protein intake",
+        "Favorite Foods": "Scrambled eggs, pasta, meatloaf, mashed sweet potatoes, banana bread",
+        "Disliked Foods": "Large sandwiches, slippery noodles, messy finger foods",
+        "Preferred Cuisine": "American, Italian",
+        "Preferred Beverages": "Water, milk",
+        "Portion Preference": "Medium"
+      },
+      "mealInstructions": [
+        "Cut foods into manageable pieces as needed.",
+        "Provide adaptive utensils and spill-resistant cups.",
+        "Prioritize meals that are easy to handle with tremors.",
+        "Allow additional time for eating.",
+        "Flag any newly observed coughing or swallowing difficulties for clinical assessment."
+      ]
+    },
+    {
+      "id": "R018",
+      "name": "Grace Nakamura",
+      "age": 79,
+      "room": "121",
+      "allergens": [
+        "shellfish"
+      ],
+      "diets": [
+        "low-sodium"
+      ],
+      "likes": [
+        "Rice",
+        "tofu",
+        "vegetable stir-fries",
+        "eggs",
+        "fresh fruit",
+        "noodle soups"
+      ],
+      "notes": "Medical conditions: Gout, hypertension\nNutritional priority: Support blood pressure management and dietary gout management while avoiding shellfish allergens\nStrictly avoid shellfish and potential shellfish cross-contact.\nUse reduced-sodium sauces and broths.\nFollow her individualized guidance for purine-rich foods.\nEncourage adequate hydration according to her care plan.\nVerify ingredients in seafood-based broths and sauces.",
+      "careProfile": {
+        "Resident ID": "R018",
+        "Age": "79",
+        "Gender": "Female",
+        "Room Number": "121",
+        "Mobility": "Independent",
+        "Eating Assistance": "Independent",
+        "Medical Conditions": "Gout, hypertension",
+        "Diet Type": "Low sodium, individualized gout-management diet",
+        "Food Allergies": "Shellfish (shrimp, crab, lobster)",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Nutritional Priority": "Support blood pressure management and dietary gout management while avoiding shellfish allergens",
+        "Favorite Foods": "Rice, tofu, vegetable stir-fries, eggs, fresh fruit, noodle soups",
+        "Disliked Foods": "Organ meats, greasy foods, very sweet desserts",
+        "Preferred Cuisine": "Japanese, East Asian",
+        "Preferred Beverages": "Water, green tea",
+        "Portion Preference": "Small to medium"
+      },
+      "mealInstructions": [
+        "Strictly avoid shellfish and potential shellfish cross-contact.",
+        "Use reduced-sodium sauces and broths.",
+        "Follow her individualized guidance for purine-rich foods.",
+        "Encourage adequate hydration according to her care plan.",
+        "Verify ingredients in seafood-based broths and sauces."
+      ]
+    },
+    {
+      "id": "R019",
+      "name": "Arthur Mitchell",
+      "age": 94,
+      "room": "122",
+      "allergens": [],
+      "diets": [],
+      "likes": [
+        "Mini sandwiches",
+        "scrambled eggs",
+        "soft fruit slices",
+        "chicken strips",
+        "muffins",
+        "roasted potatoes"
+      ],
+      "notes": "Medical conditions: Dementia, reduced appetite\nNutritional priority: Encourage sufficient energy and protein intake while supporting comfortable, independent eating when possible\nOffer manageable finger-food portions to support independence.\nPresent one or two food choices at a time.\nMaintain consistent meal routines and familiar flavors.\nProvide a calm environment with limited distractions.\nMonitor meal intake and hydration.\nEnsure staff verify that finger-food options are appropriate for his current chewing and swallowing abilities.",
+      "careProfile": {
+        "Resident ID": "R019",
+        "Age": "94",
+        "Gender": "Male",
+        "Room Number": "122",
+        "Mobility": "Wheelchair user",
+        "Eating Assistance": "Requires staff assistance and supervision during meals",
+        "Medical Conditions": "Dementia, reduced appetite",
+        "Diet Type": "Regular, with nutrient-dense finger-food options",
+        "Food Allergies": "None known",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None currently documented",
+        "Nutritional Priority": "Encourage sufficient energy and protein intake while supporting comfortable, independent eating when possible",
+        "Favorite Foods": "Mini sandwiches, scrambled eggs, soft fruit slices, chicken strips, muffins, roasted potatoes",
+        "Disliked Foods": "Large portions, unfamiliar dishes, strongly flavored foods",
+        "Preferred Cuisine": "Traditional American",
+        "Preferred Beverages": "Apple juice, milk, water",
+        "Portion Preference": "Small, frequent meals"
+      },
+      "mealInstructions": [
+        "Offer manageable finger-food portions to support independence.",
+        "Present one or two food choices at a time.",
+        "Maintain consistent meal routines and familiar flavors.",
+        "Provide a calm environment with limited distractions.",
+        "Monitor meal intake and hydration.",
+        "Ensure staff verify that finger-food options are appropriate for his current chewing and swallowing abilities."
+      ]
+    },
+    {
+      "id": "R020",
+      "name": "Evelyn Foster",
+      "age": 83,
+      "room": "123",
+      "allergens": [
+        "egg"
+      ],
+      "diets": [],
+      "likes": [
+        "Oatmeal",
+        "baked chicken",
+        "rice",
+        "steamed carrots",
+        "bananas",
+        "vegetable soup"
+      ],
+      "notes": "Medical conditions: Gastroesophageal reflux disease (GERD)\nNutritional priority: Maintain balanced nutrition while minimizing reflux symptoms and preventing egg-allergen exposure\nStrictly avoid eggs and egg-containing ingredients.\nCheck baked goods, pasta, dressings, and sauces for hidden egg ingredients.\nFollow facility protocols to prevent egg cross-contact.\nOffer smaller meals when practical.\nAvoid foods identified as personal reflux triggers.\nFollow her care plan regarding meal timing and remaining upright after eating.",
+      "careProfile": {
+        "Resident ID": "R020",
+        "Age": "83",
+        "Gender": "Female",
+        "Room Number": "123",
+        "Mobility": "Uses a cane",
+        "Eating Assistance": "Independent",
+        "Medical Conditions": "Gastroesophageal reflux disease (GERD)",
+        "Diet Type": "Reflux-conscious, individualized",
+        "Food Allergies": "Eggs",
+        "Texture Requirement": "Regular",
+        "Swallowing Difficulties": "None",
+        "Nutritional Priority": "Maintain balanced nutrition while minimizing reflux symptoms and preventing egg-allergen exposure",
+        "Favorite Foods": "Oatmeal, baked chicken, rice, steamed carrots, bananas, vegetable soup",
+        "Disliked Foods": "Tomato-based sauces, spicy dishes, coffee, fried food",
+        "Preferred Cuisine": "American, Mediterranean",
+        "Preferred Beverages": "Water, caffeine-free herbal tea",
+        "Portion Preference": "Small to medium"
+      },
+      "mealInstructions": [
+        "Strictly avoid eggs and egg-containing ingredients.",
+        "Check baked goods, pasta, dressings, and sauces for hidden egg ingredients.",
+        "Follow facility protocols to prevent egg cross-contact.",
+        "Offer smaller meals when practical.",
+        "Avoid foods identified as personal reflux triggers.",
+        "Follow her care plan regarding meal timing and remaining upright after eating."
+      ]
+    }
+  ]
+}

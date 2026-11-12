@@ -4,6 +4,7 @@
 - Recipe types are derived by the shared recipeType helper unless staff save an explicit selection; they are separate from main/side/snack and never alter dietary analysis.
 - Showcase profile changes and observations use a one-time additive demo-content migration with internal demo flags; preserve staff reviews and resident records rather than fabricating care edits.
 - Account rules: src/components/AGENTS.md.
+- Catalog storage and bulk approvals follow src/lib/kitchen/AGENTS.md to preserve shared persistence.
 - Agent logic (Dietary/Menu/Inventory) lives in the pure `analyze()` in src/lib/kitchen/engine.ts; proposals are derived from state, so pages never store them — keeps agents sharing one context and re-running on every change.
 - Engine rules are covered by src/test/kitchen-engine.test.ts; update it when safety rules change.
 - Menu and inventory use the shared schedule helpers; analyze derives horizon demand and purchasing requests so forecasts cannot diverge from the displayed sample rotation.

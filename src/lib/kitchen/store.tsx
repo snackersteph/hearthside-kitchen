@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from "react";
-import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS } from "./data";
+import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS, installKitchenCatalog } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
 import type { AgentId, Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
-import { ADDITIONAL_RESIDENTS } from "./additional-residents";
+import { loadKitchenCatalogs, withKitchenCatalogs } from "./catalog-storage";
 import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
 import { ADDITIONAL_INGREDIENTS, FOOD_CATEGORIES } from "./inventory-catalog";
 import { profileContentChanges } from "./profile-changes";
@@ -22,6 +22,7 @@ import { migrateApprovalCleanup } from "./approval-cleanup";
 import { migrateInventoryReplenishment } from "./inventory-replenishment";
 import { rebuild, replayAt } from "./shared-sync";
 import { supabase } from "@/integrations/supabase/client";
+import { RECIPE_CATALOG } from "./recipe-catalog";
 
 type Action =
   | { type: "addResident"; resident: Resident }
@@ -470,7 +471,7 @@ export function migrateOrderSnapshot(s: KitchenState, reference = new Date()): K
 }
 export function migrateAdditionalResidents(s: KitchenState): KitchenState {
   if (s.additionalResidentsVersion === 1) return s;
-  return { ...s, additionalResidentsVersion: 1, residents: [...s.residents, ...ADDITIONAL_RESIDENTS.filter((r) => !s.residents.some((existing) => existing.id === r.id))] };
+  return { ...s, additionalResidentsVersion: 1, residents: [...s.residents, ...RESIDENTS.filter((r) => Number(r.id.slice(1)) >= 16 && !s.residents.some((existing) => existing.id === r.id))] };
 }
 export function mergeIngredientCatalog(s: KitchenState): KitchenState {
   return { ...s, ingredients: [...s.ingredients, ...[...INGREDIENTS, ...ADDITIONAL_INGREDIENTS].filter((i) => !s.ingredients.some((x) => x.id === i.id) && !s.deletedIngredientIds?.includes(i.id)).map((i) => ({ ...i }))] };
@@ -503,12 +504,17 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
   const pending = useRef<{ key: string; action: Action; at: number }[]>([]);
   const queue = useRef<Promise<void>>(Promise.resolve());
   const [reference, setReference] = useState<Date | null>(null);
+  const [loadError, setLoadError] = useState(false);
   useEffect(() => {
     setReference(new Date());
     const timer = window.setInterval(() => setReference(new Date()), 60000);
     return () => window.clearInterval(timer);
   }, []);
-  const show = () => { if (confirmed.current) setState(rebuild(confirmed.current.state, pending.current, sharedReduce)); };
+  const show = () => { if (confirmed.current) {
+    const next = rebuild(confirmed.current.state, pending.current, sharedReduce);
+    installKitchenCatalog([...RECIPE_CATALOG.filter((r) => !next.recipes?.some((saved) => saved.id === r.id)), ...(next.recipes ?? [])], next.residents);
+    setState(next);
+  } };
   // Pull every shared action this browser has not applied yet, in database order.
   const catchUp = () => { queue.current = queue.current.then(async () => {
     const base = confirmed.current; if (!base) return;
@@ -528,6 +534,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const catalogs = await loadKitchenCatalogs();
       let { data: snap } = await supabase.from("kitchen_snapshot").select("state, through_action_id").eq("id", 1).maybeSingle();
       if (!snap) {
         // First visit ever: this browser's kitchen becomes the shared starting point.
@@ -535,12 +542,22 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
         ({ data: snap } = await supabase.from("kitchen_snapshot").select("state, through_action_id").eq("id", 1).maybeSingle());
       }
       if (cancelled) return;
-      const base = prepareState((snap?.state as unknown as KitchenState) ?? null);
+      let base = prepareState((snap?.state as unknown as KitchenState) ?? null);
       const through = snap?.through_action_id ?? 0;
-      confirmed.current = { state: base, lastId: through, snapshotId: through };
+      let lastId = through;
+      // Replay once against the original snapshot to preserve care-update comparisons;
+      // then use table records instead of stale embedded residents/recipes.
+      while (true) {
+        const { data, error } = await supabase.from("kitchen_actions").select("id, client_id, action, acted_at").gt("id", lastId).order("id").limit(1000);
+        if (error) throw error;
+        for (const row of (data ?? []) as ActionRow[]) { base = replayAt(base, row.action as Action, new Date(row.acted_at).getTime(), sharedReduce); lastId = row.id; }
+        if (!data || data.length < 1000) break;
+      }
+      if (cancelled) return;
+      confirmed.current = { state: withKitchenCatalogs(base, catalogs), lastId, snapshotId: through };
       show();
       catchUp();
-    })();
+    })().catch(() => { if (!cancelled) setLoadError(true); });
     const channel = supabase.channel(`kitchen-actions-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "kitchen_actions" }, () => catchUp())
       .subscribe();
@@ -570,6 +587,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [runningRun?.workflowRunId, runningRun?.step]); // eslint-disable-line react-hooks/exhaustive-deps
   const analysis = useMemo(() => state ? analyze(state, reference ?? new Date("2026-01-01T12:00:00Z")) : null, [state, reference]);
+  if (loadError) return <div className="min-h-screen bg-background p-8 text-destructive" role="alert">Kitchen records could not be loaded. Please refresh to try again.</div>;
   if (!reference || !state || !analysis) return <div className="min-h-screen bg-background" aria-busy="true" />;
   return <Ctx.Provider value={{ state, analysis, dispatch, reference }}>{children}</Ctx.Provider>;
 }

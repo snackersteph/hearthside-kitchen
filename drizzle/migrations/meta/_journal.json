@@ -36,6 +36,20 @@
       "when": 1794446257519,
       "tag": "0004_tighten_shared_kitchen_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794448207056,
+      "tag": "0005_dedicated_recipe_resident_catalogs",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794448547376,
+      "tag": "0006_close_recipe_catalog_import",
+      "breakpoints": true
     }
   ]
 }

@@ -80,6 +80,54 @@ export type Database = {
         }
         Relationships: []
       }
+      recipes: {
+        Row: {
+          data: Json
+          deleted: boolean
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          deleted?: boolean
+          id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          deleted?: boolean
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      residents: {
+        Row: {
+          data: Json
+          deleted: boolean
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          deleted?: boolean
+          id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          deleted?: boolean
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_messages: {
         Row: {
           body: string

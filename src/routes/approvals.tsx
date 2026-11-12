@@ -10,7 +10,9 @@ import { PageHeader } from "@/components/kitchen/app-shell";
 import { AGENTS, AgentAvatar, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { bulkApprovalActions } from "@/lib/kitchen/bulk-approvals";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { canApproveMeal, dateKey } from "@/lib/kitchen/schedule";
@@ -47,7 +49,7 @@ export const Route = createFileRoute("/approvals")({
 });
 
 function ApprovalsPage() {
-  const { state, analysis } = useKitchen();
+  const { state, analysis, dispatch } = useKitchen();
   const { kind, date, meal, fromMenu, fromInventory } = Route.useSearch();
   const [origin] = useState(() => fromMenu && date && meal ? { date, meal } : null);
   const navigate = Route.useNavigate();
@@ -95,6 +97,45 @@ function ApprovalsPage() {
   const more = (key: string, total: number) => total > limit(key) ? <div className="flex justify-center pt-2"><Button variant="link" onClick={() => setLimits((l) => ({ ...l, [key]: limit(key) + PAGE_SIZE }))}>Load {Math.min(PAGE_SIZE, total - limit(key))} more ({limit(key)} of {total} shown)</Button></div> : null;
   const now = Date.now();
   const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000 && (kind || historyKind === "all" || h.kind === historyKind) && (!q || h.summary.toLowerCase().includes(q))).sort((x, y) => y.at - x.at);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [dishChoices, setDishChoices] = useState<Record<string, string>>({});
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [rememberBulk, setRememberBulk] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); setBulkOpen(false); }, [tab, query, kind, date, meal]);
+  const currentRequests: Proposal[] = tab === "pending" ? reviews : tab === "orders" ? [...weeklyShown.flatMap((w) => w.proposals.filter(matches)), ...purchases] : [];
+  const chosenDish = (p: Proposal): Proposal => p.kind === "substitution" && dishChoices[p.id] ? { ...p, dishId: dishChoices[p.id] ?? p.dishId } : p;
+  const eligible = currentRequests.map(chosenDish).filter((p) => bulkApprovalActions(state, [p]).length > 0);
+  const selectedRequests = eligible.filter((p) => selectedIds.has(p.id));
+  const selectedMeals = selectedRequests.filter((p): p is SubstitutionProposal => p.kind === "substitution");
+  const selectedResidents = residentApprovalCount(selectedMeals);
+  const selectedOrders = selectedRequests.length - selectedMeals.length;
+  const toggleRequest = (id: string, checked: boolean) => setSelectedIds((previous) => {
+    const next = new Set(previous); if (checked) next.add(id); else next.delete(id); return next;
+  });
+  const selectionProps = (p: Proposal) => ({
+    checked: selectedIds.has(p.id),
+    selectionDisabled: !eligible.some((request) => request.id === p.id),
+    onSelect: (checked: boolean) => toggleRequest(p.id, checked),
+    onDishSelection: (dishId: string) => setDishChoices((previous) => ({ ...previous, [p.id]: dishId })),
+  });
+  const bulkToolbar = eligible.length > 0 ? <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3">
+    <label className="flex items-center gap-2 text-sm font-medium">
+      <Checkbox aria-label="Select all matching requests" checked={selectedRequests.length === eligible.length ? true : selectedRequests.length ? "indeterminate" : false} onCheckedChange={(checked) => setSelectedIds(checked === true ? new Set(eligible.map((p) => p.id)) : new Set())} />
+      Select all matching requests ({eligible.length})
+    </label>
+    <span className="text-sm text-muted-foreground" aria-live="polite">{selectedRequests.length} selected{selectedResidents > 0 ? ` · ${selectedResidents} resident meal${selectedResidents === 1 ? "" : "s"}` : ""}</span>
+    <div className="ml-auto flex gap-2">
+      {selectedRequests.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear selection</Button>}
+      <ApproveButton disabled={!selectedRequests.length} onClick={() => { setRememberBulk(false); setBulkOpen(true); }}>Approve selected ({selectedRequests.length})</ApproveButton>
+    </div>
+  </div> : null;
+  const approveBulk = () => {
+    const actions = bulkApprovalActions(state, selectedRequests, rememberBulk);
+    if (!actions.length) { toast.error("These requests are no longer available to approve"); setBulkOpen(false); return; }
+    actions.forEach(dispatch);
+    setSelectedIds(new Set()); setBulkOpen(false);
+    toast.success(`Approved ${actions.length} request${actions.length === 1 ? "" : "s"}`);
+  };
   return (
     <>
       {origin && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu/$date" params={{ date: origin.date }} search={{ meal: origin.meal, focus: true }}><ArrowLeft />Back to {MEAL_LABEL[origin.meal].toLowerCase()} menu</Link></Button>}
@@ -119,9 +160,10 @@ function ApprovalsPage() {
           <TabsTrigger value="history">History ({history.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-6 space-y-3">
+          {bulkToolbar}
           {reviews.length === 0 ? <Empty text="No alternatives awaiting approval." /> : <>
             <p className="text-sm text-muted-foreground">Most urgent first</p>
-            {reviews.slice(0, limit("pending")).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}
+            {reviews.slice(0, limit("pending")).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} {...selectionProps(p)} />)}
             {more("pending", reviews.length)}
           </>}
         </TabsContent>
@@ -129,13 +171,14 @@ function ApprovalsPage() {
           {approved.length ? <>{approved.slice(0, limit("approved")).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}{more("approved", approved.length)}</> : <Empty text="No approved alternatives for this selection." />}
         </TabsContent>
         <TabsContent value="orders" className="mt-6 space-y-3">
+          {bulkToolbar}
           {weeklyShown.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
-            {w.proposals.filter(matches).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}
+            {w.proposals.filter(matches).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} {...selectionProps(p)} />)}
             {w.rejected.map((p) => <p key={p.id} className="text-sm text-muted-foreground">Rejected: {p.vendor} · {p.lines.length} item{p.lines.length === 1 ? "" : "s"} · ${p.total.toFixed(2)}</p>)}
             {w.state === "ready-to-confirm" && <ConfirmWeeklyPurchasing weekId={w.weekId} title={`service week ${weekRange(w.startDate, w.endDate)}`} rejected={w.rejected.length} />}
           </WeeklyPurchasingPanel>)}
           {weeklyShown.length > 0 && purchases.length > 0 && <h3 className="pt-2 text-sm font-semibold text-muted-foreground">Rolling {state.purchaseHorizonDays ?? 7}-day forecast requests</h3>}
-          {purchases.length ? <>{purchases.slice(0, limit("orders")).map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} /></div>)}{more("orders", purchases.length)}</> : !weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
+          {purchases.length ? <>{purchases.slice(0, limit("orders")).map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} {...selectionProps(p)} /></div>)}{more("orders", purchases.length)}</> : !weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
         </TabsContent>
         <TabsContent value="history" className="mt-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -162,6 +205,13 @@ function ApprovalsPage() {
         </TabsContent>
       </Tabs>
       {approvalRequest && <RememberApprovalDialog p={approvalRequest} onApproved={() => setTab("pending")} onClose={() => setApprovalRequest(null)} />}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Approve {selectedRequests.length} selected requests?</DialogTitle><DialogDescription>{selectedResidents > 0 ? `${selectedResidents} resident meal decisions. ` : ""}{selectedOrders > 0 ? `${selectedOrders} purchase orders will become incoming orders; stock is unchanged until delivery is confirmed.` : "The selected alternatives will be approved for their listed serve dates."}</DialogDescription></DialogHeader>
+          {selectedMeals.length > 0 && <label className="flex items-start gap-3 text-sm"><Checkbox aria-label="Save selected meal choices for future matching meals" checked={rememberBulk} onCheckedChange={(checked) => setRememberBulk(checked === true)} /><span>Save these choices for future matching meals<span className="mt-1 block text-xs text-muted-foreground">Only while each resident’s dietary requirements stay unchanged and the alternative remains safe.</span></span></label>}
+          <DialogFooter><Button variant="outline" onClick={() => setBulkOpen(false)}>Cancel</Button><ApproveButton disabled={!selectedRequests.length} onClick={approveBulk}>Approve {selectedRequests.length} requests</ApproveButton></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -178,7 +228,7 @@ function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boo
   );
 }
 
-function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: SubstitutionProposal) => void }) {
+function ProposalCard({ p, onApprove, checked, selectionDisabled, onSelect, onDishSelection }: { p: Proposal; onApprove: (p: SubstitutionProposal) => void; checked?: boolean; selectionDisabled?: boolean; onSelect?: (checked: boolean) => void; onDishSelection?: (dishId: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [rejectionRequest, setRejectionRequest] = useState<SubstitutionProposal | null>(null);
@@ -192,13 +242,14 @@ function ProposalCard({ p, onApprove }: { p: Proposal; onApprove: (p: Substituti
   return (
     <article id={`proposal-${p.id}`} className={cn("scroll-mt-24 transition-shadow", "rounded-lg border border-l-4 bg-card p-4 shadow-soft", agent.border)}>
       <div className="flex flex-wrap items-start gap-4">
+        {onSelect && <Checkbox className="mt-2" checked={checked ?? false} disabled={selectionDisabled ?? false} aria-label={`Select request ${p.kind === "substitution" ? `${p.serviceDate} ${p.meal} ${dishById(p.dishId).name}` : p.vendor}`} onCheckedChange={(value) => onSelect(value === true)} />}
         <AgentAvatar agent={p.agent} />
         <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-0">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="text-xs font-semibold text-muted-foreground">{agent.name} · {p.kind === "substitution" ? `${MEAL_LABEL[p.meal]} substitution` : "Purchase request"}</div>
             <Actions p={selected} onApprove={onApprove} onModify={() => setEditing(true)} />
           </div>
-          {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={setSelectedDish} onApprove={onApprove} onReject={setRejectionRequest} /> : <PurchaseBody p={selected} />}
+          {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={(id) => { setSelectedDish(id); onDishSelection?.(id); }} onApprove={onApprove} onReject={setRejectionRequest} /> : <PurchaseBody p={selected} />}
         </div>
       </div>
       {editing && (p.kind === "substitution" ? <RejectSubDialog p={p} onApprove={onApprove} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}

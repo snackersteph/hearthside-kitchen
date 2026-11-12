@@ -35,7 +35,7 @@ describe("uploaded resident profiles", () => {
     const old = { ...initialState(), residentProfileVersion: 0, residents: [], alternativePreferences: [{ residentId: "r1", meal: "lunch" as const, fromDishId: "l-alfredo", dishId: "l-primavera" }] };
     const migrated = migrateResidentProfiles(old);
     expect(migrated.residentProfileVersion).toBe(RESIDENT_PROFILE_VERSION);
-    expect(migrated.residents).toHaveLength(15);
+    expect(migrated.residents).toHaveLength(20);
     expect(migrated.alternativePreferences).toEqual([]);
   });
 });

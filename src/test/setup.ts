@@ -20,4 +20,9 @@ if (typeof window !== "undefined") Object.defineProperty(window, "matchMedia", {
 });
 
 import { vi } from "vitest";
+import fixtures from "./fixtures/catalogs.json";
+import { installKitchenCatalog } from "@/lib/kitchen/data";
+import type { Recipe } from "@/lib/kitchen/recipes";
+import type { Resident } from "@/lib/kitchen/types";
+installKitchenCatalog(fixtures.recipes as Recipe[], fixtures.residents as Resident[]);
 vi.mock("@/integrations/supabase/client", async () => ({ supabase: (await import("./supabase-memory")).memorySupabase }));
