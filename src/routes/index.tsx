@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ClipboardCheck, CircleCheck, PackageCheck, PackageX, Truck, UserRound, Users, BookOpen, Utensils, Scale, DollarSign } from "lucide-react";
+import { ClipboardCheck, CircleCheck, PackageCheck, Truck, UserRound, Users, BookOpen, Utensils, Scale, DollarSign } from "lucide-react";
+import DiningOutlinedIcon from "@mui/icons-material/DiningOutlined";
 import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
 import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 import { stockOrderEstimate } from "@/lib/kitchen/stock-orders";
@@ -18,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { useAccountData } from "@/lib/account";
 import { recipePhoto } from "@/lib/kitchen/recipe-photos";
 
-const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: PackageX, delivered: PackageCheck, incoming: Truck, profiles: UserRound } as const;
+const CARD_ICONS = { approvals: ClipboardCheck, shortfalls: DiningOutlinedIcon, delivered: PackageCheck, incoming: Truck, profiles: UserRound } as const;
 
 export const Route = createFileRoute("/")({
   head: () => ({

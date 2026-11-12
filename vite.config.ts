@@ -19,6 +19,8 @@ export default defineConfig({
         "react-day-picker",
         "date-fns",
         "zod",
+        "@mui/icons-material",
+        "@mui/material",
         "@supabase/supabase-js",
         "@lovable.dev/cloud-auth-js",
         "@radix-ui/react-accordion",
