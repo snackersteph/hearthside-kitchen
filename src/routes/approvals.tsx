@@ -16,24 +16,42 @@ import { bulkApprovalActions } from "@/lib/kitchen/bulk-approvals";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { canApproveMeal, dateKey } from "@/lib/kitchen/schedule";
-import { addDays } from "@/lib/kitchen/weekly-schedule";
+import { addDays, weekStartFor } from "@/lib/kitchen/weekly-schedule";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-dialog";
 import { WeeklyPurchasingPanel } from "@/components/kitchen/weekly-purchasing";
-import { weekRange } from "@/lib/kitchen/weekly-operations";
+import { rollingServiceWeeks, weekRange } from "@/lib/kitchen/weekly-operations";
 import { WeeklyWorkstreams } from "@/components/kitchen/weekly-workstreams";
 
 const PAGE_SIZE = 50;
 
+type WeekFilter = "current" | "next" | "two";
+const WEEK_FILTERS: { value: WeekFilter; label: string }[] = [
+  { value: "current", label: "Current Week" },
+  { value: "next", label: "Next Week" },
+  { value: "two", label: "In Two Weeks" },
+];
+/** Monday of the selected service week, from the same rolling weeks the workstreams use. */
+function weekFilterStart(week: WeekFilter, reference = new Date()) {
+  const weeks = rollingServiceWeeks(reference);
+  return week === "current" ? weeks.service : week === "next" ? weeks.purchasing : weeks.planning;
+}
+/** The service date a request belongs to: serve date for meals, service week or first need for orders. */
+function proposalWeekDate(p: Proposal): string | undefined {
+  if (p.kind === "substitution") return p.serviceDate;
+  return p.serviceWeekId ? p.serviceWeekId.slice(5) : p.neededDate ?? p.deliveryDate;
+}
+
 export const Route = createFileRoute("/approvals")({
-  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming" } => {
+  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming" } => {
     const kind = search["kind"];
     const date = typeof search["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search["date"]) ? search["date"] : undefined;
     const meal = MEALS.find((m) => m === search["meal"]);
     const inv = search["fromInventory"];
     const fromInventory = inv === "stock" || inv === "alerts" || inv === "delivered" || inv === "incoming" ? inv : undefined;
-    return { ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}) };
+    const week = WEEK_FILTERS.find((w) => w.value === search["week"])?.value;
+    return { ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}) };
   },
   head: () => ({
     meta: [
@@ -50,16 +68,19 @@ export const Route = createFileRoute("/approvals")({
 
 function ApprovalsPage() {
   const { state, analysis, dispatch } = useKitchen();
-  const { kind, date, meal, fromMenu, fromInventory } = Route.useSearch();
+  const { kind, date, meal, week, fromMenu, fromInventory } = Route.useSearch();
   const [origin] = useState(() => fromMenu && date && meal ? { date, meal } : null);
   const navigate = Route.useNavigate();
   const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
   const today = dateKey(new Date());
+  const weekStart = week ? weekFilterStart(week) : undefined;
+  const inWeek = (key: string | undefined) => !weekStart || (!!key && weekStartFor(key) === weekStart);
   const overview = useMemo(() => alternativeOverview(state, new Date(), date ? [date] : undefined), [state, date, today]);
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const ingredientNames = (ids: string[]) => ids.map((id) => state.ingredients.find((i) => i.id === id)?.name ?? id).join(" ");
   const matches = (p: Proposal) => {
+    if (!inWeek(proposalWeekDate(p))) return false;
     if (!q) return true;
     const text = p.kind === "substitution"
       ? [dishById(p.dishId)?.name, dishById(p.fromDishId)?.name, p.meal, p.serviceDate, ...p.residentIds.map((id) => residentName(state, id)), ...Object.values(p.reasons).flat()].join(" ")
@@ -71,7 +92,7 @@ function ApprovalsPage() {
   const purchases = proposals.filter((p): p is PurchaseProposal => p.kind === "purchase" && matches(p));
   // Week-specific drafts from approved weekly menus, shown with their stock breakdown.
   const weekly = useWeeklyPurchasing().filter((w) => w.state !== "awaiting-menu" || w.invalidated);
-  const weeklyShown = kind === "substitution" || date ? [] : weekly;
+  const weeklyShown = kind === "substitution" || date ? [] : weekly.filter((w) => inWeek(w.startDate));
   const weeklyCount = weeklyShown.reduce((n, w) => n + w.proposals.filter(matches).length, 0);
   const defaultTab = kind === "purchase" ? "orders" : "pending";
   const [tab, setTab] = useState(defaultTab);
@@ -92,7 +113,7 @@ function ApprovalsPage() {
   const [range, setRange] = useState<7 | 14 | 30>(7);
   const [historyKind, setHistoryKind] = useState<"all" | "substitution" | "purchase">("all");
   const [limits, setLimits] = useState<Record<string, number>>({});
-  useEffect(() => setLimits({}), [query, kind, date, meal, range, historyKind]);
+  useEffect(() => setLimits({}), [query, kind, date, meal, week, range, historyKind]);
   const limit = (key: string) => limits[key] ?? PAGE_SIZE;
   const more = (key: string, total: number) => total > limit(key) ? <div className="flex justify-center pt-2"><Button variant="link" onClick={() => setLimits((l) => ({ ...l, [key]: limit(key) + PAGE_SIZE }))}>Load {Math.min(PAGE_SIZE, total - limit(key))} more ({limit(key)} of {total} shown)</Button></div> : null;
   const now = Date.now();
@@ -101,7 +122,7 @@ function ApprovalsPage() {
   const [dishChoices, setDishChoices] = useState<Record<string, string>>({});
   const [bulkOpen, setBulkOpen] = useState(false);
   const [rememberBulk, setRememberBulk] = useState(false);
-  useEffect(() => { setSelectedIds(new Set()); setBulkOpen(false); }, [tab, query, kind, date, meal]);
+  useEffect(() => { setSelectedIds(new Set()); setBulkOpen(false); }, [tab, query, kind, date, meal, week]);
   const currentRequests: Proposal[] = tab === "pending" ? reviews : tab === "orders" ? [...weeklyShown.flatMap((w) => w.proposals.filter(matches)), ...purchases] : [];
   const chosenDish = (p: Proposal): Proposal => p.kind === "substitution" && dishChoices[p.id] ? { ...p, dishId: dishChoices[p.id] ?? p.dishId } : p;
   const eligible = currentRequests.map(chosenDish).filter((p) => bulkApprovalActions(state, [p]).length > 0);
@@ -143,15 +164,23 @@ function ApprovalsPage() {
       <PageHeader title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
       <div className="mb-6"><WeeklyWorkstreams /></div>
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Proposal type">
-        <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: {} })}>All proposals</Button>
-        <Button variant={kind === "substitution" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "substitution" } })}>Meals only</Button>
-        <Button variant={kind === "purchase" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "purchase" } })}>Orders only</Button>
+        <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: week ? { week } : {} })}>All proposals</Button>
+        <Button variant={kind === "substitution" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "substitution", ...(week ? { week } : {}) } })}>Meals only</Button>
+        <Button variant={kind === "purchase" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "purchase", ...(week ? { week } : {}) } })}>Orders only</Button>
         <div className="relative ml-auto w-full sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search residents, dishes, vendors…" aria-label="Search approvals" className="pl-9" />
         </div>
       </div>
-      {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: kind ? { kind } : {} })}>All dates</Button></div>}
+      <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Service week">
+        <Button size="sm" variant={!week ? "default" : "outline"} aria-pressed={!week} onClick={() => navigate({ search: (prev) => { const { week: _week, ...rest } = prev; return rest; } })}>All weeks</Button>
+        {WEEK_FILTERS.map((w) => {
+          const start = weekFilterStart(w.value);
+          return <Button key={w.value} size="sm" variant={week === w.value ? "default" : "outline"} aria-pressed={week === w.value} title={weekRange(start, addDays(start, 6))} onClick={() => navigate({ search: (prev) => ({ ...prev, week: w.value }) })}>{w.label}</Button>;
+        })}
+        {weekStart && <span className="text-sm text-muted-foreground">{weekRange(weekStart, addDays(weekStart, 6))}</span>}
+      </div>
+      {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: { ...(kind ? { kind } : {}), ...(week ? { week } : {}) } })}>All dates</Button></div>}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           {kind !== "purchase" && <TabsTrigger value="pending">Residents to approve ({residentApprovalCount(reviews)})</TabsTrigger>}
