@@ -1,3 +1,4 @@
+import { BoardReturn, boardReturnSearch } from "@/components/kitchen/board-return";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
@@ -20,7 +21,7 @@ import { DISHES } from "@/lib/kitchen/data";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/inventory")({
-  validateSearch: (search: Record<string, unknown>): { view?: "stock" | "alerts" | "delivered" | "incoming" } => ({ ...(search["view"] === "stock" || search["view"] === "alerts" || search["view"] === "delivered" || search["view"] === "incoming" ? { view: search["view"] } : {}) }),
+  validateSearch: (search: Record<string, unknown>): { view?: "stock" | "alerts" | "delivered" | "incoming"; fromBoard?: string } => ({ ...boardReturnSearch(search), ...(search["view"] === "stock" || search["view"] === "alerts" || search["view"] === "delivered" || search["view"] === "incoming" ? { view: search["view"] } : {}) }),
   head: () => ({
     meta: [
       { title: "Inventory · NutriSync" },
@@ -42,7 +43,7 @@ function InventoryPage() {
   const navigate = Route.useNavigate();
   const setView = (view: "stock" | "alerts" | "delivered" | "incoming") => {
     if (view === "alerts") setTab("All");
-    navigate({ search: { view } });
+    navigate({ search: (prev) => ({ ...prev, view }) });
   };
   const [editing, setEditing] = useState<Ingredient | null>(null);
   const [ordering, setOrdering] = useState<Ingredient | null>(null);
@@ -66,6 +67,7 @@ function InventoryPage() {
 
   return (
     <>
+      <BoardReturn />
       <PageHeader title="Inventory"><div className="flex flex-wrap gap-2"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Search ingredients" placeholder="Search ingredients or vendors" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 pl-9" /></div><Button onClick={() => setAdding(true)}><Plus />Add New</Button></div></PageHeader>
 
       <div role="tablist" aria-label="Inventory views" className="inventory-view-tabs mb-6 flex flex-wrap gap-2 border-b pb-3">

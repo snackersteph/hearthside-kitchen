@@ -1,3 +1,4 @@
+import { BoardReturn, boardReturnSearch } from "@/components/kitchen/board-return";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, CircleCheck, X } from "lucide-react";
@@ -7,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { draftProfileChanges } from "@/lib/kitchen/profile-changes";
 
 export const Route = createFileRoute("/profile-updates")({
-  validateSearch: (search: Record<string, unknown>): { resident?: string; from?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { resident?: string; from?: string; fromBoard?: string } => ({
+    ...boardReturnSearch(search),
     ...(typeof search["resident"] === "string" ? { resident: search["resident"] } : {}),
     ...(typeof search["from"] === "string" ? { from: search["from"] } : {}),
   }),
@@ -36,6 +38,7 @@ function ProfileUpdates() {
     .filter((o) => o.status === "open" && o.severity === "concern" && (!residentFilter || o.residentId === residentFilter))
     .sort((a, b) => b.notedAt - a.notedAt);
   return <>
+    <BoardReturn />
     <Button asChild variant="ghost" className="mb-5">{from === "residents" ? <Link to="/residents"><ArrowLeft />Residents</Link> : <Link to="/"><ArrowLeft />Kitchen Pulse</Link>}</Button>
     <PageHeader title="Profile updates" />
     {openReactions.length > 0 && <section aria-label="Meal reactions needing follow-up" className="mb-8">

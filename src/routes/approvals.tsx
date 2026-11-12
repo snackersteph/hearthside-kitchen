@@ -1,3 +1,4 @@
+import { BoardReturn, boardReturnSearch } from "@/components/kitchen/board-return";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, Check, Search, ChevronDown, Pencil, X } from "lucide-react";
@@ -44,14 +45,14 @@ function proposalWeekDate(p: Proposal): string | undefined {
 }
 
 export const Route = createFileRoute("/approvals")({
-  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming" } => {
+  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming"; fromBoard?: string } => {
     const kind = search["kind"];
     const date = typeof search["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search["date"]) ? search["date"] : undefined;
     const meal = MEALS.find((m) => m === search["meal"]);
     const inv = search["fromInventory"];
     const fromInventory = inv === "stock" || inv === "alerts" || inv === "delivered" || inv === "incoming" ? inv : undefined;
     const week = WEEK_FILTERS.find((w) => w.value === search["week"])?.value;
-    return { ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}) };
+    return { ...boardReturnSearch(search), ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}) };
   },
   head: () => ({
     meta: [
@@ -162,6 +163,7 @@ function ApprovalsPage() {
     <>
       {origin && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu/$date" params={{ date: origin.date }} search={{ meal: origin.meal, focus: true }}><ArrowLeft />Back to {MEAL_LABEL[origin.meal].toLowerCase()} menu</Link></Button>}
       {!origin && fromInventory && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/inventory" search={{ view: fromInventory }}><ArrowLeft />Back to inventory</Link></Button>}
+      <BoardReturn />
       <PageHeader title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Proposal type">
         <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: week ? { week } : {} })}>All proposals</Button>

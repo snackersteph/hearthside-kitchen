@@ -122,7 +122,7 @@ function AlertList({ alerts }: { alerts: WorkstreamAlert[] }) {
             {a.to ? (
               <Link
                 to={a.to}
-                search={a.inventoryView ? { view: a.inventoryView } : {}}
+                search={{ ...(a.inventoryView ? { view: a.inventoryView } : {}), fromBoard: "current-service-week" }}
                 className={cn(cls, "hover:underline")}
               >
                 {body}
@@ -164,7 +164,7 @@ export function WeeklyWorkstreams() {
         icon={UtensilsCrossed}
         info={service}
         action={
-          <Link to="/menu/$date" params={{ date: serviceDate }} className={actionClass}>
+          <Link to="/menu/$date" params={{ date: serviceDate }} search={{ fromBoard: "current-service-week" }} className={actionClass}>
             View Service Menu
             <ArrowRight className="size-3.5" />
           </Link>
@@ -188,10 +188,11 @@ export function WeeklyWorkstreams() {
 
       <Workstream
         eyebrow="Next week · Purchasing"
+        id="purchasing-service-week"
         icon={ShoppingCart}
         info={purchasing}
         action={
-          <Link to="/approvals" search={{ kind: "purchase", week: "next" }} className={actionClass}>
+          <Link to="/approvals" search={{ kind: "purchase", week: "next", fromBoard: "purchasing-service-week" }} className={actionClass}>
             Review Purchasing
             <ArrowRight className="size-3.5" />
           </Link>
@@ -220,11 +221,12 @@ export function WeeklyWorkstreams() {
 
       <Workstream
         eyebrow="In two weeks · Planning"
+        id="planning-service-week"
         icon={Sparkles}
         info={planning}
         action={
-          <Link to="/dashboard" search={{ week: planning.startDate }} className={actionClass}>
-            Open Agent Workspace
+          <Link to="/dashboard" search={{ week: planning.startDate, fromBoard: "planning-service-week" }} hash="weekly-meal-coverage" className={actionClass}>
+            View meal planning
             <ArrowRight className="size-3.5" />
           </Link>
         }

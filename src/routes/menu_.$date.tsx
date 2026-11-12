@@ -1,3 +1,4 @@
+import { BoardReturn, boardReturnSearch } from "@/components/kitchen/board-return";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, CirclePlus } from "lucide-react";
@@ -22,7 +23,8 @@ export const Route = createFileRoute("/menu_/$date")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
-  validateSearch: (search: Record<string, unknown>): { meal?: "breakfast" | "lunch" | "dinner"; focus?: boolean } => ({
+  validateSearch: (search: Record<string, unknown>): { meal?: "breakfast" | "lunch" | "dinner"; focus?: boolean; fromBoard?: string } => ({
+    ...boardReturnSearch(search),
     ...(search["meal"] === "breakfast" || search["meal"] === "lunch" || search["meal"] === "dinner" ? { meal: search["meal"] } : {}),
     ...(search["focus"] === true || search["focus"] === "true" ? { focus: true } : {}),
   }),
@@ -47,6 +49,7 @@ function DatedMenuPage() {
   if (!reference) return null;
   const selected = parseISO(date);
   if (!isValid(selected) || dateKey(selected) !== date) return <>
+    <BoardReturn />
     <PageHeader eyebrow="Daily Menu" title="Date unavailable" />
     <Button asChild variant="outline"><Link to="/menu"><ArrowLeft />Back to dates</Link></Button>
   </>;
@@ -54,11 +57,13 @@ function DatedMenuPage() {
   const minOffset = differenceInCalendarDays(addMonths(reference, -6), reference);
   const maxOffset = differenceInCalendarDays(addMonths(reference, 2), reference);
   if (offset < minOffset || offset > maxOffset) return <>
+    <BoardReturn />
     <PageHeader eyebrow="Daily Menu" title="Date outside the current menu" />
     <Button asChild variant="outline"><Link to="/menu"><ArrowLeft />Back to dates</Link></Button>
   </>;
   const status = alternativeOverview(state, reference, [date])[0];
   if (offset > 0 && isMenuCleared(state, date)) return <>
+    <BoardReturn />
     <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu"><ArrowLeft />All dates</Link></Button>
     <PageHeader eyebrow="Daily Menu" title={selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} />
     <section aria-label="Menu not started" className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
@@ -68,6 +73,7 @@ function DatedMenuPage() {
     </section>
   </>;
   return <>
+    <BoardReturn />
     <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu"><ArrowLeft />All dates</Link></Button>
     <PageHeader eyebrow="Daily Menu" title={selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}>
       <div className="flex items-center gap-2">

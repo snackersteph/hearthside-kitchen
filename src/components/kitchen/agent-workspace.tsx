@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { BoardReturn } from "@/components/kitchen/board-return";
 import {
   ArrowRight,
   CalendarCheck,
@@ -471,8 +472,10 @@ export function AgentWorkspace({
       {/* 4 · Weekly meal coverage */}
       <section
         aria-label="Weekly meal coverage"
+        id="weekly-meal-coverage"
         className="mb-8 rounded-xl border bg-card p-5 shadow-soft"
       >
+        <BoardReturn />
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-lg font-semibold">Weekly meal coverage</h2>

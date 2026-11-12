@@ -1,3 +1,4 @@
+import { BoardReturn, boardReturnSearch } from "@/components/kitchen/board-return";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { AgentWorkspace } from "@/components/kitchen/agent-workspace";
@@ -7,7 +8,8 @@ import { isDateKey, weekStartFor } from "@/lib/kitchen/weekly-schedule";
 export const Route = createFileRoute("/dashboard")({
   // `week` is any date in a Monday–Sunday service week; it is snapped to that Monday.
   // `fromMenu` marks arrival from the menu calendar so a back link returns there.
-  validateSearch: (search: Record<string, unknown>): { week?: string; fromMenu?: boolean } => ({
+  validateSearch: (search: Record<string, unknown>): { week?: string; fromMenu?: boolean; fromBoard?: string } => ({
+    ...boardReturnSearch(search),
     ...(isDateKey(search["week"]) ? { week: weekStartFor(search["week"]) } : {}),
     ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}),
   }),
@@ -39,6 +41,7 @@ function AgentWorkspacePage() {
   const navigate = useNavigate({ from: "/dashboard" });
   return (
     <>
+      <BoardReturn />
       {fromMenu && (
         <Button asChild variant="ghost" size="sm" className="mb-4 gap-1.5">
           <Link to="/menu">

@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Deep-link meal planning to weekly coverage and preserve return navigation for each service board.
 - [x] Add a fictional current-week emergency menu conflict, shared approval, and return navigation; verify the full flow.
 
 - [x] Add selection, confirmation and bulk approval for meal and purchase requests; verify shared persistence.
