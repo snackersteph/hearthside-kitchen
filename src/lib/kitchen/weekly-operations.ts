@@ -264,6 +264,7 @@ export function weeklyWorkstreams(
     alerts.push({
       tone: "danger",
       message: `${plural(concerns, "meal reaction")} needing follow-up`,
+      to: "/profile-updates",
     });
 
   // Next week — purchasing

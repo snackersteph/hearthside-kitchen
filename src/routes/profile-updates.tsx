@@ -32,9 +32,22 @@ function ProfileUpdates() {
     isDraft: !u.changes?.length,
     changes: u.changes?.length ? u.changes : draftProfileChanges(u.residentId),
   }));
+  const openReactions = (state.observations ?? [])
+    .filter((o) => o.status === "open" && o.severity === "concern" && (!residentFilter || o.residentId === residentFilter))
+    .sort((a, b) => b.notedAt - a.notedAt);
   return <>
     <Button asChild variant="ghost" className="mb-5">{from === "residents" ? <Link to="/residents"><ArrowLeft />Residents</Link> : <Link to="/"><ArrowLeft />Kitchen Pulse</Link>}</Button>
     <PageHeader title="Profile updates" />
+    {openReactions.length > 0 && <section aria-label="Meal reactions needing follow-up" className="mb-8">
+      <h2 className="mb-3 text-lg font-semibold">Meal reactions needing follow-up ({openReactions.length})</h2>
+      <div className="space-y-3">{openReactions.map((o) => <article key={o.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4 shadow-soft">
+        <div>
+          <h3 className="font-semibold">{state.residents.some((r) => r.id === o.residentId) ? <Link to="/residents/$residentId" params={{ residentId: o.residentId }} className="text-primary hover:underline">{residentName(state, o.residentId)}</Link> : o.residentId}</h3>
+          <p className="text-sm text-muted-foreground">{o.serviceDate} · {o.meal} · {o.reaction}</p>
+        </div>
+        <Button variant="outline" onClick={() => dispatch({ type: "reviewObservation", id: o.id })}><Check />Mark reviewed</Button>
+      </article>)}</div>
+    </section>}
     {residentFilter && <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-card px-4 py-3 text-sm">
       <span>Showing updates for <strong>{filteredName ?? residentFilter}</strong></span>
       <Link to="/profile-updates" search={{}} className="font-semibold text-primary hover:underline">Show all residents</Link>
