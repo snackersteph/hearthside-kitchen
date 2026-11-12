@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Generate pending purchasing for Nov 16–22; awaits permission to complete demo menu prerequisites (resident alternatives, care-update reviews, and a meal concern).
+- [x] Generate 13 pending purchasing requests for Nov 16–22 after the authorized sample reviews and menu approval; verify its review/return flow.
 - [x] Generate meal planning for Nov 23–29 and verify its view/return flow.
 - [x] Add two shared demo observations and service-board follow-up links.
 - [x] Show the whole weekly service menu with return navigation.
