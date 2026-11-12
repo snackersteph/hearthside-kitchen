@@ -8,6 +8,7 @@ import type { KitchenState } from "@/lib/kitchen/types";
 import { WORKFLOW_STEPS, latestRunFor } from "@/lib/kitchen/agent-workflow";
 import { applyWeeklyStatus, createWeeklyPlan } from "@/lib/kitchen/weekly-schedule";
 import {
+  approvalWeekFilter,
   rollingServiceWeeks,
   weekRange,
   weekStatus,
@@ -204,5 +205,18 @@ describe("week navigation", () => {
     expect(router.matchRoutes("/dashboard", { week: "not-a-date" }).at(-1)?.routeId).toBe(
       "/dashboard",
     );
+  });
+
+  it("links the Agent Workspace week to the matching Approval Center week filter", () => {
+    expect(approvalWeekFilter("2026-11-09", now)).toBe("current");
+    expect(approvalWeekFilter("2026-11-18", now)).toBe("next");
+    expect(approvalWeekFilter("2026-11-23", now)).toBe("two");
+    // Weeks outside the rolling three deep-link by their Monday.
+    expect(approvalWeekFilter("2026-12-03", now)).toBe("2026-11-30");
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    expect(router.matchRoutes("/approvals", { week: "two" }).at(-1)?.search).toEqual({ week: "two" });
+    expect(router.matchRoutes("/approvals", { week: "2026-12-03" }).at(-1)?.search).toEqual({ week: "2026-11-30" });
+    // Invalid values are not normalized into a week (the page also ignores them).
+    expect(router.matchRoutes("/approvals", { week: "someday" }).at(-1)?.routeId).toBe("/approvals");
   });
 });

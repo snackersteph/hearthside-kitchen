@@ -10,8 +10,8 @@ import { MEALS, type KitchenState } from "@/lib/kitchen/types";
 // Links need a router; the workspace only renders them, so plain anchors are enough here.
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
-  Link: ({ children, className, "aria-label": label }: { children: ReactNode; className?: string; "aria-label"?: string }) => (
-    <a className={className} aria-label={label}>{children}</a>
+  Link: ({ children, className, to, search, "aria-label": label }: { children: ReactNode; className?: string; to?: string; search?: unknown; "aria-label"?: string }) => (
+    <a className={className} aria-label={label} data-to={to} data-search={search === undefined ? undefined : JSON.stringify(search)}>{children}</a>
   ),
 }));
 
@@ -145,7 +145,11 @@ describe("Agent Workspace", () => {
     expect(decisions.compareDocumentPosition(overview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const approve = within(decisions).getByRole("button", { name: /Approve Weekly Menu/ }) as HTMLButtonElement;
     expect(approve.disabled).toBe(true);
-    expect(within(within(decisions).getByRole("list", { name: "Approval blockers" })).getByText(/awaiting approval in the Approval Center/)).toBeTruthy();
+    const alternativesBlocker = within(within(decisions).getByRole("list", { name: "Approval blockers" })).getByText(/awaiting approval in the Approval Center/).closest("li")!;
+    // Review opens the Approval Center filtered to the week being worked on (two weeks out by default).
+    const review = within(alternativesBlocker).getByText("Review");
+    expect(review.getAttribute("data-to")).toBe("/approvals");
+    expect(JSON.parse(review.getAttribute("data-search")!)).toEqual({ week: "two" });
     expect(within(decisions).getByText(/Purchasing doesn't block menu approval/)).toBeTruthy();
     fireEvent.click(approve);
     expect(screen.queryByText("Weekly Menu Approved")).toBeNull();

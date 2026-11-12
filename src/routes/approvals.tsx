@@ -27,16 +27,23 @@ import { pendingPurchasingWeeks } from "@/lib/kitchen/purchasing-review";
 
 const PAGE_SIZE = 50;
 
-type WeekFilter = "current" | "next" | "two";
-const WEEK_FILTERS: { value: WeekFilter; label: string }[] = [
+type RelativeWeek = "current" | "next" | "two";
+/** A rolling week, or the Monday (YYYY-MM-DD) of a specific service week linked from elsewhere. */
+type WeekFilter = RelativeWeek | (string & {});
+const WEEK_FILTERS: { value: RelativeWeek; label: string }[] = [
   { value: "current", label: "Current Week" },
   { value: "next", label: "Next Week" },
   { value: "two", label: "In Two Weeks" },
 ];
-/** Monday of the selected service week, from the same rolling weeks the workstreams use. */
-function weekFilterStart(week: WeekFilter, reference = new Date()) {
+/**
+ * Monday of the selected service week, from the same rolling weeks the workstreams use, or of a
+ * dated week. Unrecognized values select no week (the router passes unvalidated params through).
+ */
+function weekFilterStart(week: unknown, reference = new Date()): string | undefined {
+  if (typeof week !== "string") return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(week)) return weekStartFor(week);
   const weeks = rollingServiceWeeks(reference);
-  return week === "current" ? weeks.service : week === "next" ? weeks.purchasing : weeks.planning;
+  return week === "current" ? weeks.service : week === "next" ? weeks.purchasing : week === "two" ? weeks.planning : undefined;
 }
 /** The service date a request belongs to: serve date for meals, service week or first need for orders. */
 function proposalWeekDate(p: Proposal): string | undefined {
@@ -51,7 +58,9 @@ export const Route = createFileRoute("/approvals")({
     const meal = MEALS.find((m) => m === search["meal"]);
     const inv = search["fromInventory"];
     const fromInventory = inv === "stock" || inv === "alerts" || inv === "delivered" || inv === "incoming" ? inv : undefined;
-    const week = WEEK_FILTERS.find((w) => w.value === search["week"])?.value;
+    const rawWeek = search["week"];
+    const week = WEEK_FILTERS.find((w) => w.value === rawWeek)?.value
+      ?? (typeof rawWeek === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawWeek) ? weekFilterStart(rawWeek) : undefined);
     return { ...boardReturnSearch(search), ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}) };
   },
   head: () => ({
@@ -74,7 +83,7 @@ function ApprovalsPage() {
   const navigate = Route.useNavigate();
   const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
   const today = dateKey(new Date());
-  const weekStart = week ? weekFilterStart(week) : undefined;
+  const weekStart = weekFilterStart(week);
   const scopedPurchasing = kind === "purchase" && !!weekStart;
   const inWeek = (key: string | undefined) => !weekStart || (!!key && weekStartFor(key) === weekStart);
   const overview = useMemo(() => alternativeOverview(state, new Date(), date ? [date] : undefined), [state, date, today]);
@@ -175,10 +184,11 @@ function ApprovalsPage() {
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Service week">
-        <Button size="sm" variant={!week ? "default" : "outline"} aria-pressed={!week} onClick={() => navigate({ search: (prev) => { const { week: _week, ...rest } = prev; return rest; } })}>All weeks</Button>
+        <Button size="sm" variant={!weekStart ? "default" : "outline"} aria-pressed={!weekStart} onClick={() => navigate({ search: (prev) => { const { week: _week, ...rest } = prev; return rest; } })}>All weeks</Button>
         {WEEK_FILTERS.map((w) => {
-          const start = weekFilterStart(w.value);
-          return <Button key={w.value} size="sm" variant={week === w.value ? "default" : "outline"} aria-pressed={week === w.value} title={weekRange(start, addDays(start, 6))} onClick={() => navigate({ search: (prev) => ({ ...prev, week: w.value }) })}>{w.label}</Button>;
+          const start = weekFilterStart(w.value)!;
+          const active = weekStart === start;
+          return <Button key={w.value} size="sm" variant={active ? "default" : "outline"} aria-pressed={active} title={weekRange(start, addDays(start, 6))} onClick={() => navigate({ search: (prev) => ({ ...prev, week: w.value }) })}>{w.label}</Button>;
         })}
         {weekStart && <span className="text-sm text-muted-foreground">{weekRange(weekStart, addDays(weekStart, 6))}</span>}
       </div>
