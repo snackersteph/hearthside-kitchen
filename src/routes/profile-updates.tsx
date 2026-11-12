@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { draftProfileChanges } from "@/lib/kitchen/profile-changes";
 
 export const Route = createFileRoute("/profile-updates")({
-  validateSearch: (search: Record<string, unknown>): { resident?: string; from?: string; fromBoard?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { resident?: string; from?: string; fromBoard?: string; observations?: string } => ({
     ...boardReturnSearch(search),
+    ...(typeof search["observations"] === "string" ? { observations: search["observations"] } : {}),
     ...(typeof search["resident"] === "string" ? { resident: search["resident"] } : {}),
     ...(typeof search["from"] === "string" ? { from: search["from"] } : {}),
   }),
@@ -26,7 +27,8 @@ export const Route = createFileRoute("/profile-updates")({
 
 function ProfileUpdates() {
   const { state, dispatch } = useKitchen();
-  const { resident: residentFilter, from } = Route.useSearch();
+  const { resident: residentFilter, from, observations } = Route.useSearch();
+  const observationIds = observations?.split(",");
   const [view, setView] = useState<"open" | "seen">("open");
   const filteredName = residentFilter ? residentName(state, residentFilter) : null;
   const updates = (state.profileUpdates ?? []).filter((u) => u.review === view && (!residentFilter || u.residentId === residentFilter)).sort((a, b) => b.at - a.at).map((u) => ({
@@ -35,14 +37,15 @@ function ProfileUpdates() {
     changes: u.changes?.length ? u.changes : draftProfileChanges(u.residentId),
   }));
   const openReactions = (state.observations ?? [])
-    .filter((o) => o.status === "open" && o.severity === "concern" && (!residentFilter || o.residentId === residentFilter))
+    .filter((o) => o.status === "open" && o.severity === "concern" && (!residentFilter || o.residentId === residentFilter) && (!observationIds || observationIds.includes(o.id)))
     .sort((a, b) => b.notedAt - a.notedAt);
   return <>
     <BoardReturn />
     <Button asChild variant="ghost" className="mb-5">{from === "residents" ? <Link to="/residents"><ArrowLeft />Residents</Link> : <Link to="/"><ArrowLeft />Kitchen Pulse</Link>}</Button>
     <PageHeader title="Profile updates" />
-    {openReactions.length > 0 && <section aria-label="Meal reactions needing follow-up" className="mb-8">
+    {(openReactions.length > 0 || observationIds) && <section id="meal-reactions" aria-label="Meal reactions needing follow-up" className="mb-8 scroll-mt-6">
       <h2 className="mb-3 text-lg font-semibold">Meal reactions needing follow-up ({openReactions.length})</h2>
+      {!openReactions.length && <p className="flex items-center gap-2 text-success"><CircleCheck className="size-4" />All selected observations reviewed</p>}
       <div className="space-y-3">{openReactions.map((o) => <article key={o.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4 shadow-soft">
         <div>
           <h3 className="font-semibold">{state.residents.some((r) => r.id === o.residentId) ? <Link to="/residents/$residentId" params={{ residentId: o.residentId }} className="text-primary hover:underline">{residentName(state, o.residentId)}</Link> : o.residentId}</h3>

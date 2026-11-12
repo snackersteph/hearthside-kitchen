@@ -160,6 +160,7 @@ export interface WorkstreamAlert {
   tone: "danger" | "warn";
   to?: "/approvals" | "/inventory" | "/profile-updates";
   inventoryView?: "delivered" | "incoming";
+  observationIds?: string;
 }
 
 export interface WeeklyWorkstreams {
@@ -259,12 +260,13 @@ export function weeklyWorkstreams(
     });
   const concerns = (s.observations ?? []).filter(
     (o) => o.status === "open" && o.severity === "concern",
-  ).length;
-  if (concerns)
+  );
+  if (concerns.length)
     alerts.push({
       tone: "danger",
-      message: `${plural(concerns, "meal reaction")} needing follow-up`,
+      message: `${plural(concerns.length, "meal reaction")} needing follow-up · Review observations`,
       to: "/profile-updates",
+      observationIds: concerns.map((o) => o.id).join(","),
     });
 
   // Next week — purchasing

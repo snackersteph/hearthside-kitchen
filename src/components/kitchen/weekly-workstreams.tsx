@@ -9,7 +9,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
-import { dateKey } from "@/lib/kitchen/schedule";
 import { parseDateKey } from "@/lib/kitchen/weekly-schedule";
 import {
   weekRange,
@@ -122,7 +121,8 @@ function AlertList({ alerts }: { alerts: WorkstreamAlert[] }) {
             {a.to ? (
               <Link
                 to={a.to}
-                search={{ ...(a.inventoryView ? { view: a.inventoryView } : {}), fromBoard: "current-service-week" }}
+                search={{ ...(a.inventoryView ? { view: a.inventoryView } : {}), ...(a.observationIds ? { observations: a.observationIds } : {}), fromBoard: "current-service-week" }}
+                hash={a.observationIds ? "meal-reactions" : ""}
                 className={cn(cls, "hover:underline")}
               >
                 {body}
@@ -144,10 +144,7 @@ const actionClass =
 export function WeeklyWorkstreams() {
   const { state, analysis, reference } = useKitchen();
   const { service, purchasing, planning } = weeklyWorkstreams(state, analysis, reference);
-  const today = dateKey(reference);
   const emergency = emergencyMenuDemo(state, reference);
-  const serviceDate =
-    today >= service.startDate && today <= service.endDate ? today : service.startDate;
 
   return (
     <section className="pulse-weeks" aria-label="Weekly workstreams">
@@ -164,7 +161,7 @@ export function WeeklyWorkstreams() {
         icon={UtensilsCrossed}
         info={service}
         action={
-          <Link to="/menu/$date" params={{ date: serviceDate }} search={{ fromBoard: "current-service-week" }} className={actionClass}>
+          <Link to="/service-menu" search={{ week: service.startDate, fromBoard: "current-service-week" }} className={actionClass}>
             View Service Menu
             <ArrowRight className="size-3.5" />
           </Link>
@@ -214,7 +211,7 @@ export function WeeklyWorkstreams() {
         <Fact label="Orders awaiting approval">{purchasing.pendingOrders}</Fact>
         <Fact label="Expected deliveries">
           {purchasing.deliveries.count
-            ? `${purchasing.deliveries.count} · next ${shortDate(purchasing.deliveries.next!)}`
+            ? `${purchasing.deliveries.count} · next ${shortDate(purchasing.deliveries.next ?? purchasing.startDate)}`
             : "None scheduled"}
         </Fact>
       </Workstream>

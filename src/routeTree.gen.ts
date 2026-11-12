@@ -21,6 +21,7 @@ import { Route as ProfileUpdatesRouteImport } from './routes/profile-updates'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ResidentsRouteImport } from './routes/residents'
+import { Route as ServiceMenuRouteImport } from './routes/service-menu'
 import { Route as AgentsAgentIdRouteImport } from './routes/agents.$agentId'
 import { Route as MenuDateRouteImport } from './routes/menu_.$date'
 import { Route as ResidentsResidentIdRouteImport } from './routes/residents_.$residentId'
@@ -85,6 +86,11 @@ const ResidentsRoute = ResidentsRouteImport.update({
   path: '/residents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServiceMenuRoute = ServiceMenuRouteImport.update({
+  id: '/service-menu',
+  path: '/service-menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgentsAgentIdRoute = AgentsAgentIdRouteImport.update({
   id: '/agents/$agentId',
   path: '/agents/$agentId',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/recipes': typeof RecipesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/residents': typeof ResidentsRoute
+  '/service-menu': typeof ServiceMenuRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu/$date': typeof MenuDateRoute
   '/residents/$residentId': typeof ResidentsResidentIdRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/recipes': typeof RecipesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/residents': typeof ResidentsRoute
+  '/service-menu': typeof ServiceMenuRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu/$date': typeof MenuDateRoute
   '/residents/$residentId': typeof ResidentsResidentIdRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/recipes': typeof RecipesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/residents': typeof ResidentsRoute
+  '/service-menu': typeof ServiceMenuRoute
   '/agents/$agentId': typeof AgentsAgentIdRoute
   '/menu_/$date': typeof MenuDateRoute
   '/residents_/$residentId': typeof ResidentsResidentIdRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/reset-password'
     | '/residents'
+    | '/service-menu'
     | '/agents/$agentId'
     | '/menu/$date'
     | '/residents/$residentId'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/reset-password'
     | '/residents'
+    | '/service-menu'
     | '/agents/$agentId'
     | '/menu/$date'
     | '/residents/$residentId'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/reset-password'
     | '/residents'
+    | '/service-menu'
     | '/agents/$agentId'
     | '/menu_/$date'
     | '/residents_/$residentId'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   RecipesRoute: typeof RecipesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResidentsRoute: typeof ResidentsRoute
+  ServiceMenuRoute: typeof ServiceMenuRoute
   AgentsAgentIdRoute: typeof AgentsAgentIdRoute
   MenuDateRoute: typeof MenuDateRoute
   ResidentsResidentIdRoute: typeof ResidentsResidentIdRoute
@@ -311,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/service-menu': {
+      id: '/service-menu'
+      path: '/service-menu'
+      fullPath: '/service-menu'
+      preLoaderRoute: typeof ServiceMenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agents/$agentId': {
       id: '/agents/$agentId'
       path: '/agents/$agentId'
@@ -348,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecipesRoute: RecipesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResidentsRoute: ResidentsRoute,
+  ServiceMenuRoute: ServiceMenuRoute,
   AgentsAgentIdRoute: AgentsAgentIdRoute,
   MenuDateRoute: MenuDateRoute,
   ResidentsResidentIdRoute: ResidentsResidentIdRoute,

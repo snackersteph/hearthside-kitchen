@@ -124,6 +124,17 @@ describe("weekly status", () => {
 });
 
 describe("weekly workstreams", () => {
+  it("links the exact two open concerns and clears reviewed observations", () => {
+    const base = initialState();
+    const s: KitchenState = { ...base, observations: [
+      { id: "follow-up-1", residentId: "R001", dishId: base.plan.breakfast, meal: "breakfast", serviceDate: "2026-11-11", notedAt: now.getTime(), reaction: "Reduced intake", severity: "concern", status: "open", demo: true },
+      { id: "follow-up-2", residentId: "R002", dishId: base.plan.lunch, meal: "lunch", serviceDate: "2026-11-11", notedAt: now.getTime(), reaction: "Meal declined", severity: "concern", status: "open", demo: true },
+    ] };
+    const alert = weeklyWorkstreams(s, { proposals: [] }, now).service.alerts.find((a) => a.to === "/profile-updates");
+    expect(alert?.observationIds).toBe("follow-up-1,follow-up-2");
+    const reviewed = reducer(reducer(s, { type: "reviewObservation", id: "follow-up-1" }, now), { type: "reviewObservation", id: "follow-up-2" }, now);
+    expect(weeklyWorkstreams(reviewed, { proposals: [] }, now).service.alerts.some((a) => a.to === "/profile-updates")).toBe(false);
+  });
   it("summarizes the planning week from the same workflow the Agent Workspace runs", () => {
     let s: KitchenState = { ...initialState(), seeded: true };
     s = reducer(s, { type: "startWeeklyWorkflow", date: "2026-11-23" }, now);

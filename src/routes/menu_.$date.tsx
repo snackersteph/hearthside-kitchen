@@ -14,6 +14,8 @@ import { useKitchen } from "@/lib/kitchen/store";
 import { MEALS } from "@/lib/kitchen/types";
 import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
 
+import { isDateKey, weekStartFor } from "@/lib/kitchen/weekly-schedule";
+
 export const Route = createFileRoute("/menu_/$date")({
   head: ({ params }) => ({ meta: [
     { title: `${params.date} Daily Menu · NutriSync` },
@@ -23,8 +25,9 @@ export const Route = createFileRoute("/menu_/$date")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
-  validateSearch: (search: Record<string, unknown>): { meal?: "breakfast" | "lunch" | "dinner"; focus?: boolean; fromBoard?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { meal?: "breakfast" | "lunch" | "dinner"; focus?: boolean; fromBoard?: string; serviceWeek?: string } => ({
     ...boardReturnSearch(search),
+    ...(typeof search["serviceWeek"] === "string" && isDateKey(search["serviceWeek"]) ? { serviceWeek: weekStartFor(search["serviceWeek"]) } : {}),
     ...(search["meal"] === "breakfast" || search["meal"] === "lunch" || search["meal"] === "dinner" ? { meal: search["meal"] } : {}),
     ...(search["focus"] === true || search["focus"] === "true" ? { focus: true } : {}),
   }),
@@ -34,7 +37,8 @@ export const Route = createFileRoute("/menu_/$date")({
 function DatedMenuPage() {
   const { date } = Route.useParams();
   const { state } = useKitchen();
-  const { meal: focusMeal, focus } = Route.useSearch();
+  const search = Route.useSearch();
+  const { meal: focusMeal, focus, serviceWeek, fromBoard } = search;
   const [reference, setReference] = useState<Date | null>(null);
   useEffect(() => {
     setReference(new Date());
@@ -50,6 +54,7 @@ function DatedMenuPage() {
   const selected = parseISO(date);
   if (!isValid(selected) || dateKey(selected) !== date) return <>
     <BoardReturn />
+    {serviceWeek && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/service-menu" search={{ week: serviceWeek, ...(fromBoard ? { fromBoard } : {}) }}><ArrowLeft />Back to weekly menu</Link></Button>}
     <PageHeader eyebrow="Daily Menu" title="Date unavailable" />
     <Button asChild variant="outline"><Link to="/menu"><ArrowLeft />Back to dates</Link></Button>
   </>;
@@ -58,12 +63,14 @@ function DatedMenuPage() {
   const maxOffset = differenceInCalendarDays(addMonths(reference, 2), reference);
   if (offset < minOffset || offset > maxOffset) return <>
     <BoardReturn />
+    {serviceWeek && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/service-menu" search={{ week: serviceWeek, ...(fromBoard ? { fromBoard } : {}) }}><ArrowLeft />Back to weekly menu</Link></Button>}
     <PageHeader eyebrow="Daily Menu" title="Date outside the current menu" />
     <Button asChild variant="outline"><Link to="/menu"><ArrowLeft />Back to dates</Link></Button>
   </>;
   const status = alternativeOverview(state, reference, [date])[0];
   if (offset > 0 && isMenuCleared(state, date)) return <>
     <BoardReturn />
+    {serviceWeek && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/service-menu" search={{ week: serviceWeek, ...(fromBoard ? { fromBoard } : {}) }}><ArrowLeft />Back to weekly menu</Link></Button>}
     <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu"><ArrowLeft />All dates</Link></Button>
     <PageHeader eyebrow="Daily Menu" title={selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} />
     <section aria-label="Menu not started" className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
@@ -74,12 +81,13 @@ function DatedMenuPage() {
   </>;
   return <>
     <BoardReturn />
+    {serviceWeek && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/service-menu" search={{ week: serviceWeek, ...(fromBoard ? { fromBoard } : {}) }}><ArrowLeft />Back to weekly menu</Link></Button>}
     <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/menu"><ArrowLeft />All dates</Link></Button>
     <PageHeader eyebrow="Daily Menu" title={selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}>
       <div className="flex items-center gap-2">
         {offset === 0 && <Tag tone="ok">Today</Tag>}
-        {offset > minOffset && <Button asChild variant="outline" size="icon" aria-label="Previous day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(-1, selected)) }}><ChevronLeft /></Link></Button>}
-        {offset < maxOffset && <Button asChild variant="outline" size="icon" aria-label="Next day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(1, selected)) }}><ChevronRight /></Link></Button>}
+        {offset > minOffset && <Button asChild variant="outline" size="icon" aria-label="Previous day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(-1, selected)) }} search={search}><ChevronLeft /></Link></Button>}
+        {offset < maxOffset && <Button asChild variant="outline" size="icon" aria-label="Next day"><Link to="/menu/$date" params={{ date: dateKey(dayAt(1, selected)) }} search={search}><ChevronRight /></Link></Button>}
       </div>
     </PageHeader>
     <Tabs key={date} defaultValue={focusMeal ?? "breakfast"}>

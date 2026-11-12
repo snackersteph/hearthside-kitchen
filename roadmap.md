@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Add two shared demo observations and service-board follow-up links.
+- [x] Show the whole weekly service menu with return navigation.
 - [x] Deep-link meal planning to weekly coverage and preserve return navigation for each service board.
 - [x] Add a fictional current-week emergency menu conflict, shared approval, and return navigation; verify the full flow.
 
