@@ -19,6 +19,8 @@ import {
 } from "@/lib/kitchen/weekly-operations";
 import { WeekStatusBadge } from "@/components/kitchen/week-status";
 import { cn } from "@/lib/utils";
+import { emergencyMenuDemo } from "@/lib/kitchen/emergency-menu-demo";
+import { Button } from "@/components/ui/button";
 
 const PURCHASING_LABEL = {
   "not-started": "Not started",
@@ -50,7 +52,9 @@ function Workstream({
   info,
   children,
   action,
+  id,
 }: {
+  id?: string;
   eyebrow: string;
   icon: LucideIcon;
   info: WeekStatusInfo;
@@ -59,6 +63,7 @@ function Workstream({
 }) {
   return (
     <article
+      id={id}
       aria-label={`${eyebrow}: ${weekRange(info.startDate, info.endDate)}`}
       className={cn(
         "pulse-week rounded-xl border bg-card shadow-soft",
@@ -140,6 +145,7 @@ export function WeeklyWorkstreams() {
   const { state, analysis, reference } = useKitchen();
   const { service, purchasing, planning } = weeklyWorkstreams(state, analysis, reference);
   const today = dateKey(reference);
+  const emergency = emergencyMenuDemo(state, reference);
   const serviceDate =
     today >= service.startDate && today <= service.endDate ? today : service.startDate;
 
@@ -153,6 +159,7 @@ export function WeeklyWorkstreams() {
       </div>
 
       <Workstream
+        id="current-service-week"
         eyebrow="Current week · Service"
         icon={UtensilsCrossed}
         info={service}
@@ -170,8 +177,13 @@ export function WeeklyWorkstreams() {
           {service.remainingApproved} of {service.remaining} signed off
         </Fact>
         <div className="pt-1">
-          <AlertList alerts={service.alerts} />
+          {(!emergency || emergency.approvedAt || service.alerts.length > 0) && <AlertList alerts={service.alerts} />}
         </div>
+        {emergency && <div className={cn("space-y-2 rounded-md p-3", emergency.approvedAt ? "bg-success-soft" : "bg-danger-soft")}>
+          <p className={cn("text-sm font-semibold", emergency.approvedAt ? "text-success" : "text-destructive")}>{emergency.approvedAt ? "Emergency menu approved" : "Emergency menu conflict · Needs approval"}</p>
+          <p className="text-xs text-muted-foreground">Demo scenario · Fluid-only food following an accident</p>
+          <Button asChild size="sm" variant="outline"><Link to="/emergency-menu" search={{ week: service.startDate }}>{emergency.approvedAt ? "View decision" : "Review emergency menu"}<ArrowRight className="size-3.5" /></Link></Button>
+        </div>}
       </Workstream>
 
       <Workstream

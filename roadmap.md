@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Add a fictional current-week emergency menu conflict, shared approval, and return navigation; verify the full flow.
 
 - [x] Add selection, confirmation and bulk approval for meal and purchase requests; verify shared persistence.
 - [x] Move recipe information into a dedicated database table and preserve recipe edits, photos and dietary analysis.

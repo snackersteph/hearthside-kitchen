@@ -22,8 +22,10 @@ import { migrateApprovalCleanup } from "./approval-cleanup";
 import { migrateInventoryReplenishment } from "./inventory-replenishment";
 import { rebuild, replayAt } from "./shared-sync";
 import { supabase } from "@/integrations/supabase/client";
+import { approveEmergencyMenuDemo } from "./emergency-menu-demo";
 
 type Action =
+  | { type: "approveEmergencyMenuDemo"; id: string }
   | { type: "addResident"; resident: Resident }
   | { type: "deleteResident"; id: string }
   | { type: "addIngredient"; ingredient: Ingredient }
@@ -120,6 +122,7 @@ function purchaseAlreadyDecided(s: KitchenState, proposalId: string, serviceWeek
 
 function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState {
   switch (a.type) {
+    case "approveEmergencyMenuDemo": return approveEmergencyMenuDemo(s, a.id, reference);
     case "deleteResident": {
       if (!s.residents.some((r) => r.id === a.id)) return s;
       const clear = (meals: Partial<Record<Meal, Record<string, string>>>) => Object.fromEntries(Object.entries(meals).map(([meal, entries]) => [meal, Object.fromEntries(Object.entries(entries ?? {}).filter(([id]) => id !== a.id))]));

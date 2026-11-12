@@ -14,6 +14,7 @@ import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as EmergencyMenuRouteImport } from './routes/emergency-menu'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ProfileUpdatesRouteImport } from './routes/profile-updates'
@@ -47,6 +48,11 @@ const ChatRoute = ChatRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmergencyMenuRoute = EmergencyMenuRouteImport.update({
+  id: '/emergency-menu',
+  path: '/emergency-menu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InventoryRoute = InventoryRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
+  '/emergency-menu': typeof EmergencyMenuRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
   '/profile-updates': typeof ProfileUpdatesRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
+  '/emergency-menu': typeof EmergencyMenuRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
   '/profile-updates': typeof ProfileUpdatesRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
+  '/emergency-menu': typeof EmergencyMenuRoute
   '/inventory': typeof InventoryRoute
   '/menu': typeof MenuRoute
   '/profile-updates': typeof ProfileUpdatesRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/dashboard'
+    | '/emergency-menu'
     | '/inventory'
     | '/menu'
     | '/profile-updates'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/dashboard'
+    | '/emergency-menu'
     | '/inventory'
     | '/menu'
     | '/profile-updates'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/dashboard'
+    | '/emergency-menu'
     | '/inventory'
     | '/menu'
     | '/profile-updates'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChatRoute: typeof ChatRoute
   DashboardRoute: typeof DashboardRoute
+  EmergencyMenuRoute: typeof EmergencyMenuRoute
   InventoryRoute: typeof InventoryRoute
   MenuRoute: typeof MenuRoute
   ProfileUpdatesRoute: typeof ProfileUpdatesRoute
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/emergency-menu': {
+      id: '/emergency-menu'
+      path: '/emergency-menu'
+      fullPath: '/emergency-menu'
+      preLoaderRoute: typeof EmergencyMenuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inventory': {
@@ -321,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChatRoute: ChatRoute,
   DashboardRoute: DashboardRoute,
+  EmergencyMenuRoute: EmergencyMenuRoute,
   InventoryRoute: InventoryRoute,
   MenuRoute: MenuRoute,
   ProfileUpdatesRoute: ProfileUpdatesRoute,

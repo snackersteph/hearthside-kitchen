@@ -99,6 +99,8 @@ export interface AgentProfileEdit {
 }
 
 export interface KitchenState {
+  /** Showcase emergency decisions only; never resident care instructions or serving overrides. */
+  emergencyDemoApprovals?: Record<string, number>;
   inventoryReplenishmentVersion?: number;
   approvalCleanupVersion?: number;
   demoContentVersion?: number;
