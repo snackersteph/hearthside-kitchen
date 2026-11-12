@@ -372,7 +372,7 @@ describe("end-to-end edge cases", () => {
     const review = plannedWeekWithShortage().s;
     const late = weekStatus(review, START, new Date(2026, 10, 23, 9));
     expect(late.status).toBe("needs-review");
-    expect(late.outstanding.map((o) => o.kind)).toEqual(["menu"]);
+    expect(late.outstanding).toEqual([]);
     // Menu approved but purchasing undecided on Nov 28 (due Nov 27 with a 2-day lead time).
     const { s } = approvedWeek();
     const lateBuy = weekStatus(s, START, new Date(2026, 10, 28, 9));

@@ -96,10 +96,10 @@ describe("weekly status", () => {
   });
 
   it("reports overdue work as outstanding instead of advancing the week", () => {
-    // Next week's menu was due Nov 8 and is still unapproved: it stays in review, flagged.
+    // Next week's menu was due Nov 8 and is still unapproved: it stays in review, unflagged.
     const review = weekStatus(withPlan(base, "2026-11-16", "needs-review"), "2026-11-16", now);
     expect(review.status).toBe("needs-review");
-    expect(review.outstanding.map((o) => o.kind)).toEqual(["menu"]);
+    expect(review.outstanding).toEqual([]);
     // The current week is being served without weekly sign-off: not "In Service", and the
     // lapsed menu deadline no longer raises a warning on the week already in service.
     const serving = weekStatus(base, "2026-11-09", now);

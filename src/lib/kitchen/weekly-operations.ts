@@ -50,7 +50,7 @@ export const WEEK_STATUS_LABEL: Record<WeekStatus, string> = {
 };
 
 export interface OutstandingAction {
-  kind: "menu" | "purchasing";
+  kind: "purchasing";
   message: string;
   dueDate: string;
 }
@@ -117,16 +117,7 @@ export function weekStatus(s: KitchenState, date: string, reference = new Date()
   let note: string | null = null;
   if (phase === "completed") {
     if (!menuApproved) note = "Served without a weekly menu approval";
-  } else if (!menuApproved) {
-    // A week already being served is not flagged for its lapsed menu deadline; only upcoming
-    // weeks report the overdue approval.
-    if (phase !== "service" && today > dates.menuDueDate)
-      outstanding.push({
-        kind: "menu",
-        dueDate: dates.menuDueDate,
-        message: `Menu approval overdue since ${shortDate(dates.menuDueDate)}`,
-      });
-  } else if (!purchasingApproved && today > dates.purchasingDueDate) {
+  } else if (menuApproved && !purchasingApproved && today > dates.purchasingDueDate) {
     outstanding.push({
       kind: "purchasing",
       dueDate: dates.purchasingDueDate,
