@@ -53,7 +53,7 @@ export function MealSection({ meal, offset, reference }: { meal: Meal; offset: n
             <SelectContent>{DISHES.filter((d) => d.meal === meal).map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
           </Select>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Tag tone={pendingCount || unresolved.length ? "danger" : "ok"}>{pendingCount ? `${pendingCount} to approve` : unresolved.length ? "Needs attention" : approvedCount ? "Approved" : "No approvals needed"}</Tag>
+            <Tag tone={pendingCount || unresolved.length ? "danger" : "ok"}>{pendingCount || unresolved.length ? `${pendingCount + unresolved.length} to approve` : "Approved"}</Tag>
           </div>
           <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/approvals" search={{ kind: "substitution", date, meal, fromMenu: true }}>Review {MEAL_LABEL[meal].toLowerCase()} <ChevronRight /></Link></Button>
         </div>

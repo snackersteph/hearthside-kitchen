@@ -48,7 +48,7 @@ function MenuPage() {
     const pending = residentApprovalCount(day?.pending ?? []);
     const past = key < today;
     const cleared = !past && isMenuCleared(state, key);
-    const status = cleared ? "Not started" : pending ? `${pending} to approve` : day?.unresolved.length ? "Needs attention" : day?.approved.length ? "Approved" : "No approvals";
+    const status = cleared ? "Not started" : pending ? `${pending} to approve` : day?.unresolved.length ? "Needs approval" : "Approved";
     const isToday = key === today;
     const inRange = props.day.date >= start && props.day.date <= end;
     return <CalendarDayButton {...props}
@@ -69,7 +69,7 @@ function MenuPage() {
     const inRange = sunday >= start && monday <= end;
     const info = inRange ? calendarWeekApproval(overview, dateKey(monday), dateKey(sunday), reference) : null;
     const weekCleared = inRange && dateKey(monday) > today && week.days.every((day) => isMenuCleared(state, dateKey(day.date)));
-    const label = weekCleared ? "Not started" : info?.status === "pending" ? `${info.pending} to approve` : info?.status === "unresolved" ? "Needs attention" : info?.status === "approved" ? "Approved" : info?.status === "past" ? "Completed" : "No approvals";
+    const label = weekCleared ? "Not started" : info?.status === "pending" ? `${info.pending} to approve` : info?.status === "unresolved" ? "Needs approval" : info?.status === "approved" ? "Approved" : info?.status === "past" ? "Completed" : "Approved";
     const range = weekRange(dateKey(monday), dateKey(sunday));
     return <tr {...props}>
       {info && <td className="col-span-7">
@@ -101,8 +101,6 @@ function MenuPage() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5"><ClipboardCheck className="size-4 text-destructive" />Needs approval</span>
           <span className="flex items-center gap-1.5"><CheckCircle2 className="size-4 text-success" />Approved</span>
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="size-4 text-success" />Needs attention</span>
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="size-4 text-success" />No approvals</span>
           <span className="flex items-center gap-1.5"><CheckCheck className="size-4" />Completed</span>
           <span className="flex items-center gap-1.5"><CirclePlus className="size-4" />Not started</span>
         </div>

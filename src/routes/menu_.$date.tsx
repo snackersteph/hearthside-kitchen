@@ -83,7 +83,7 @@ function DatedMenuPage() {
           const approved = status?.approved.some((p) => p.meal === meal);
           const unresolved = status?.unresolved.some((c) => c.meal === meal);
           return <TabsTrigger key={meal} value={meal} className="min-h-16 flex-col gap-1 border border-transparent text-base data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            {MEAL_LABEL[meal]}<span className={`text-[11px] font-normal ${offset >= 0 && pending ? "rounded-md bg-danger-soft px-1.5 py-0.5 text-destructive" : ""}`}>{offset < 0 ? "Past menu" : pending ? `${pending} to approve` : unresolved ? "Needs attention" : approved ? "Approved" : "No approvals needed"}</span>
+            {MEAL_LABEL[meal]}<span className={`text-[11px] font-normal ${offset >= 0 && pending ? "rounded-md bg-danger-soft px-1.5 py-0.5 text-destructive" : ""}`}>{offset < 0 ? "Past menu" : pending ? `${pending} to approve` : unresolved ? "Needs approval" : "Approved"}</span>
           </TabsTrigger>;
         })}
       </TabsList>
