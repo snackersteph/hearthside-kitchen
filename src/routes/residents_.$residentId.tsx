@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/kitchen/app-shell";
 import { EditDialog, type ProfileSection } from "@/components/kitchen/resident-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { ResidentPhoto } from "@/components/kitchen/resident-photo";
+import { ResidentObservationLog } from "@/components/kitchen/resident-observation-log";
 import { ResidentMealHistory } from "@/components/kitchen/resident-meal-history";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
@@ -64,6 +65,7 @@ function ResidentProfilePage() {
         {r.mealInstructions?.length ? <ul className="list-disc space-y-3 pl-5 text-sm leading-relaxed">{r.mealInstructions.map((instruction) => <li key={instruction}>{instruction}</li>)}</ul> : <p className="text-sm text-muted-foreground">Not specified</p>}
       </section>
       <section className="border-t pt-6"><div className="mb-5 flex items-center justify-between gap-3"><h2 className="font-display text-xl font-semibold">Clinical notes</h2><Button variant="outline" size="icon" aria-label="Edit clinical notes" title="Edit clinical notes" onClick={() => setEditing("Clinical notes")}><Pencil /></Button></div><p className="whitespace-pre-line text-sm leading-relaxed">{r.notes || "Not specified"}</p></section>
+      <ResidentObservationLog residentId={r.id} />
       <ResidentMealHistory residentId={r.id} />
     </div>
     {editing && <EditDialog resident={r} section={editing} onClose={() => setEditing(null)} />}

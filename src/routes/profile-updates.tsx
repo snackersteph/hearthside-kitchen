@@ -41,10 +41,10 @@ function ProfileUpdates() {
   return <>
     <BoardReturn />
     {from === "residents" && <Button asChild variant="ghost" className="mb-5"><Link to="/residents"><ArrowLeft />Residents</Link></Button>}
-    <div className="mb-6 flex flex-wrap gap-2 border-b pb-4">
+    {!observationIds && <div className="mb-6 flex flex-wrap gap-2 border-b pb-4">
       <Button variant={view === "open" ? "default" : "outline"} onClick={() => setView("open")}>Needs acknowledgment ({(state.profileUpdates ?? []).filter((u) => u.review === "open").length})</Button>
       <Button variant={view === "seen" ? "default" : "outline"} onClick={() => setView("seen")}>Acknowledged</Button>
-    </div>
+    </div>}
     {(openReactions.length > 0 || observationIds) && <section id="meal-reactions" aria-label="Meal reactions needing follow-up" className="mb-8 scroll-mt-6">
       <h2 className="mb-3 text-lg font-semibold">Meal reactions needing follow-up ({openReactions.length})</h2>
       {!openReactions.length && <p className="flex items-center gap-2 text-success"><CircleCheck className="size-4" />All selected observations reviewed</p>}
@@ -60,8 +60,8 @@ function ProfileUpdates() {
       <span>Showing updates for <strong>{filteredName ?? residentFilter}</strong></span>
       <Link to="/profile-updates" search={{}} className="font-semibold text-primary hover:underline">Show all residents</Link>
     </div>}
-    {!updates.length && <div className="flex items-center gap-3 py-10 text-muted-foreground"><CircleCheck className="text-success" />{view === "open" ? "All profile updates acknowledged" : "No acknowledged updates yet"}</div>}
-    <div className="space-y-5">{updates.map((u) => <article key={u.id} className="rounded-lg border bg-card p-5 shadow-soft">
+    {!observationIds && !updates.length && <div className="flex items-center gap-3 py-10 text-muted-foreground"><CircleCheck className="text-success" />{view === "open" ? "All profile updates acknowledged" : "No acknowledged updates yet"}</div>}
+    {!observationIds && <div className="space-y-5">{updates.map((u) => <article key={u.id} className="rounded-lg border bg-card p-5 shadow-soft">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div><h2 className="text-lg font-semibold">{state.residents.some((r) => r.id === u.residentId) ? <Link to="/residents/$residentId" params={{ residentId: u.residentId }} className="text-primary hover:underline">{residentName(state, u.residentId)}</Link> : u.residentName ?? u.residentId}</h2><p className="text-sm text-muted-foreground">{new Date(u.at).toLocaleString()} · {u.summary}</p></div>
         {u.review === "open" ? <Button onClick={() => dispatch({ type: "acknowledgeProfileUpdate", id: u.id })}><Check />Acknowledge update</Button> : <span className="text-sm text-success">Acknowledged{u.acknowledgedAt ? ` · ${new Date(u.acknowledgedAt).toLocaleString()}` : ""}</span>}
@@ -80,6 +80,6 @@ function ProfileUpdates() {
           </div>
         </div>
       </div>)}</div>
-    </article>)}</div>
+    </article>)}</div>}
   </>;
 }
