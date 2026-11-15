@@ -1,14 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { medicalConditions } from "@/lib/kitchen/resident-profile";
+import { residentMealHistory } from "@/lib/kitchen/resident-meal-history";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { EditDialog, type ProfileSection } from "@/components/kitchen/resident-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { ResidentPhoto } from "@/components/kitchen/resident-photo";
-import { ResidentObservationLog } from "@/components/kitchen/resident-observation-log";
-import { ResidentMealHistory } from "@/components/kitchen/resident-meal-history";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/residents_/$residentId")({
@@ -65,8 +64,15 @@ function ResidentProfilePage() {
         {r.mealInstructions?.length ? <ul className="list-disc space-y-3 pl-5 text-sm leading-relaxed">{r.mealInstructions.map((instruction) => <li key={instruction}>{instruction}</li>)}</ul> : <p className="text-sm text-muted-foreground">Not specified</p>}
       </section>
       <section className="border-t pt-6"><div className="mb-5 flex items-center justify-between gap-3"><h2 className="font-display text-xl font-semibold">Clinical notes</h2><Button variant="outline" size="icon" aria-label="Edit clinical notes" title="Edit clinical notes" onClick={() => setEditing("Clinical notes")}><Pencil /></Button></div><p className="whitespace-pre-line text-sm leading-relaxed">{r.notes || "Not specified"}</p></section>
-      <ResidentObservationLog residentId={r.id} />
-      <ResidentMealHistory residentId={r.id} />
+      <section className="grid gap-4 border-t pt-6 sm:grid-cols-2" aria-label="Resident records">
+        {[
+          { title: "Observation log", description: "Food reactions noted at meal times", count: (state.observations ?? []).filter((o) => o.residentId === r.id).length, to: "/residents/$residentId/observations" as const },
+          { title: "Meal history", description: "Recorded meals from the past month", count: residentMealHistory(state, r.id, 30).length, to: "/residents/$residentId/meal-history" as const },
+        ].map((card) => <Link key={card.title} to={card.to} params={{ residentId: r.id }} search={approval ? { approval } : {}} className="group flex items-center justify-between gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <div className="min-w-0"><h2 className="font-display text-lg font-semibold">{card.title}</h2><p className="mt-1 text-sm text-muted-foreground">{card.description}</p><p className="mt-2 text-sm font-medium">{card.count} {card.count === 1 ? "entry" : "entries"}</p></div>
+          <ChevronRight className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+        </Link>)}
+      </section>
     </div>
     {editing && <EditDialog resident={r} section={editing} onClose={() => setEditing(null)} />}
   </>;

@@ -8,8 +8,7 @@ import { Check } from "lucide-react";
 export function ResidentObservationLog({ residentId }: { residentId: string }) {
   const { state, dispatch } = useKitchen();
   const entries = (state.observations ?? []).filter((o) => o.residentId === residentId).sort((a, b) => b.notedAt - a.notedAt);
-  return <section className="border-t pt-6" aria-label="Observation log">
-    <h2 className="mb-5 font-display text-xl font-semibold">Observation log</h2>
+  return <section aria-label="Observation log">
     {!entries.length ? <p className="border-y py-6 text-sm text-muted-foreground">No meal reactions observed yet.</p> : <div className="overflow-x-auto border-y"><table className="w-full text-left text-sm"><thead className="bg-muted/60"><tr>{["Date", "Meal", "Dish", "Reaction", "Status"].map((t) => <th key={t} className="px-4 py-3 font-semibold">{t}</th>)}</tr></thead><tbody className="divide-y">{entries.map((o) => <tr key={o.id}>
       <td className="whitespace-nowrap px-4 py-4">{new Date(`${o.serviceDate}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</td>
       <td className="px-4 py-4">{MEAL_LABEL[o.meal]}</td>
