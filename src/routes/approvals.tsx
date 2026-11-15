@@ -200,10 +200,10 @@ function ApprovalsPage() {
       {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: { ...(kind ? { kind } : {}), ...(week ? { week } : {}) } })}>All dates</Button></div>}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-          {kind !== "purchase" && <TabsTrigger value="pending">Residents to approve ({residentApprovalCount(reviews)})</TabsTrigger>}
+          {kind !== "purchase" && <TabsTrigger value="pending">Meals to approve ({residentApprovalCount(reviews)})</TabsTrigger>}
           {kind !== "purchase" && <TabsTrigger value="approved">Approved residents ({residentApprovalCount(approved)})</TabsTrigger>}
-          {kind !== "substitution" && <TabsTrigger value="orders">Purchase orders to approve ({purchases.length + weeklyCount})</TabsTrigger>}
-          <TabsTrigger value="history">History ({history.length})</TabsTrigger>
+          {kind !== "substitution" && <TabsTrigger value="orders">Orders to approve ({purchases.length + weeklyCount})</TabsTrigger>}
+          <TabsTrigger value="history">Approval history ({history.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-6 space-y-3">
           {bulkToolbar}
