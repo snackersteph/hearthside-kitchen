@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { bulkApprovalActions } from "@/lib/kitchen/bulk-approvals";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { canApproveMeal, dateKey } from "@/lib/kitchen/schedule";
+import { canApproveMeal, dateKey, scheduledState } from "@/lib/kitchen/schedule";
 import { addDays, weekStartFor } from "@/lib/kitchen/weekly-schedule";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { alternativeOverview, residentApprovalCount } from "@/components/kitchen/approval-rules";
@@ -104,7 +104,6 @@ function ApprovalsPage() {
     return text.toLowerCase().includes(q);
   };
   const reviews = kind === "purchase" ? [] : overview.flatMap((day) => day.pending).filter((p) => (!meal || p.meal === meal) && matches(p)).sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
-  const approved = kind === "purchase" ? [] : overview.flatMap((day) => day.approved).filter((p) => (!meal || p.meal === meal) && matches(p));
   const purchases = proposals.filter((p): p is PurchaseProposal => p.kind === "purchase" && matches(p));
   // Week-specific drafts from approved weekly menus, shown with their stock breakdown.
   const weekly = useWeeklyPurchasing().filter((w) => w.state !== "awaiting-menu" || w.invalidated);
@@ -116,8 +115,7 @@ function ApprovalsPage() {
   useEffect(() => {
     const id = window.location.hash.replace(/^#proposal-/, "");
     if (!id || id === window.location.hash) return;
-    if (approved.some((p) => p.id === id)) setTab("approved");
-    else if (reviews.some((p) => p.id === id)) setTab("pending");
+    if (reviews.some((p) => p.id === id)) setTab("pending");
     const t = window.setTimeout(() => {
       const el = document.getElementById(`proposal-${id}`);
       if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("ring-2", "ring-primary"); window.setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2500); }
@@ -134,6 +132,14 @@ function ApprovalsPage() {
   const more = (key: string, total: number) => total > limit(key) ? <div className="flex justify-center pt-2"><Button variant="link" onClick={() => setLimits((l) => ({ ...l, [key]: limit(key) + PAGE_SIZE }))}>Load {Math.min(PAGE_SIZE, total - limit(key))} more ({limit(key)} of {total} shown)</Button></div> : null;
   const now = Date.now();
   const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000 && (kind || historyKind === "all" || h.kind === historyKind) && (!q || h.summary.toLowerCase().includes(q))).sort((x, y) => y.at - x.at);
+  /** Whole-meal decisions ("Approved lunch menu for …") name no dish; append the planned main dish. */
+  const historyText = (h: (typeof history)[number]) => {
+    if (h.kind !== "substitution" || h.alternativeScope) return h.summary;
+    const found = h.summary.match(/(?:Approved|Rejected) (breakfast|lunch|dinner) menu for (\d{4}-\d{2}-\d{2})/);
+    if (!found) return h.summary;
+    const offset = Math.round((new Date(`${found[2]}T12:00:00`).getTime() - new Date(`${today}T12:00:00`).getTime()) / 86400000);
+    return `${h.summary} · ${dishById(scheduledState(state, offset).plan[found[1] as Meal]).name}`;
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dishChoices, setDishChoices] = useState<Record<string, string>>({});
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -201,7 +207,6 @@ function ApprovalsPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           {kind !== "purchase" && <TabsTrigger value="pending">Meals to approve ({residentApprovalCount(reviews)})</TabsTrigger>}
-          {kind !== "purchase" && <TabsTrigger value="approved">Approved residents ({residentApprovalCount(approved)})</TabsTrigger>}
           {kind !== "substitution" && <TabsTrigger value="orders">Orders to approve ({purchases.length + weeklyCount})</TabsTrigger>}
           <TabsTrigger value="history">Approval history ({history.length})</TabsTrigger>
         </TabsList>
@@ -214,9 +219,6 @@ function ApprovalsPage() {
             {reviews.slice(0, limit("pending")).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} {...selectionProps(p)} />)}
             {more("pending", reviews.length)}
           </>}
-        </TabsContent>
-        <TabsContent value="approved" className="mt-6 space-y-3">
-          {approved.length ? <>{approved.slice(0, limit("approved")).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} />)}{more("approved", approved.length)}</> : <Empty text="No approved alternatives for this selection." />}
         </TabsContent>
         <TabsContent value="orders" className="mt-6 space-y-3">
           {bulkToolbar}
@@ -243,7 +245,7 @@ function ApprovalsPage() {
                 <li key={h.proposalId + h.at} className="flex items-center gap-3 px-5 py-4 text-sm">
                   <Tag tone={h.status === "approved" ? "ok" : "danger"}>{h.status}</Tag>
                   {h.modified && <Tag tone="warn">modified</Tag>}
-                  <span className="flex-1">{h.summary}</span>
+                  <span className="flex-1">{historyText(h)}</span>
                   <span className="text-xs text-muted-foreground">{new Date(h.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                 </li>
               ))}
