@@ -52,7 +52,7 @@ function proposalWeekDate(p: Proposal): string | undefined {
 }
 
 export const Route = createFileRoute("/approvals")({
-  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming"; fromBoard?: string; fromDashboard?: string } => {
+  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming"; fromBoard?: string; fromDashboard?: string; horizon?: 7 | 14 } => {
     const kind = search["kind"];
     const date = typeof search["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search["date"]) ? search["date"] : undefined;
     const meal = MEALS.find((m) => m === search["meal"]);
@@ -64,7 +64,9 @@ export const Route = createFileRoute("/approvals")({
     // Agent Dashboard week the staff member came from, so they can return to it once reviews are done.
     const rawDashboard = search["fromDashboard"];
     const fromDashboard = typeof rawDashboard === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawDashboard) ? weekStartFor(rawDashboard) : undefined;
-    return { ...boardReturnSearch(search), ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}), ...(fromDashboard ? { fromDashboard } : {}) };
+    const rawHorizon = search["horizon"];
+    const horizon = rawHorizon === 7 || rawHorizon === "7" ? 7 : rawHorizon === 14 || rawHorizon === "14" ? 14 : undefined;
+    return { ...boardReturnSearch(search), ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}), ...(fromDashboard ? { fromDashboard } : {}), ...(horizon ? { horizon } : {}) };
   },
   head: () => ({
     meta: [
@@ -81,7 +83,7 @@ export const Route = createFileRoute("/approvals")({
 
 function ApprovalsPage() {
   const { state, analysis, dispatch } = useKitchen();
-  const { kind, date, meal, week, fromMenu, fromInventory, fromDashboard } = Route.useSearch();
+  const { kind, date, meal, week, fromMenu, fromInventory, fromDashboard, horizon } = Route.useSearch();
   const [origin] = useState(() => fromMenu && date && meal ? { date, meal } : null);
   // Kept from arrival so changing filters on this page doesn't lose the way back.
   const [dashboardWeek] = useState(() => fromDashboard);
@@ -123,6 +125,12 @@ function ApprovalsPage() {
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // Arriving from the Inventory forecast banner: jump straight to the matching 7- or 14-day orders section.
+  useEffect(() => {
+    if (!horizon) return;
+    const t = window.setTimeout(() => document.getElementById("forecast-orders")?.scrollIntoView({ block: "start" }), 100);
+    return () => window.clearTimeout(t);
+  }, [horizon]);
   const [approvalRequest, setApprovalRequest] = useState<SubstitutionProposal | null>(null);
   const [range, setRange] = useState<7 | 14 | 30>(7);
   const [historyKind, setHistoryKind] = useState<"all" | "substitution" | "purchase">("all");
@@ -227,7 +235,7 @@ function ApprovalsPage() {
             {w.rejected.map((p) => <p key={p.id} className="text-sm text-muted-foreground">Rejected: {p.vendor} · {p.lines.length} item{p.lines.length === 1 ? "" : "s"} · ${p.total.toFixed(2)}</p>)}
             {w.state === "ready-to-confirm" && <ConfirmWeeklyPurchasing weekId={w.weekId} title={`service week ${weekRange(w.startDate, w.endDate)}`} rejected={w.rejected.length} />}
           </WeeklyPurchasingPanel>)}
-          {weeklyShown.length > 0 && purchases.length > 0 && <h3 className="pt-2 text-sm font-semibold text-muted-foreground">Rolling {state.purchaseHorizonDays ?? 7}-day forecast requests</h3>}
+          {purchases.length > 0 && (weeklyShown.length > 0 || horizon) && <h3 id="forecast-orders" className="scroll-mt-24 pt-2 text-sm font-semibold text-muted-foreground">{horizon ?? state.purchaseHorizonDays ?? 7}-day orders · rolling forecast requests</h3>}
           {purchases.length ? <>{purchases.slice(0, limit("orders")).map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} {...selectionProps(p)} /></div>)}{more("orders", purchases.length)}</> : !weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
         </TabsContent>
         <TabsContent value="history" className="mt-6 space-y-3">
