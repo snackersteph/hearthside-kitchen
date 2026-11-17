@@ -193,12 +193,6 @@ function ApprovalsPage() {
       {!origin && fromInventory && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/inventory" search={{ view: fromInventory }}><ArrowLeft />Back to inventory</Link></Button>}
       <BoardReturn />
       <PageHeader title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
-      <div className="mb-4 flex flex-wrap gap-2">
-        <div className="relative ml-auto w-full sm:w-72">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search residents, dishes, vendors…" aria-label="Search approvals" className="pl-9" />
-        </div>
-      </div>
       <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Service week">
         <Button size="sm" variant={!weekStart ? "default" : "outline"} aria-pressed={!weekStart} onClick={() => navigate({ search: (prev) => { const { week: _week, ...rest } = prev; return rest; } })}>All weeks</Button>
         {WEEK_FILTERS.map((w) => {
@@ -207,6 +201,10 @@ function ApprovalsPage() {
           return <Button key={w.value} size="sm" variant={active ? "default" : "outline"} aria-pressed={active} title={weekRange(start, addDays(start, 6))} onClick={() => navigate({ search: (prev) => ({ ...prev, week: w.value }) })}>{w.label}</Button>;
         })}
         {weekStart && <span className="text-sm text-muted-foreground">{weekRange(weekStart, addDays(weekStart, 6))}</span>}
+        <div className="relative ml-auto w-full sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search residents, dishes, vendors…" aria-label="Search approvals" className="pl-9" />
+        </div>
       </div>
       {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: { ...(kind ? { kind } : {}), ...(week ? { week } : {}) } })}>All dates</Button></div>}
       <Tabs value={tab} onValueChange={setTab}>
