@@ -193,10 +193,7 @@ function ApprovalsPage() {
       {!origin && fromInventory && <Button asChild variant="ghost" size="sm" className="mb-5"><Link to="/inventory" search={{ view: fromInventory }}><ArrowLeft />Back to inventory</Link></Button>}
       <BoardReturn />
       <PageHeader title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
-      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Proposal type">
-        <Button variant={!kind ? "default" : "outline"} onClick={() => navigate({ search: week ? { week } : {} })}>All proposals</Button>
-        <Button variant={kind === "substitution" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "substitution", ...(week ? { week } : {}) } })}>Meals only</Button>
-        <Button variant={kind === "purchase" ? "default" : "outline"} onClick={() => navigate({ search: { kind: "purchase", ...(week ? { week } : {}) } })}>Orders only</Button>
+      <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative ml-auto w-full sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search residents, dishes, vendors…" aria-label="Search approvals" className="pl-9" />
