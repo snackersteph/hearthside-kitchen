@@ -23,7 +23,6 @@ import { alternativeOverview, residentApprovalCount } from "@/components/kitchen
 import { RememberApprovalDialog } from "@/components/kitchen/remember-approval-dialog";
 import { WeeklyPurchasingPanel } from "@/components/kitchen/weekly-purchasing";
 import { rollingServiceWeeks, weekRange } from "@/lib/kitchen/weekly-operations";
-import { pendingPurchasingWeeks } from "@/lib/kitchen/purchasing-review";
 
 const PAGE_SIZE = 50;
 
@@ -52,7 +51,7 @@ function proposalWeekDate(p: Proposal): string | undefined {
 }
 
 export const Route = createFileRoute("/approvals")({
-  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming"; fromBoard?: string; fromDashboard?: string; horizon?: 7 | 14 } => {
+  validateSearch: (search: Record<string, unknown>): { kind?: "purchase" | "substitution"; date?: string; meal?: Meal; week?: WeekFilter; fromMenu?: boolean; fromInventory?: "stock" | "alerts" | "delivered" | "incoming"; fromBoard?: string; fromDashboard?: string } => {
     const kind = search["kind"];
     const date = typeof search["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search["date"]) ? search["date"] : undefined;
     const meal = MEALS.find((m) => m === search["meal"]);
@@ -64,9 +63,7 @@ export const Route = createFileRoute("/approvals")({
     // Agent Dashboard week the staff member came from, so they can return to it once reviews are done.
     const rawDashboard = search["fromDashboard"];
     const fromDashboard = typeof rawDashboard === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawDashboard) ? weekStartFor(rawDashboard) : undefined;
-    const rawHorizon = search["horizon"];
-    const horizon = rawHorizon === 7 || rawHorizon === "7" ? 7 : rawHorizon === 14 || rawHorizon === "14" ? 14 : undefined;
-    return { ...boardReturnSearch(search), ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}), ...(fromDashboard ? { fromDashboard } : {}), ...(horizon ? { horizon } : {}) };
+    return { ...boardReturnSearch(search), ...(kind === "purchase" || kind === "substitution" ? { kind } : {}), ...(date ? { date } : {}), ...(meal ? { meal } : {}), ...(week ? { week } : {}), ...(search["fromMenu"] === true || search["fromMenu"] === "true" ? { fromMenu: true } : {}), ...(fromInventory ? { fromInventory } : {}), ...(fromDashboard ? { fromDashboard } : {}) };
   },
   head: () => ({
     meta: [
@@ -82,16 +79,14 @@ export const Route = createFileRoute("/approvals")({
 });
 
 function ApprovalsPage() {
-  const { state, analysis, dispatch } = useKitchen();
-  const { kind, date, meal, week, fromMenu, fromInventory, fromDashboard, horizon } = Route.useSearch();
+  const { state, dispatch } = useKitchen();
+  const { kind, date, meal, week, fromMenu, fromInventory, fromDashboard } = Route.useSearch();
   const [origin] = useState(() => fromMenu && date && meal ? { date, meal } : null);
   // Kept from arrival so changing filters on this page doesn't lose the way back.
   const [dashboardWeek] = useState(() => fromDashboard);
   const navigate = Route.useNavigate();
-  const proposals = analysis.proposals.filter((p) => (!kind || p.kind === kind) && (!date || (p.kind === "substitution" && p.serviceDate === date)) && (!meal || (p.kind === "substitution" && p.meal === meal)));
   const today = dateKey(new Date());
   const weekStart = weekFilterStart(week);
-  const scopedPurchasing = kind === "purchase" && !!weekStart;
   const inWeek = (key: string | undefined) => !weekStart || (!!key && weekStartFor(key) === weekStart);
   const overview = useMemo(() => alternativeOverview(state, new Date(), date ? [date] : undefined), [state, date, today]);
   const [query, setQuery] = useState("");
@@ -106,10 +101,9 @@ function ApprovalsPage() {
     return text.toLowerCase().includes(q);
   };
   const reviews = kind === "purchase" ? [] : overview.flatMap((day) => day.pending).filter((p) => (!meal || p.meal === meal) && matches(p)).sort((a, b) => (a.serviceDate ?? "").localeCompare(b.serviceDate ?? "") || MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal));
-  const purchases = proposals.filter((p): p is PurchaseProposal => p.kind === "purchase" && matches(p));
   // Week-specific drafts from approved weekly menus, shown with their stock breakdown.
-  const weekly = useWeeklyPurchasing().filter((w) => w.state !== "awaiting-menu" || w.invalidated);
-  const weeklyShown = kind === "substitution" || date ? [] : scopedPurchasing && weekStart ? pendingPurchasingWeeks(weekly, weekStart) : weekly.filter((w) => inWeek(w.startDate));
+  const weekly = useWeeklyPurchasing().filter((w) => !w.invalidated && (w.state === "needs-review" || w.state === "ready-to-confirm"));
+  const weeklyShown = kind === "substitution" || date ? [] : weekStart ? weekly.filter((w) => w.startDate === weekStart) : weekly.filter((w) => inWeek(w.startDate));
   const weeklyCount = weeklyShown.reduce((n, w) => n + w.proposals.filter(matches).length, 0);
   const defaultTab = kind === "purchase" ? "orders" : "pending";
   const [tab, setTab] = useState(defaultTab);
@@ -125,12 +119,6 @@ function ApprovalsPage() {
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Arriving from the Inventory forecast banner: jump straight to the matching 7- or 14-day orders section.
-  useEffect(() => {
-    if (!horizon) return;
-    const t = window.setTimeout(() => document.getElementById("forecast-orders")?.scrollIntoView({ block: "start" }), 100);
-    return () => window.clearTimeout(t);
-  }, [horizon]);
   const [approvalRequest, setApprovalRequest] = useState<SubstitutionProposal | null>(null);
   const [range, setRange] = useState<7 | 14 | 30>(7);
   const [historyKind, setHistoryKind] = useState<"all" | "substitution" | "purchase">("all");
@@ -153,7 +141,7 @@ function ApprovalsPage() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [rememberBulk, setRememberBulk] = useState(false);
   useEffect(() => { setSelectedIds(new Set()); setBulkOpen(false); }, [tab, query, kind, date, meal, week]);
-  const currentRequests: Proposal[] = tab === "pending" ? reviews : tab === "orders" ? [...weeklyShown.flatMap((w) => w.proposals.filter(matches)), ...purchases] : [];
+  const currentRequests: Proposal[] = tab === "pending" ? reviews : tab === "orders" ? weeklyShown.flatMap((w) => w.proposals.filter(matches)) : [];
   const chosenDish = (p: Proposal): Proposal => p.kind === "substitution" && dishChoices[p.id] ? { ...p, dishId: dishChoices[p.id] ?? p.dishId } : p;
   const eligible = currentRequests.map(chosenDish).filter((p) => bulkApprovalActions(state, [p]).length > 0);
   const selectedRequests = eligible.filter((p) => selectedIds.has(p.id));
@@ -196,7 +184,8 @@ function ApprovalsPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Service week">
         <Button size="sm" variant={!weekStart ? "default" : "outline"} aria-pressed={!weekStart} onClick={() => navigate({ search: (prev) => { const { week: _week, ...rest } = prev; return rest; } })}>All weeks</Button>
         {WEEK_FILTERS.map((w) => {
-          const start = weekFilterStart(w.value)!;
+          const start = weekFilterStart(w.value);
+          if (!start) return null;
           const active = weekStart === start;
           return <Button key={w.value} size="sm" variant={active ? "default" : "outline"} aria-pressed={active} title={weekRange(start, addDays(start, 6))} onClick={() => navigate({ search: (prev) => ({ ...prev, week: w.value }) })}>{w.label}</Button>;
         })}
@@ -210,7 +199,7 @@ function ApprovalsPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           {kind !== "purchase" && <TabsTrigger value="pending">Meals to approve ({residentApprovalCount(reviews)})</TabsTrigger>}
-          {kind !== "substitution" && <TabsTrigger value="orders">Orders to approve ({purchases.length + weeklyCount})</TabsTrigger>}
+          {kind !== "substitution" && <TabsTrigger value="orders">Orders to approve ({weeklyCount})</TabsTrigger>}
           <TabsTrigger value="history">Approval history ({history.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-6 space-y-3">
@@ -225,13 +214,12 @@ function ApprovalsPage() {
         </TabsContent>
         <TabsContent value="orders" className="mt-6 space-y-3">
           {bulkToolbar}
-          {scopedPurchasing ? weeklyShown.flatMap((w) => w.proposals.filter(matches)).map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} {...selectionProps(p)} /></div>) : weeklyShown.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
+          {weeklyShown.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
             {w.proposals.filter(matches).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} {...selectionProps(p)} />)}
             {w.rejected.map((p) => <p key={p.id} className="text-sm text-muted-foreground">Rejected: {p.vendor} · {p.lines.length} item{p.lines.length === 1 ? "" : "s"} · ${p.total.toFixed(2)}</p>)}
             {w.state === "ready-to-confirm" && <ConfirmWeeklyPurchasing weekId={w.weekId} title={`service week ${weekRange(w.startDate, w.endDate)}`} rejected={w.rejected.length} />}
           </WeeklyPurchasingPanel>)}
-          {purchases.length > 0 && (weeklyShown.length > 0 || horizon) && <h3 id="forecast-orders" className="scroll-mt-24 pt-2 text-sm font-semibold text-muted-foreground">{horizon ?? state.purchaseHorizonDays ?? 7}-day orders · rolling forecast requests</h3>}
-          {purchases.length ? <>{purchases.slice(0, limit("orders")).map((p) => <div key={p.id} className="rounded-lg border bg-card shadow-soft"><ProposalCard p={p} onApprove={setApprovalRequest} {...selectionProps(p)} /></div>)}{more("orders", purchases.length)}</> : !weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
+          {!weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
         </TabsContent>
         <TabsContent value="history" className="mt-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">

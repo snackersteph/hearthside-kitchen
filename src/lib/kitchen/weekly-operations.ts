@@ -325,9 +325,7 @@ export function weeklyWorkstreams(
       menuApproved: purchasingInfo.plan?.menuStatus === "approved",
       purchasingStatus: purchasingInfo.plan?.purchasingStatus ?? "not-started",
       recommended,
-      pendingOrders:
-        analysis.proposals.filter((p) => p.kind === "purchase").length +
-        (weekPurchasing?.proposals.length ?? 0),
+      pendingOrders: weekPurchasing?.proposals.length ?? 0,
       deliveries: {
         count: expected.length,
         next: expected[0]?.deliveryDate ?? null,

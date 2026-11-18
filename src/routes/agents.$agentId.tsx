@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { useKitchen } from "@/lib/kitchen/store";
+import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AGENTS, AgentAvatar } from "@/components/kitchen/agents";
 import { AgentActionHistory } from "@/components/kitchen/agent-action-history";
@@ -24,8 +24,8 @@ const INFO: Record<AgentId, { summary: string; duties: string[]; link: { to: "/r
     link: { to: "/menu", label: "Open daily menu" },
   },
   inventory: {
-    summary: "Forecasts ingredient use from the planned menus and prepares purchase requests before stock runs short.",
-    duties: ["Totals ingredient demand across upcoming meals", "Counts stock on hand and incoming orders", "Prepares purchase requests grouped by vendor", "Adds delivered orders to stock once staff confirm them"],
+    summary: "Forecasts ingredient use and prepares service-week purchase requests from approved weekly menus.",
+    duties: ["Totals ingredient demand across upcoming meals", "Counts stock on hand and incoming orders", "Prepares service-week purchase requests grouped by vendor", "Adds delivered orders to stock once staff confirm them"],
     link: { to: "/inventory", label: "Open inventory" },
   },
 };
@@ -56,7 +56,8 @@ function AgentPage() {
   const summary = edit?.summary ?? info.summary;
   const duties = edit?.duties?.length ? edit.duties : info.duties;
   const mealPending = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
-  const open = id === "dietary" ? analysis.conflicts.length : id === "menu" ? analysis.proposals.filter((p) => p.kind === "substitution").length + mealPending : analysis.proposals.filter((p) => p.kind === "purchase").length;
+  const weeklyRequests = useWeeklyPurchasing().reduce((n, w) => n + w.proposals.length, 0);
+  const open = id === "dietary" ? analysis.conflicts.length : id === "menu" ? analysis.proposals.filter((p) => p.kind === "substitution").length + mealPending : weeklyRequests;
   const baseConfig: [string, string][] = id === "dietary"
     ? [["Residents monitored", String(state.residents.length)], ["Checks", "Allergens, diet type, texture"], ["When no safe dish exists", "Escalate to staff"], ["Runs", "On every menu or profile change"]]
     : id === "menu"

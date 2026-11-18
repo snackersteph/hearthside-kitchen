@@ -1,8 +1,8 @@
 import { BoardReturn, boardReturnSearch } from "@/components/kitchen/board-return";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useKitchen } from "@/lib/kitchen/store";
+import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
-import { AgentAvatar, Tag } from "@/components/kitchen/agents";
+import { Tag } from "@/components/kitchen/agents";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,7 @@ function InventoryPage() {
   const [ordering, setOrdering] = useState<Ingredient | null>(null);
   const [deleting, setDeleting] = useState<Ingredient | null>(null);
   const [query, setQuery] = useState("");
-  const purchases = analysis.proposals.filter((p) => p.kind === "purchase");
+  const purchasingWeeks = useWeeklyPurchasing().filter((w) => !w.invalidated && (w.proposals.length > 0 || w.state === "ready-to-confirm"));
   const forecast = analysis.forecast;
   const horizon = state.purchaseHorizonDays ?? 7;
   const incoming = (state.orders ?? []).filter((order) => order.status === "incoming");
@@ -93,16 +93,13 @@ function InventoryPage() {
 
       {(forecast?.unresolved ?? 0) > 0 && <div className="mb-5 border-l-4 border-warning bg-warning-soft p-4 text-sm">{forecast?.unresolved} resident-meal conflicts have no safe alternative on file in this period. Forecast is provisional until staff resolve them.</div>}
 
-      {purchases.length > 0 && (
-        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-agent-inventory bg-agent-inventory-soft p-4">
-          <AgentAvatar agent="inventory" />
-          <div className="flex-1 text-sm">
-            <div className="font-semibold">{purchases.length} purchase request{purchases.length > 1 ? "s" : ""} for the {horizon}-day plan</div>
-            <div className="text-muted-foreground">{purchases.map((p) => p.kind === "purchase" && `${p.vendor} ($${p.total.toFixed(2)})`).join(" · ")}</div>
-          </div>
-          <Button asChild><Link to="/approvals" search={{ kind: "purchase", fromInventory: view, horizon }}>Review orders</Link></Button>
-        </div>
-      )}
+      {purchasingWeeks.length > 0 && <section aria-label="Purchasing by service week" className="mb-6 border-y py-4">
+        <h2 className="mb-3 text-lg font-semibold">Purchasing by service week</h2>
+        <div className="divide-y">{purchasingWeeks.map((w) => <div key={w.weekId} className="flex flex-wrap items-center justify-between gap-3 py-3">
+          <div className="text-sm"><div className="font-semibold">{dateLabel(w.startDate)} – {dateLabel(w.endDate)}</div><div className="text-muted-foreground">{w.proposals.length} orders to approve · ${w.total.toFixed(2)}{w.state === "ready-to-confirm" && " · Ready to confirm"}</div></div>
+          <Button asChild variant="outline"><Link to="/approvals" search={{ kind: "purchase", fromInventory: view, week: w.startDate }}>Review orders</Link></Button>
+        </div>)}</div>
+      </section>}
 
       <div role="tablist" aria-label="Ingredient sections" className="ingredient-section-tabs sticky top-0 z-10 -mx-1 mb-6 flex flex-wrap gap-2 bg-background/95 px-1 py-3 backdrop-blur">
         {["All", ...FOOD_CATEGORIES].map((c) => { const sourceRows = view === "alerts" ? alertRows : rows; const n = c === "All" ? sourceRows.length : sourceRows.filter((i) => ingredientCategory(i) === c).length; if (c !== "All" && !n) return null; return <Button key={c} role="tab" aria-selected={tab === c} onClick={() => setTab(c)} variant={tab === c ? "default" : "outline"}>{c} <span className="ml-1 opacity-70">{n}</span></Button>; })}

@@ -24,11 +24,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const mealPending = (analysis.mealReviews ?? []).filter((r) => !r.approved).length;
   const residentsToApprove = useMemo(() => residentApprovalCount(alternativeOverview(state, new Date()).flatMap((d) => d.pending)), [state]);
   const weeklyRequests = useWeeklyPurchasing().reduce((n, w) => n + w.proposals.length, 0);
-  const pending = residentsToApprove + analysis.proposals.filter((p) => p.kind === "purchase").length + weeklyRequests;
+  const pending = residentsToApprove + weeklyRequests;
   const busy: Record<AgentId, number> = {
     dietary: analysis.conflicts.length,
     menu: analysis.proposals.filter((p) => p.kind === "substitution").length + mealPending,
-    inventory: analysis.proposals.filter((p) => p.kind === "purchase").length + weeklyRequests,
+    inventory: weeklyRequests,
   };
   return (
     <div className="app-shell flex min-h-screen bg-background">

@@ -8,7 +8,6 @@ import {
   type KitchenState,
   type Meal,
   type Proposal,
-  type PurchaseProposal,
   type Resident,
   type SubstitutionProposal,
 } from "./types";
@@ -54,7 +53,6 @@ export function resolveMenuState(state: KitchenState, offset = 0, reference = ne
 const firstName = (r: Resident): string => r.name.split(" ")[0] ?? r.name;
 const list = (names: string[]) =>
   names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const round = (n: number) => Math.round(n * 100) / 100;
 
 /** Recipe quantities are per serving in g/ml; stock is tracked in kg/L. Convert before comparing. */
@@ -210,27 +208,10 @@ function analyzeDay(state: KitchenState, serviceDate?: string): Analysis {
     for (const dishId of Object.values(served[meal]))
       for (const ing of dishById(dishId).ingredients) demand[ing.id] = round((demand[ing.id] ?? 0) + servingQty(ing));
 
-  const byVendor = new Map<string, PurchaseProposal["lines"]>();
-  for (const ing of state.ingredients) {
-    const need = demand[ing.id] ?? 0;
-    const shortage = round(need - ing.stock - ing.onOrder);
-    if (shortage <= 0) continue;
-    const qty = Math.ceil(shortage / ing.packSize) * ing.packSize;
-    byVendor.set(ing.vendor, [...(byVendor.get(ing.vendor) ?? []), { ingredientId: ing.id, shortage, qty }]);
-    messages.push({ id: `inv-${ing.id}`, agent: "inventory", to: "staff", tone: "alert", text: `We need ${shortage} additional ${ing.unit} of ${ing.name.toLowerCase()}. I've prepared a purchase request to ${ing.vendor}.` });
-  }
-  for (const [vendor, lines] of byVendor) {
-    const prefix = `po-${slug(vendor)}-`;
-    const n = state.history.filter((h) => h.proposalId.startsWith(prefix)).length;
-    const total = round(lines.reduce((s, l) => s + l.qty * (state.ingredients.find((i) => i.id === l.ingredientId)?.unitCost ?? 0), 0));
-    proposals.push({ id: `${prefix}${n}`, kind: "purchase", agent: "inventory", vendor, lines, total });
-  }
-  if (!byVendor.size) messages.push({ id: "inv-ok", agent: "inventory", tone: "ok", text: "Stock covers every planned and proposed meal today." });
-
   return { conflicts, proposals, messages, demand, served };
 }
 
-/** Shared purchasing forecast: today plus upcoming scheduled meals, with safe swaps. */
+/** Inventory forecast only; approval requests are derived by weeklyPurchasePlan. */
 export function analyze(state: KitchenState, reference = new Date()): Analysis {
   const today = analyzeMenuDay(state, 0, reference);
   const menuDays = Array.from({ length: 8 }, (_, offset) => ({ offset, result: offset === 0 ? today : analyzeMenuDay(state, offset, reference) }));
@@ -255,7 +236,6 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
   const demand: Record<string, number> = {};
   const firstShortDate: Record<string, string> = {};
   const todayShortage: Record<string, number> = {};
-  const byVendor = new Map<string, PurchaseProposal["lines"]>();
   const forecastIngredients = [...state.ingredients, ...Object.keys(Object.assign({}, ...days.map((day) => day.demand))).filter((id) => !state.ingredients.some((i) => i.id === id)).map((id) => ({ id, stock: 0, onOrder: 0, packSize: 1, vendor: "Unlisted ingredient", unitCost: 0 }))];
   for (const ingredient of forecastIngredients) {
     let balance = ingredient.stock;
@@ -276,30 +256,13 @@ export function analyze(state: KitchenState, reference = new Date()): Analysis {
       if (offset === 0 && balance < 0) todayShortage[ingredient.id] = round(-balance);
     }
     demand[ingredient.id] = used;
-    const arrivingWithinWindow = incoming.filter((line) => line.date <= (days.at(-1)?.date ?? "")).reduce((sum, line) => sum + line.qty, 0);
-    const shortage = round(used - ingredient.stock - arrivingWithinWindow);
-    if (!state.ingredients.some((i) => i.id === ingredient.id)) continue;
-    if (shortage <= 0) continue;
-    const qty = Math.ceil(shortage / ingredient.packSize) * ingredient.packSize;
-    byVendor.set(ingredient.vendor, [...(byVendor.get(ingredient.vendor) ?? []), { ingredientId: ingredient.id, shortage, qty }]);
   }
   const proposals = menuDays.flatMap(({ result }) => result.proposals.filter((p) => p.kind === "substitution"));
-  const purchases: PurchaseProposal[] = [];
   const messages = today.messages.filter((message) => message.agent !== "inventory");
-  for (const [vendor, lines] of byVendor) {
-    const prefix = `po-${slug(vendor)}-`;
-    const signature = `${horizonDays}-${lines.map((line) => `${line.ingredientId}.${line.qty}`).join("-")}`;
-    const id = `${prefix}${signature}`;
-    if (state.history.some((decision) => decision.proposalId === id && decision.status === "rejected")) continue;
-    const neededDate = lines.map((line) => firstShortDate[line.ingredientId]).filter((date): date is string => Boolean(date)).sort()[0] ?? dateKey(dayAt(leadTime, reference));
-    const needed = new Date(`${neededDate}T12:00:00`);
-    const orderByDate = dateKey(dayAt(-leadTime, needed));
-    purchases.push({ id, kind: "purchase", agent: "inventory", vendor, lines, total: round(lines.reduce((sum, line) => sum + lineCost(state, line.ingredientId, line.qty), 0)), horizonDays, deliveryDate: dateKey(dayAt(leadTime, reference)), neededDate, orderByDate });
-    messages.push({ id: `inv-${id}`, agent: "inventory", to: "staff", tone: "alert", text: `${vendor}: purchase request for ${horizonDays}-day consumption. First shortage ${neededDate}; allow ${leadTime} days for delivery.` });
-  }
   if (Object.keys(todayShortage).length) messages.push({ id: "inv-service-risk", agent: "inventory", to: "staff", tone: "alert", text: "Today's stock is short. Incoming purchases cannot cover same-day service; arrange an available-stock alternative." });
-  if (!purchases.length) messages.push({ id: "inv-ok", agent: "inventory", tone: "ok", text: `No new purchase requests for the ${horizonDays}-day plan. Check service risks separately from incoming stock.` });
-  return { ...today, mealReviews, proposals: [...proposals, ...purchases], messages, forecast: { days, demand, firstShortDate, todayShortage, horizonDays, unresolved: days.reduce((sum, day) => sum + day.unresolved, 0) } };
+  const alertCount = Object.keys(firstShortDate).length;
+  messages.push({ id: "inv-forecast", agent: "inventory", to: "staff", tone: alertCount ? "alert" : "ok", text: alertCount ? `${alertCount} ingredient shortages in the ${horizonDays}-day forecast. Review Stock alert; planned purchasing is grouped by service week.` : `Stock covers the ${horizonDays}-day forecast. Planned purchasing is grouped by service week.` });
+  return { ...today, mealReviews, proposals, messages, forecast: { days, demand, firstShortDate, todayShortage, horizonDays, unresolved: days.reduce((sum, day) => sum + day.unresolved, 0) } };
 }
 
 export function lineCost(state: KitchenState, ingredientId: string, qty: number) {

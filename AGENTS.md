@@ -7,7 +7,7 @@
 - Catalog storage and bulk approvals follow src/lib/kitchen/AGENTS.md to preserve shared persistence.
 - Agent logic (Dietary/Menu/Inventory) lives in the pure `analyze()` in src/lib/kitchen/engine.ts; proposals are derived from state, so pages never store them — keeps agents sharing one context and re-running on every change.
 - Engine rules are covered by src/test/kitchen-engine.test.ts; update it when safety rules change.
-- Menu and inventory use the shared schedule helpers; analyze derives horizon demand and purchasing requests so forecasts cannot diverge from the displayed sample rotation.
+- Menu and inventory use the shared schedule helpers; analyze derives horizon demand and stock alerts only, while weeklyPurchasePlan exclusively derives approval requests from approved service-week menus to avoid overlapping rolling orders.
 - Date-specific future main dishes are staff decisions stored in KitchenState.scheduledPlans; the shared schedule resolves them before the sample rotation so editing one day changes only that day's forecast.
 - Approved purchases remain incoming until explicitly received; dated order lines support delivery-aware forecasts without treating unreceived stock as available today.
 - Stock-alert orders use shared validation and estimates; edits and receipts synchronize incoming quantities without adding stock until receipt.

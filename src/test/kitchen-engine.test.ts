@@ -142,14 +142,11 @@ describe("kitchen agents", () => {
     }
   });
 
-  it("approving a swap resolves the conflict and approving an order clears the shortage", () => {
+  it("approving a swap resolves the conflict", () => {
     let s = initialState();
     for (const p of analyzeMenuDay(s, 1).proposals)
       if (p.kind === "substitution") s = reducer(s, { type: "approveSub", proposalId: p.id, serviceDate: p.serviceDate, meal: p.meal, dishId: p.dishId, residentIds: p.residentIds, modified: false, summary: "" });
     expect(analyzeMenuDay(s, 1).conflicts.length).toBe(0);
-    for (const p of analyze(s).proposals)
-      if (p.kind === "purchase") s = reducer(s, { type: "approvePurchase", proposalId: p.id, lines: p.lines, modified: false, summary: "" });
-    expect(analyze(s).proposals.filter((p) => p.kind === "purchase").length).toBe(0);
   });
 
   it("forecasts exactly 7 or 14 days of scheduled consumption including today", () => {
@@ -195,14 +192,20 @@ describe("kitchen agents", () => {
     const s = initialState();
     s.ingredients = s.ingredients.map((i) => i.id === "chicken" ? { ...i, onOrder: 100 } : i);
     s.orders = [{ id: "late", vendor: "Sysco", deliveryDate: dateKey(dayAt(10, reference)), status: "incoming", lines: [{ ingredientId: "chicken", qty: 100, shortage: 100 }] }];
-    expect(analyze(s, reference).proposals.some((p) => p.kind === "purchase" && p.lines.some((l) => l.ingredientId === "chicken"))).toBe(true);
+    expect(analyze(s, reference).forecast?.firstShortDate["chicken"]).toBeDefined();
   });
 
-  it("purchase requests have at least one day of lead time", () => {
-    const reference = new Date("2026-11-08T12:00:00");
-    const s = { ...initialState(), leadTimeDays: 0 };
-    const order = analyze(s, reference).proposals.find((p) => p.kind === "purchase");
-    expect(order?.kind === "purchase" ? order.deliveryDate : undefined).toBe("2026-11-09");
+  it.each([7, 14] as const)("a %i-day forecast retains shortages without generating rolling purchase requests", (days) => {
+    const reference = new Date("2026-11-18T12:00:00");
+    const s = initialState();
+    s.purchaseHorizonDays = days;
+    s.ingredients = s.ingredients.map((i) => ({ ...i, stock: 0, onOrder: 0 }));
+    s.orders = [];
+    const result = analyze(s, reference);
+    expect(result.forecast?.days).toHaveLength(days);
+    expect(Object.keys(result.forecast?.firstShortDate ?? {}).length).toBeGreaterThan(0);
+    expect(result.proposals.filter((p) => p.kind === "purchase")).toEqual([]);
+    expect(analyzeMenuDay(s, 0, reference).proposals.filter((p) => p.kind === "purchase")).toEqual([]);
   });
 });
 

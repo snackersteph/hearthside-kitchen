@@ -41,7 +41,7 @@ function CommandCenter() {
   const { state, analysis, dispatch } = useKitchen();
   const weeklyRequests = useWeeklyPurchasing().reduce((n, w) => n + w.proposals.length, 0);
   // Same totals as the sidebar badge and the Inventory "Stock alert" tab.
-  const approvals = residentApprovalCount(alternativeOverview(state, new Date()).flatMap((d) => d.pending)) + analysis.proposals.filter((p) => p.kind === "purchase").length + weeklyRequests;
+  const approvals = residentApprovalCount(alternativeOverview(state, new Date()).flatMap((d) => d.pending)) + weeklyRequests;
   const forecast = analysis.forecast;
   const stockAlerts = state.ingredients.filter((i) => Boolean(forecast?.firstShortDate[i.id]) || (stockOrderEstimate(state, i.id, forecast?.demand[i.id] ?? 0)?.qty ?? 0) > 0).length;
   const cards = actionCards(state, analysis, new Date(), { approvals, stockAlerts });
