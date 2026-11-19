@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { bulkApprovalActions } from "@/lib/kitchen/bulk-approvals";
+import { approvalHistory, type HistoryRange } from "@/lib/kitchen/approval-history";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { canApproveMeal, dateKey, scheduledState } from "@/lib/kitchen/schedule";
@@ -79,7 +80,7 @@ export const Route = createFileRoute("/approvals")({
 });
 
 function ApprovalsPage() {
-  const { state, dispatch } = useKitchen();
+  const { state, dispatch, reference } = useKitchen();
   const { kind, date, meal, week, fromMenu, fromInventory, fromDashboard } = Route.useSearch();
   const [origin] = useState(() => fromMenu && date && meal ? { date, meal } : null);
   // Kept from arrival so changing filters on this page doesn't lose the way back.
@@ -120,14 +121,13 @@ function ApprovalsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [approvalRequest, setApprovalRequest] = useState<SubstitutionProposal | null>(null);
-  const [range, setRange] = useState<7 | 14 | 30>(7);
+  const [range, setRange] = useState<HistoryRange>(7);
   const [historyKind, setHistoryKind] = useState<"all" | "substitution" | "purchase">("all");
   const [limits, setLimits] = useState<Record<string, number>>({});
   useEffect(() => setLimits({}), [query, kind, date, meal, week, range, historyKind]);
   const limit = (key: string) => limits[key] ?? PAGE_SIZE;
   const more = (key: string, total: number) => total > limit(key) ? <div className="flex justify-center pt-2"><Button variant="link" onClick={() => setLimits((l) => ({ ...l, [key]: limit(key) + PAGE_SIZE }))}>Load {Math.min(PAGE_SIZE, total - limit(key))} more ({limit(key)} of {total} shown)</Button></div> : null;
-  const now = Date.now();
-  const history = state.history.filter((h) => (!kind || h.kind === kind) && (!date || h.serviceDate === date) && h.at >= now - range * 86400000 && (kind || historyKind === "all" || h.kind === historyKind) && (!q || h.summary.toLowerCase().includes(q))).sort((x, y) => y.at - x.at);
+  const history = approvalHistory(state.history, range, reference, kind ?? historyKind, query);
   /** Whole-meal decisions ("Approved lunch menu for …") name no dish; append the planned main dish. */
   const historyText = (h: (typeof history)[number]) => {
     if (h.kind !== "substitution" || h.alternativeScope) return h.summary;
@@ -182,20 +182,20 @@ function ApprovalsPage() {
       <BoardReturn />
       <PageHeader title={kind === "purchase" ? "Purchase Orders" : "Approval Center"} />
       <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Service week">
-        <Button size="sm" variant={!weekStart ? "default" : "outline"} aria-pressed={!weekStart} onClick={() => navigate({ search: (prev) => { const { week: _week, ...rest } = prev; return rest; } })}>All weeks</Button>
-        {WEEK_FILTERS.map((w) => {
+        {tab !== "history" && <Button size="sm" variant={!weekStart ? "default" : "outline"} aria-pressed={!weekStart} onClick={() => navigate({ search: (prev) => { const { week: _week, ...rest } = prev; return rest; } })}>All weeks</Button>}
+        {tab !== "history" && WEEK_FILTERS.map((w) => {
           const start = weekFilterStart(w.value);
           if (!start) return null;
           const active = weekStart === start;
           return <Button key={w.value} size="sm" variant={active ? "default" : "outline"} aria-pressed={active} title={weekRange(start, addDays(start, 6))} onClick={() => navigate({ search: (prev) => ({ ...prev, week: w.value }) })}>{w.label}</Button>;
         })}
-        {weekStart && <span className="text-sm text-muted-foreground">{weekRange(weekStart, addDays(weekStart, 6))}</span>}
+        {tab !== "history" && weekStart && <span className="text-sm text-muted-foreground">{weekRange(weekStart, addDays(weekStart, 6))}</span>}
         <div className="relative ml-auto w-full sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search residents, dishes, vendors…" aria-label="Search approvals" className="pl-9" />
         </div>
       </div>
-      {date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: { ...(kind ? { kind } : {}), ...(week ? { week } : {}) } })}>All dates</Button></div>}
+      {tab !== "history" && date && <div className="mb-4 flex items-center gap-3 text-sm font-semibold">{date}{meal && ` · ${MEAL_LABEL[meal]}`}<Button size="sm" variant="ghost" onClick={() => navigate({ search: { ...(kind ? { kind } : {}), ...(week ? { week } : {}) } })}>All dates</Button></div>}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           {kind !== "purchase" && <TabsTrigger value="pending">Meals to approve ({residentApprovalCount(reviews)})</TabsTrigger>}
@@ -224,20 +224,20 @@ function ApprovalsPage() {
         <TabsContent value="history" className="mt-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex gap-2" role="group" aria-label="History range">
-              {([7, 14, 30] as const).map((d) => <Button key={d} size="sm" variant={range === d ? "default" : "outline"} onClick={() => setRange(d)}>{d === 7 ? "Past week" : d === 14 ? "Past 2 weeks" : "Past month"}</Button>)}
+              {([7, 14, 30, "all"] as const).map((d) => <Button key={d} size="sm" variant={range === d ? "default" : "outline"} onClick={() => setRange(d)}>{d === 7 ? "Past week" : d === 14 ? "Past 2 weeks" : d === 30 ? "Past month" : "All time"}</Button>)}
             </div>
             {!kind && <div className="ml-auto flex gap-1 rounded-lg border bg-muted p-1" role="group" aria-label="History type">
               {([["all", "All"], ["substitution", "Meals"], ["purchase", "Orders"]] as const).map(([k, l]) => <Button key={k} size="sm" variant={historyKind === k ? "default" : "ghost"} onClick={() => setHistoryKind(k)}>{l}</Button>)}
             </div>}
           </div>
-          {history.length === 0 ? <Empty text="No decisions in this period." /> : (
+          {history.length === 0 ? <Empty text={range === "all" ? "No recorded decisions match these filters." : "No recorded decisions in this period. Select All time to see older history."} /> : (
             <ul className="divide-y rounded-xl border bg-card shadow-soft">
               {history.slice(0, limit("history")).map((h) => (
                 <li key={h.proposalId + h.at} className="flex items-center gap-3 px-5 py-4 text-sm">
                   <Tag tone={h.status === "approved" ? "ok" : "danger"}>{h.status}</Tag>
                   {h.modified && <Tag tone="warn">modified</Tag>}
-                  <span className="flex-1">{historyText(h)}</span>
-                  <span className="text-xs text-muted-foreground">{new Date(h.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                  <span className="flex-1">{historyText(h)}{h.serviceWeekId && <span className="mt-1 block text-xs text-muted-foreground">Service week · {weekRange(h.serviceWeekId.slice(5), addDays(h.serviceWeekId.slice(5), 6))}</span>}</span>
+                  <span className="text-xs text-muted-foreground">{h.status === "approved" ? "Approved" : "Rejected"} {new Date(h.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                 </li>
               ))}
             </ul>
