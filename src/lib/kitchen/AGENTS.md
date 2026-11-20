@@ -1,4 +1,5 @@
 # Order presentation
+- Purchase decisions retain the reviewed order in history; legacy entries resolve only an exact source order, never inferred vendor matches, so deleted or rejected requests remain inspectable without fabricating details.
 - Service-board destinations carry an allowlisted fromBoard search value and share BoardReturn links to the matching Kitchen Pulse anchor; planning links target the weekly-meal-coverage anchor to preserve review context.
 - Service-week Review Purchasing opens the selected purchasing week and only pending requests, excluding decided orders and withdrawn drafts so historical purchasing cannot crowd its approval flow.
 - Showcase stock replenishment is a one-time versioned migration using eleven days of shared dietary-aware demand; only stored quantities increase, preserving incoming orders and later stock edits.

@@ -61,6 +61,8 @@ export interface Decision {
   note?: string;
   /** Service week a weekly purchase decision belongs to. */
   serviceWeekId?: string;
+  /** Order as reviewed, retained even after delivery, deletion or rejection. */
+  purchaseDetails?: PurchaseProposal;
   alternativeScope?: { meal: Meal; fromDishId: string; dishId: string; residentSignatures: Record<string, string> };
 }
 

@@ -1,4 +1,15 @@
-import type { PurchaseOrder } from "./types";
+import type { Decision, KitchenState, PurchaseOrder, PurchaseProposal } from "./types";
+
+/** Legacy approvals can resolve their exact source order, never another order from the same vendor. */
+export function historicalPurchase(state: KitchenState, decision: Decision): PurchaseProposal | undefined {
+  if (decision.kind !== "purchase") return undefined;
+  if (decision.purchaseDetails) return decision.purchaseDetails;
+  if (decision.status !== "approved") return undefined;
+  const order = state.orders?.find((o) => o.id === decision.proposalId || (o.id.startsWith(`${decision.proposalId}-`) && /^\d+$/.test(o.id.slice(decision.proposalId.length + 1))));
+  if (!order) return undefined;
+  return { id: decision.proposalId, kind: "purchase", agent: "inventory", vendor: order.vendor, lines: order.lines, deliveryDate: order.deliveryDate, ...(order.serviceWeekId ? { serviceWeekId: order.serviceWeekId } : {}),
+    total: order.lines.reduce((sum, line) => sum + line.qty * (state.ingredients.find((i) => i.id === line.ingredientId)?.unitCost ?? 0), 0) };
+}
 
 export interface VendorOrder extends PurchaseOrder {
   sourceOrders: PurchaseOrder[];

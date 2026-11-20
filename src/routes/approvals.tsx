@@ -1,12 +1,13 @@
 import { BoardReturn, boardReturnSearch } from "@/components/kitchen/board-return";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, Check, Search, ChevronDown, Pencil, X } from "lucide-react";
+import { ArrowLeft, Check, Search, ChevronDown, Pencil, X, Eye, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useKitchen, useWeeklyPurchasing, residentName } from "@/lib/kitchen/store";
 import { DISHES, dishById } from "@/lib/kitchen/data";
 import { conflictReasons, lineCost } from "@/lib/kitchen/engine";
-import { MEALS, type Meal, type Proposal, type PurchaseProposal, type SubstitutionProposal } from "@/lib/kitchen/types";
+import { MEALS, type Decision, type Meal, type Proposal, type PurchaseProposal, type SubstitutionProposal } from "@/lib/kitchen/types";
+import { historicalPurchase, vendorDestination } from "@/lib/kitchen/order-display";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AGENTS, AgentAvatar, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,7 @@ function ApprovalsPage() {
   }, []);
   const [approvalRequest, setApprovalRequest] = useState<SubstitutionProposal | null>(null);
   const [range, setRange] = useState<HistoryRange>(7);
+  const [viewingDecision, setViewingDecision] = useState<Decision | null>(null);
   const [historyKind, setHistoryKind] = useState<"all" | "substitution" | "purchase">("all");
   const [limits, setLimits] = useState<Record<string, number>>({});
   useEffect(() => setLimits({}), [query, kind, date, meal, week, range, historyKind]);
@@ -216,7 +218,7 @@ function ApprovalsPage() {
           {bulkToolbar}
           {weeklyShown.map((w) => <WeeklyPurchasingPanel key={w.weekId} plan={w}>
             {w.proposals.filter(matches).map((p) => <ProposalCard key={p.id} p={p} onApprove={setApprovalRequest} {...selectionProps(p)} />)}
-            {w.rejected.map((p) => <p key={p.id} className="text-sm text-muted-foreground">Rejected: {p.vendor} · {p.lines.length} item{p.lines.length === 1 ? "" : "s"} · ${p.total.toFixed(2)}</p>)}
+            {w.rejected.map((p) => <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground"><span>Rejected: {p.vendor} · {p.lines.length} item{p.lines.length === 1 ? "" : "s"} · ${p.total.toFixed(2)}</span><Button variant="outline" size="sm" onClick={() => { const decision = state.history.find((h) => h.kind === "purchase" && h.proposalId === p.id && h.status === "rejected"); if (decision) setViewingDecision({ ...decision, purchaseDetails: decision.purchaseDetails ?? p }); }}><Eye />View</Button></div>)}
             {w.state === "ready-to-confirm" && <ConfirmWeeklyPurchasing weekId={w.weekId} title={`service week ${weekRange(w.startDate, w.endDate)}`} rejected={w.rejected.length} />}
           </WeeklyPurchasingPanel>)}
           {!weeklyShown.length && <Empty text="No purchase requests awaiting approval." />}
@@ -224,7 +226,7 @@ function ApprovalsPage() {
         <TabsContent value="history" className="mt-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex gap-2" role="group" aria-label="History range">
-              {([7, 14, 30, "all"] as const).map((d) => <Button key={d} size="sm" variant={range === d ? "default" : "outline"} onClick={() => setRange(d)}>{d === 7 ? "Past week" : d === 14 ? "Past 2 weeks" : d === 30 ? "Past month" : "All time"}</Button>)}
+              {(["all", 7, 14, 30] as const).map((d) => <Button key={d} size="sm" variant={range === d ? "default" : "outline"} onClick={() => setRange(d)}>{d === 7 ? "Past week" : d === 14 ? "Past 2 weeks" : d === 30 ? "Past month" : "All time"}</Button>)}
             </div>
             {!kind && <div className="ml-auto flex gap-1 rounded-lg border bg-muted p-1" role="group" aria-label="History type">
               {([["all", "All"], ["substitution", "Meals"], ["purchase", "Orders"]] as const).map(([k, l]) => <Button key={k} size="sm" variant={historyKind === k ? "default" : "ghost"} onClick={() => setHistoryKind(k)}>{l}</Button>)}
@@ -233,10 +235,11 @@ function ApprovalsPage() {
           {history.length === 0 ? <Empty text={range === "all" ? "No recorded decisions match these filters." : "No recorded decisions in this period. Select All time to see older history."} /> : (
             <ul className="divide-y rounded-xl border bg-card shadow-soft">
               {history.slice(0, limit("history")).map((h) => (
-                <li key={h.proposalId + h.at} className="flex items-center gap-3 px-5 py-4 text-sm">
+                <li key={h.proposalId + h.at} className="flex flex-wrap items-center gap-3 px-5 py-4 text-sm">
                   <Tag tone={h.status === "approved" ? "ok" : "danger"}>{h.status}</Tag>
                   {h.modified && <Tag tone="warn">modified</Tag>}
-                  <span className="flex-1">{historyText(h)}{h.serviceWeekId && <span className="mt-1 block text-xs text-muted-foreground">Service week · {weekRange(h.serviceWeekId.slice(5), addDays(h.serviceWeekId.slice(5), 6))}</span>}</span>
+                  <span className="min-w-0 flex-1 basis-48">{h.kind === "purchase" ? <Button variant="link" className="h-auto max-w-full justify-start whitespace-normal p-0 text-left" onClick={() => setViewingDecision(h)}>{historyText(h)}</Button> : historyText(h)}{h.serviceWeekId && <span className="mt-1 block text-xs text-muted-foreground">Service week · {weekRange(h.serviceWeekId.slice(5), addDays(h.serviceWeekId.slice(5), 6))}</span>}</span>
+                  {h.kind === "purchase" && <Button variant="outline" size="sm" onClick={() => setViewingDecision(h)}><Eye />View</Button>}
                   <span className="text-xs text-muted-foreground">{h.status === "approved" ? "Approved" : "Rejected"} {new Date(h.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                 </li>
               ))}
@@ -246,6 +249,7 @@ function ApprovalsPage() {
         </TabsContent>
       </Tabs>
       {approvalRequest && <RememberApprovalDialog p={approvalRequest} onApproved={() => setTab("pending")} onClose={() => setApprovalRequest(null)} />}
+      {viewingDecision && <PurchaseDetailsDialog p={historicalPurchase(state, viewingDecision)} decision={viewingDecision} onClose={() => setViewingDecision(null)} />}
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Approve {selectedRequests.length} selected requests?</DialogTitle><DialogDescription>{selectedResidents > 0 ? `${selectedResidents} resident meal decisions. ` : ""}{selectedOrders > 0 ? `${selectedOrders} purchase orders will become incoming orders; stock is unchanged until delivery is confirmed.` : "The selected alternatives will be approved for their listed serve dates."}</DialogDescription></DialogHeader>
@@ -272,6 +276,7 @@ function ApproveButton({ disabled, reason, onClick, children }: { disabled?: boo
 function ProposalCard({ p, onApprove, checked, selectionDisabled, onSelect, onDishSelection }: { p: Proposal; onApprove: (p: SubstitutionProposal) => void; checked?: boolean; selectionDisabled?: boolean; onSelect?: (checked: boolean) => void; onDishSelection?: (dishId: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [viewing, setViewing] = useState(false);
   const [rejectionRequest, setRejectionRequest] = useState<SubstitutionProposal | null>(null);
   const [selectedDish, setSelectedDish] = useState(p.kind === "substitution" ? p.dishId : "");
   const selected: Proposal = p.kind === "substitution" ? { ...p, dishId: selectedDish } : p;
@@ -288,12 +293,13 @@ function ProposalCard({ p, onApprove, checked, selectionDisabled, onSelect, onDi
         <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-0">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="text-xs font-semibold text-muted-foreground">{agent.name} · {p.kind === "substitution" ? `${MEAL_LABEL[p.meal]} substitution` : "Purchase request"}</div>
-            <Actions p={selected} onApprove={onApprove} onModify={() => setEditing(true)} />
+            <div className="flex flex-wrap gap-2">{p.kind === "purchase" && <Button variant="outline" size="sm" onClick={() => setViewing(true)}><Eye />View</Button>}<Actions p={selected} onApprove={onApprove} onModify={() => setEditing(true)} /></div>
           </div>
           {selected.kind === "substitution" ? <SubBody p={selected} onDishChange={(id) => { setSelectedDish(id); onDishSelection?.(id); }} onApprove={onApprove} onReject={setRejectionRequest} /> : <PurchaseBody p={selected} />}
         </div>
       </div>
       {editing && (p.kind === "substitution" ? <RejectSubDialog p={p} onApprove={onApprove} onClose={() => setEditing(false)} /> : <PurchaseEditor p={p} onClose={() => setEditing(false)} />)}
+      {viewing && p.kind === "purchase" && <PurchaseDetailsDialog p={p} onClose={() => setViewing(false)} />}
       {rejectionRequest && <RejectSubDialog p={rejectionRequest} onApprove={onApprove} onClose={() => setRejectionRequest(null)} />}
     </article>
   );
@@ -349,14 +355,14 @@ function PurchaseBody({ p }: { p: PurchaseProposal }) {
   return (
     <>
       <h3 className="mt-1 text-xl font-semibold">Order from {p.vendor} · ${p.total.toFixed(2)}</h3>
-      <div className="mt-1 text-sm text-muted-foreground">{week ? `For service week ${weekRange(week, addDays(week, 6))} · approved menu with resident alternatives` : `${p.horizonDays ?? 7}-day consumption · dietary alternatives included`}</div>
-      <div className="mt-2 flex flex-wrap gap-2 text-xs"><Tag tone="warn">First needed {p.neededDate}</Tag><Tag>Order by {p.orderByDate}</Tag><Tag>Expected delivery {p.deliveryDate}</Tag></div>
+      {week && <div className="mt-1 text-sm text-muted-foreground">For service week {weekRange(week, addDays(week, 6))}</div>}
+      <div className="mt-2 flex flex-wrap gap-2 text-xs">{p.neededDate && <Tag tone="warn">First needed {p.neededDate}</Tag>}{p.orderByDate && <Tag>Order by {p.orderByDate}</Tag>}{p.deliveryDate && <Tag>Expected delivery {p.deliveryDate}</Tag>}</div>
       {p.neededDate && p.deliveryDate && p.neededDate < p.deliveryDate && <div className="mt-3 text-sm font-medium text-destructive">Delivery is too late for the first shortage. Arrange available-stock alternatives or an emergency transfer.</div>}
       {p.flags && p.flags.length > 0 && <ul className="mt-3 space-y-0.5 text-xs text-warning">{p.flags.map((f) => <li key={f}>{f}</li>)}</ul>}
       <table className="mt-4 w-full max-w-lg text-sm">
         <tbody className="divide-y">
-          {p.lines.map((l) => { const i = state.ingredients.find((x) => x.id === l.ingredientId); if (!i) return null; return (
-            <tr key={l.ingredientId}><td className="py-2">{i.name}</td><td className="py-2 text-muted-foreground">short {l.shortage} {i.unit}</td><td className="py-2 text-right font-semibold">{l.qty} {i.unit}</td><td className="py-2 text-right text-muted-foreground">${lineCost(state, l.ingredientId, l.qty).toFixed(2)}</td></tr>
+          {p.lines.map((l) => { const i = state.ingredients.find((x) => x.id === l.ingredientId); return (
+            <tr key={l.ingredientId}><td className="py-2">{i?.name ?? l.ingredientId}</td><td className="py-2 text-muted-foreground">short {l.shortage} {i?.unit}</td><td className="py-2 text-right font-semibold">{l.qty} {i?.unit}</td><td className="py-2 text-right text-muted-foreground">{i ? `$${lineCost(state, l.ingredientId, l.qty).toFixed(2)}` : "—"}</td></tr>
           ); })}
         </tbody>
       </table>
@@ -370,6 +376,16 @@ function summarize(state: ReturnType<typeof useKitchen>["state"], p: Proposal, v
     : `${verb} ${p.vendor} order ($${p.total.toFixed(2)})`;
 }
 
+function PurchaseDetailsDialog({ p, decision, onClose }: { p?: PurchaseProposal | undefined; decision?: Decision; onClose: () => void }) {
+  const destination = p ? vendorDestination(p.vendor) : null;
+  return <Dialog open onOpenChange={(open) => !open && onClose()}><DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
+    <DialogHeader><DialogTitle>Order details</DialogTitle><DialogDescription>{decision ? `${decision.status === "approved" ? "Approved" : "Rejected"} ${new Date(decision.at).toLocaleString()}` : "Awaiting approval"}</DialogDescription></DialogHeader>
+    {p ? <PurchaseBody p={p} /> : <div className="space-y-3 text-sm"><p className="font-semibold">{decision?.summary}</p>{decision?.serviceWeekId && <p>Service week · {weekRange(decision.serviceWeekId.slice(5), addDays(decision.serviceWeekId.slice(5), 6))}</p>}<p className="text-muted-foreground">Item quantities and delivery details were not saved with this older decision.</p></div>}
+    {decision?.note && <p className="text-sm">{decision.note}</p>}
+    <DialogFooter>{destination && <Button asChild variant="outline"><a href={destination.url} target="_blank" rel="noopener noreferrer"><ExternalLink />Contact vendor</a></Button>}<Button variant="outline" onClick={onClose}><ArrowLeft />Back to {decision ? "approval history" : "orders"}</Button></DialogFooter>
+  </DialogContent></Dialog>;
+}
+
 function Actions({ p, onModify, onApprove }: { p: Proposal; onModify: () => void; onApprove: (p: SubstitutionProposal) => void }) {
   const { state, dispatch } = useKitchen();
   const late = p.kind === "substitution" && (!p.serviceDate || !canApproveMeal(p.serviceDate));
@@ -381,7 +397,7 @@ function Actions({ p, onModify, onApprove }: { p: Proposal; onModify: () => void
   };
   const reject = () => {
     const summary = summarize(state, p, "Rejected");
-    dispatch({ type: "reject", proposalId: p.id, kind: p.kind, summary, ...(p.kind === "substitution" ? { serviceDate: p.serviceDate } : { serviceWeekId: p.serviceWeekId }) });
+    dispatch({ type: "reject", proposalId: p.id, kind: p.kind, summary, ...(p.kind === "substitution" ? { serviceDate: p.serviceDate } : { serviceWeekId: p.serviceWeekId, purchaseDetails: p }) });
     toast(summary);
   };
   return (

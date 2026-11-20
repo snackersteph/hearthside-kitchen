@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from "react";
 import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS, restoreKitchenCatalog } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
-import type { AgentId, Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, Resident } from "./types";
+import type { AgentId, Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, PurchaseProposal, Resident } from "./types";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 import { loadKitchenCatalogs, withKitchenCatalogs } from "./catalog-storage";
 import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
@@ -57,7 +57,7 @@ type Action =
   | { type: "approveSub"; proposalId: string; meal: Meal; dishId: string; residentIds: string[]; serviceDate?: string | undefined; modified: boolean; summary: string; remember?: boolean }
   | { type: "rejectSub"; proposalId: string; meal: Meal; dishId: string; fromDishId: string; residentIds: string[]; serviceDate?: string | undefined; summary: string }
   | { type: "approvePurchase"; proposalId: string; lines: PurchaseLine[]; modified: boolean; summary: string; vendor?: string; deliveryDate?: string; serviceWeekId?: string | undefined }
-  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string; serviceWeekId?: string | undefined }
+  | { type: "reject"; proposalId: string; kind: "substitution" | "purchase"; summary: string; serviceDate?: string | undefined; note?: string; serviceWeekId?: string | undefined; purchaseDetails?: PurchaseProposal }
   | { type: "approveWeeklyPurchasing"; id: string }
   | { type: "createWeeklyPlan"; date: string }
   | { type: "updateWeeklyPlanStatus"; id: string; menuStatus?: WeeklyMenuStatus; purchasingStatus?: WeeklyPurchasingStatus }
@@ -347,17 +347,20 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
       if (purchaseAlreadyDecided(s, a.proposalId, a.serviceWeekId)) return s;
       // Approval places a (simulated) order that stays incoming until received; stock is unchanged.
       const week = a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {};
+      const vendor = a.vendor ?? s.ingredients.find((i) => i.id === a.lines[0]?.ingredientId)?.vendor ?? "Supplier";
+      const deliveryDate = a.deliveryDate ?? dateKey(dayAt(Math.max(1, s.leadTimeDays ?? 2), reference));
+      const purchaseDetails: PurchaseProposal = { id: a.proposalId, kind: "purchase", agent: "inventory", vendor, deliveryDate, lines: a.lines.map((line) => ({ ...line })), total: a.lines.reduce((sum, line) => sum + line.qty * (s.ingredients.find((i) => i.id === line.ingredientId)?.unitCost ?? 0), 0), ...week };
       const next: KitchenState = {
         ...s,
-        orders: [...(s.orders ?? []), { id: `${a.proposalId}-${s.history.length}`, vendor: a.vendor ?? s.ingredients.find((i) => i.id === a.lines[0]?.ingredientId)?.vendor ?? "Supplier", lines: a.lines, deliveryDate: a.deliveryDate ?? dateKey(dayAt(Math.max(1, s.leadTimeDays ?? 2))), status: "incoming", ...week }],
+        orders: [...(s.orders ?? []), { id: `${a.proposalId}-${s.history.length}`, vendor, lines: a.lines, deliveryDate, status: "incoming", ...week }],
         ingredients: s.ingredients.map((i) => { const l = a.lines.find((x) => x.ingredientId === i.id); return l ? { ...i, onOrder: i.onOrder + l.qty } : i; }),
-        history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: Date.now(), summary: a.summary, modified: a.modified, ...week }, ...s.history],
+        history: [{ proposalId: a.proposalId, kind: "purchase", status: "approved", at: reference.getTime(), summary: a.summary, modified: a.modified, purchaseDetails, ...week }, ...s.history],
       };
       return a.serviceWeekId ? settleWeeklyPurchasing(next, a.serviceWeekId, reference) : next;
     }
     case "reject": {
       if (a.kind === "purchase" && purchaseAlreadyDecided(s, a.proposalId, a.serviceWeekId)) return s;
-      const next: KitchenState = { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: Date.now(), summary: a.summary, modified: false, ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}), ...(a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {}) }, ...s.history] };
+      const next: KitchenState = { ...s, history: [{ proposalId: a.proposalId, kind: a.kind, status: "rejected", at: reference.getTime(), summary: a.summary, modified: false, ...(a.purchaseDetails && a.kind === "purchase" ? { purchaseDetails: a.purchaseDetails } : {}), ...(a.serviceDate ? { serviceDate: a.serviceDate } : {}), ...(a.note ? { note: a.note } : {}), ...(a.serviceWeekId ? { serviceWeekId: a.serviceWeekId } : {}) }, ...s.history] };
       return a.kind === "purchase" && a.serviceWeekId ? settleWeeklyPurchasing(next, a.serviceWeekId, reference) : next;
     }
     case "approveWeeklyPurchasing": return settleWeeklyPurchasing(s, a.id, reference, true);

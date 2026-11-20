@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Verify approval-time history filters and move All time before Past week (89/91/94 decisions for 7/14/30 days).
+- [x] Open pending and historical purchase order details while preserving the current page and save new decision details; historical/incoming flows verified on desktop and phone, pending requests absent in current shared data.
 - [x] Remove rolling purchase requests while retaining 7/14-day forecasts and Stock alert orders.
 - [x] Show pending purchasing by service week and synchronize counts; tests cover populated requests, preview confirms forecasts/extra-order dialog/return link (no pending approved-menu weeks in current shared data).
 - [x] Generate 13 pending purchasing requests for Nov 16–22 after the authorized sample reviews and menu approval; verify its review/return flow.
