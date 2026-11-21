@@ -1,0 +1,25 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import { useKitchen } from "@/lib/kitchen/store";
+import { findVendor, vendorPurchases } from "@/lib/kitchen/vendors";
+import { vendorDestination } from "@/lib/kitchen/order-display";
+import { VendorLink } from "@/components/kitchen/vendor-link";
+import { PageHeader } from "@/components/kitchen/app-shell";
+import { Button } from "@/components/ui/button";
+
+export const Route = createFileRoute("/orders/$orderId")({
+  validateSearch: (s: Record<string, unknown>): { vendor?: string; source?: "vendors" | "inventory" | "approvals"; view?: "incoming" | "delivered" } => ({ ...(typeof s["vendor"] === "string" ? { vendor: s["vendor"] } : {}), ...(s["source"] === "vendors" || s["source"] === "inventory" || s["source"] === "approvals" ? { source: s["source"] } : {}), ...(s["view"] === "incoming" || s["view"] === "delivered" ? { view: s["view"] } : {}) }),
+  head: () => ({ meta: [{ title: "Order details · NutriSync" }, { name: "description", content: "Review purchase order quantities, delivery dates and supplier contacts." }, { property: "og:title", content: "Order details · NutriSync" }, { property: "og:description", content: "Kitchen order details and linked vendor information." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  component: OrderPage,
+});
+function OrderPage() {
+  const { state, reference } = useKitchen();
+  const { orderId } = Route.useParams();
+  const { vendor, source, view } = Route.useSearch();
+  const entries = vendorPurchases(state, reference);
+  const entry = entries.find((e) => e.id === orderId) ?? entries.find((e) => e.id.startsWith(`${orderId}-`) && /^\d+$/.test(e.id.slice(orderId.length + 1)));
+  const p = entry?.proposal;
+  const contact = p ? findVendor(state, p.vendor) : undefined;
+  const destination = contact?.website ? { url: contact.website, label: "Contact vendor" } : p ? vendorDestination(p.vendor) : undefined;
+  return <><div className="mb-5">{vendor ? <Button asChild variant="outline"><Link to="/vendors/$vendorId" params={{ vendorId: vendor }}><ArrowLeft />Back to vendor</Link></Button> : source === "inventory" ? <Button asChild variant="outline"><Link to="/inventory" search={{ view: view ?? "incoming" }}><ArrowLeft />Back to inventory</Link></Button> : <Button asChild variant="outline"><Link to="/approvals" search={{ kind: "purchase" }}><ArrowLeft />Back to orders</Link></Button>}</div><PageHeader title="Order details" />{p && entry ? <><dl className="grid gap-5 border-y py-5 sm:grid-cols-2 lg:grid-cols-4"><div><dt className="text-sm text-muted-foreground">Vendor</dt><dd className="mt-1 font-semibold"><VendorLink name={p.vendor} order={orderId} source={source ?? "approvals"} view={view} /></dd></div><div><dt className="text-sm text-muted-foreground">Status</dt><dd className="mt-1 font-semibold">{entry.status}</dd></div><div><dt className="text-sm text-muted-foreground">Delivery date</dt><dd className="mt-1 font-semibold">{p.deliveryDate ?? "Not saved"}</dd></div><div><dt className="text-sm text-muted-foreground">Service week</dt><dd className="mt-1 font-semibold">{p.serviceWeekId?.slice(5) ?? "Extra order"}</dd></div></dl><div className="mt-6 overflow-x-auto"><table className="w-full text-sm"><thead className="border-b text-left text-muted-foreground"><tr><th className="py-3">Ingredient</th><th className="py-3 text-right">Quantity</th><th className="py-3 text-right">Estimated cost</th></tr></thead><tbody className="divide-y">{p.lines.map((l) => { const i = state.ingredients.find((i) => i.id === l.ingredientId); return <tr key={l.ingredientId}><td className="py-4 font-medium">{i?.name ?? l.ingredientId}</td><td className="py-4 text-right">{l.qty} {i?.unit}</td><td className="py-4 text-right">{i ? `$${(l.qty * i.unitCost).toFixed(2)}` : "Not saved"}</td></tr>; })}</tbody></table></div><p className="mt-5 text-right font-semibold">{entry.at ? "Recorded total" : "Estimated total"}: ${p.total.toFixed(2)}</p>{entry.at && <p className="mt-2 text-right text-sm text-muted-foreground">Decision recorded {new Date(entry.at).toLocaleString()}</p>}{p.flags?.length ? <ul className="mt-5 space-y-2 text-sm text-warning">{p.flags.map((f) => <li key={f}>{f}</li>)}</ul> : null}{destination && <Button asChild variant="outline" className="mt-6"><a href={destination.url} target="_blank" rel="noopener noreferrer"><ExternalLink />{destination.label === "Find vendor website" ? "Find vendor website" : "Contact vendor"}</a></Button>}</> : <p className="border-y py-8 text-muted-foreground">This order is no longer available. Return to the previous page for its recorded history.</p>}</>;
+}

@@ -1,143 +1,57 @@
-/**
- * Vendor catalog for the Inventory Agent.
- *
- * ALL DATA HERE IS FICTIONAL SAMPLE DATA for the prototype. License numbers and
- * certifications are simulated; the app never contacts a real registry.
- */
+import type { KitchenState, PurchaseProposal, Vendor } from "./types";
+import { historicalPurchase, vendorDestination } from "./order-display";
+import { activeWeeklyPurchasing } from "./weekly-purchasing";
 
-export type CertificationKind =
-  | "food-safety" // HACCP / safe food handling
-  | "seafood-handling"
-  | "gluten-free-facility"
-  | "halal";
-
-export interface VendorCertification {
-  kind: CertificationKind;
-  issuer: string;
-  /** ISO date (YYYY-MM-DD). */
-  expires: string;
-  /** false = the record exists but staff have not verified the document. */
-  verified: boolean;
+export const vendorKey = (name: string) => name.trim().toLowerCase();
+export const vendorId = (name: string) => `vendor-${vendorKey(name)}`;
+export function vendorMatches(vendor: Vendor, name: string) {
+  return [vendor.name, ...vendor.aliases].some((alias) => vendorKey(alias) === vendorKey(name));
 }
-
-export interface VendorOffer {
-  unitCost: number;
-  leadTimeDays: number;
+export function vendorDirectory(state: KitchenState, includeDeleted = false): Vendor[] {
+  const saved = state.vendors ?? [];
+  const names = [...state.ingredients.map((i) => i.vendor), ...(state.orders ?? []).map((o) => o.vendor), ...state.history.flatMap((h) => h.purchaseDetails ? [h.purchaseDetails.vendor] : [])];
+  const result = [...saved];
+  for (const name of names) {
+    if (!name.trim() || result.some((v) => vendorMatches(v, name))) continue;
+    const destination = vendorDestination(name);
+    result.push({ id: vendorId(name), name: name.trim(), aliases: [name.trim()], contactName: "", email: "", phone: "", address: "", website: destination.label === "Find vendor website" ? "" : destination.url, notes: "" });
+  }
+  return result.filter((v) => includeDeleted || !(state.deletedVendorIds ?? []).includes(v.id)).sort((a, b) => a.name.localeCompare(b.name));
 }
-
-export interface Vendor {
-  id: string;
-  name: string;
-  /** Missing license = cannot be verified. */
-  licenseNumber?: string;
-  /** ISO date (YYYY-MM-DD). */
-  licenseExpires?: string;
-  certifications: VendorCertification[];
-  /**
-   * Explicit offers by ingredient id. A vendor that is an ingredient's default
-   * vendor (Ingredient.vendor) also offers it at the ingredient's own unitCost.
-   */
-  offers: Record<string, VendorOffer>;
-  notes?: string;
+export function findVendor(state: KitchenState, name: string) {
+  return vendorDirectory(state, true).find((v) => vendorMatches(v, name));
 }
-
-const cert = (
-  kind: CertificationKind,
-  issuer: string,
-  expires: string,
-  verified = true,
-): VendorCertification => ({ kind, issuer, expires, verified });
-
-export const VENDORS: Vendor[] = [
-  {
-    id: "sysco",
-    name: "Sysco",
-    licenseNumber: "FD-2291-CA",
-    licenseExpires: "2027-06-30",
-    certifications: [
-      cert("food-safety", "State Dept. of Public Health (sample)", "2027-06-30"),
-      cert("gluten-free-facility", "GF Alliance (sample)", "2027-03-01"),
-    ],
-    offers: {},
-  },
-  {
-    id: "valley-farms",
-    name: "Valley Farms",
-    licenseNumber: "FD-1187-CA",
-    licenseExpires: "2027-03-31",
-    // Food-safety certificate lapses soon: eligible, but with a renewal warning.
-    certifications: [cert("food-safety", "State Dept. of Public Health (sample)", "2026-11-30")],
-    offers: {},
-  },
-  {
-    id: "pacific-seafood",
-    name: "Pacific Seafood",
-    licenseNumber: "FD-3340-CA",
-    licenseExpires: "2027-01-15",
-    certifications: [
-      cert("food-safety", "State Dept. of Public Health (sample)", "2027-01-15"),
-      cert("seafood-handling", "Seafood Safety Board (sample)", "2027-01-15"),
-    ],
-    offers: {},
-  },
-  {
-    id: "hearth-bakery",
-    name: "Hearth Bakery",
-    licenseNumber: "FD-4410-CA",
-    licenseExpires: "2027-05-20",
-    // GF facility certificate is on file but staff have not verified the document.
-    certifications: [
-      cert("food-safety", "State Dept. of Public Health (sample)", "2027-05-20"),
-      cert("gluten-free-facility", "GF Alliance (sample)", "2027-05-20", false),
-    ],
-    offers: {},
-  },
-  {
-    id: "harbor-fresh",
-    name: "Harbor Fresh Seafood",
-    licenseNumber: "FD-5502-CA",
-    // Expired license: cheapest seafood, but must be blocked.
-    licenseExpires: "2026-09-30",
-    certifications: [
-      cert("food-safety", "State Dept. of Public Health (sample)", "2026-09-30"),
-      cert("seafood-handling", "Seafood Safety Board (sample)", "2026-09-30"),
-    ],
-    offers: {
-      salmon: { unitCost: 4.9, leadTimeDays: 1 },
-      shrimp: { unitCost: 3.6, leadTimeDays: 1 },
-    },
-    notes: "Lowest price. License lapsed 2026-09-30.",
-  },
-  {
-    id: "sunrise-coop",
-    name: "Sunrise Produce Co-op",
-    // No license number on file and an unverified certificate: cannot be verified.
-    certifications: [cert("food-safety", "Self-reported (sample)", "2027-01-31", false)],
-    offers: {
-      vegetables: { unitCost: 2.9, leadTimeDays: 1 },
-      carrots: { unitCost: 1.4, leadTimeDays: 1 },
-      potatoes: { unitCost: 0.95, leadTimeDays: 1 },
-    },
-    notes: "Cheapest produce. No license on file.",
-  },
-  {
-    id: "farmstead-poultry",
-    name: "Farmstead Poultry",
-    licenseNumber: "FD-6120-CA",
-    licenseExpires: "2027-08-31",
-    certifications: [
-      cert("food-safety", "State Dept. of Public Health (sample)", "2027-08-31"),
-      cert("halal", "Halal Certification Board (sample)", "2027-08-31"),
-    ],
-    // Cheaper and halal-certified, but slow to deliver.
-    offers: {
-      chicken: { unitCost: 2.7, leadTimeDays: 4 },
-      turkey: { unitCost: 1.9, leadTimeDays: 4 },
-    },
-    notes: "Lower price, 4-day lead time.",
-  },
-];
-
-export const vendorById = (id: string): Vendor | undefined => VENDORS.find((v) => v.id === id);
-export const vendorByName = (name: string): Vendor | undefined =>
-  VENDORS.find((v) => v.name === name);
+export function validVendor(vendor: Vendor) {
+  if (!vendor.id || !vendor.name.trim() || vendor.name.trim().length > 100) return false;
+  if (vendor.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vendor.email)) return false;
+  if (vendor.website) {
+    try { if (!["https:", "http:"].includes(new URL(vendor.website).protocol)) return false; } catch { return false; }
+  }
+  return true;
+}
+export function saveVendor(state: KitchenState, vendor: Vendor): KitchenState {
+  const previous = vendorDirectory(state, true).find((v) => v.id === vendor.id);
+  const next = { ...vendor, name: vendor.name.trim(), aliases: [...new Set([...(previous?.aliases ?? []), ...(previous ? [previous.name] : []), vendor.name.trim()])] };
+  if (!validVendor(next) || vendorDirectory(state, true).some((v) => v.id !== next.id && next.aliases.some((a) => vendorMatches(v, a)))) return state;
+  return { ...state, vendors: [...(state.vendors ?? []).filter((v) => v.id !== next.id), next], deletedVendorIds: (state.deletedVendorIds ?? []).filter((id) => id !== next.id) };
+}
+export function deleteVendor(state: KitchenState, id: string): KitchenState {
+  if (!vendorDirectory(state).some((v) => v.id === id)) return state;
+  const vendor = vendorDirectory(state).find((v) => v.id === id);
+  if (!vendor) return state;
+  const tombstone = { ...vendor, contactName: "", email: "", phone: "", address: "", website: "", notes: "" };
+  return { ...state, vendors: [...(state.vendors ?? []).filter((v) => v.id !== id), tombstone], deletedVendorIds: [...(state.deletedVendorIds ?? []), id] };
+}
+export interface VendorPurchase { id: string; proposal: PurchaseProposal; status: string; at?: number }
+export function vendorPurchases(state: KitchenState, reference: Date): VendorPurchase[] {
+  const entries: VendorPurchase[] = (state.orders ?? []).map((o) => ({ id: o.id, status: o.status === "received" ? "Delivered" : "Incoming", proposal: { id: o.id, kind: "purchase", agent: "inventory", vendor: o.vendor, lines: o.lines, deliveryDate: o.deliveryDate, ...(o.serviceWeekId ? { serviceWeekId: o.serviceWeekId } : {}), total: o.lines.reduce((sum, l) => sum + l.qty * (state.ingredients.find((i) => i.id === l.ingredientId)?.unitCost ?? 0), 0) } }));
+  for (const h of state.history) {
+    const p = historicalPurchase(state, h);
+    if (!p || entries.some((e) => e.id === p.id || (e.id.startsWith(`${p.id}-`) && /^\d+$/.test(e.id.slice(p.id.length + 1))))) continue;
+    entries.push({ id: p.id, proposal: p, status: h.status === "approved" ? "Approved" : "Rejected", at: h.at });
+  }
+  for (const week of activeWeeklyPurchasing(state, reference)) for (const p of week.proposals) {
+    if (!entries.some((e) => e.id === p.id)) entries.push({ id: p.id, proposal: p, status: "Awaiting approval" });
+  }
+  return entries.sort((a, b) => (b.proposal.deliveryDate ?? "").localeCompare(a.proposal.deliveryDate ?? ""));
+}

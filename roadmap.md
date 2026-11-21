@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Add shared vendor editing, related-order details and bidirectional return navigation; verify persistence and flows.
 - [x] Verify approval-time history filters and move All time before Past week (89/91/94 decisions for 7/14/30 days).
 - [x] Open pending and historical purchase order details while preserving the current page and save new decision details; historical/incoming flows verified on desktop and phone, pending requests absent in current shared data.
 - [x] Remove rolling purchase requests while retaining 7/14-day forecasts and Stock alert orders.

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { KitchenState } from "./types";
 import { dateKey, dayAt } from "./schedule";
+import { vendorDirectory } from "./vendors";
 
 export const stockOrderSchema = z.object({
   ingredientId: z.string().trim().min(1).max(100),
@@ -9,7 +10,7 @@ export const stockOrderSchema = z.object({
 });
 
 export function stockVendors(state: KitchenState) {
-  return [...new Set(state.ingredients.map((i) => i.vendor))].sort();
+  return vendorDirectory(state).map((vendor) => vendor.name);
 }
 
 export function stockOrderEstimate(state: KitchenState, ingredientId: string, demand: number, reference = new Date()) {

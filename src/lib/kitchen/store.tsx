@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from "react";
 import { initialState, dishById, currentDishId, INGREDIENTS, RESIDENT_PROFILE_VERSION, RESIDENTS, restoreKitchenCatalog } from "./data";
 import { analyze, analyzeMenuDay, conflictReasons, dietarySignature, mealSignature, resolveMenuState, type Analysis } from "./engine";
-import type { AgentId, Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, PurchaseProposal, Resident } from "./types";
+import type { AgentId, Ingredient, KitchenState, Meal, Observation, ProfileUpdate, PurchaseLine, PurchaseProposal, Resident, Vendor } from "./types";
+import { saveVendor, deleteVendor } from "./vendors";
 import { canApproveMeal, dateKey, dayAt, scheduledState } from "./schedule";
 import { loadKitchenCatalogs, withKitchenCatalogs } from "./catalog-storage";
 import { isValidRecipe, recipeLibrary, type Recipe } from "./recipes";
@@ -25,6 +26,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { approveEmergencyMenuDemo } from "./emergency-menu-demo";
 
 type Action =
+  | { type: "saveVendor"; vendor: Vendor }
+  | { type: "deleteVendor"; id: string }
   | { type: "approveEmergencyMenuDemo"; id: string }
   | { type: "addResident"; resident: Resident }
   | { type: "deleteResident"; id: string }
@@ -96,6 +99,8 @@ function profileUpdateRecord(s: KitchenState, previous: Resident, next: Resident
 /** Daily-menu edits and decisions that touch a dated service (explicit revisions). */
 function editedService(a: Action, reference: Date): { date: string; meal?: Meal } | undefined {
   switch (a.type) {
+    case "saveVendor": return saveVendor(s, a.vendor);
+    case "deleteVendor": return deleteVendor(s, a.id);
     case "setMealPlan": case "setScheduledMain": case "rejectMeal": return { date: a.date, meal: a.meal };
     case "approveSub": case "rejectSub": return a.serviceDate ? { date: a.serviceDate, meal: a.meal } : undefined;
     case "setMain": return { date: dateKey(reference), meal: a.meal };

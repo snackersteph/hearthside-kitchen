@@ -8,6 +8,8 @@ import { DISHES, dishById } from "@/lib/kitchen/data";
 import { conflictReasons, lineCost } from "@/lib/kitchen/engine";
 import { MEALS, type Decision, type Meal, type Proposal, type PurchaseProposal, type SubstitutionProposal } from "@/lib/kitchen/types";
 import { historicalPurchase, vendorDestination } from "@/lib/kitchen/order-display";
+import { VendorLink } from "@/components/kitchen/vendor-link";
+import { findVendor } from "@/lib/kitchen/vendors";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AGENTS, AgentAvatar, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";
@@ -354,7 +356,7 @@ function PurchaseBody({ p }: { p: PurchaseProposal }) {
   const week = p.serviceWeekId ? p.serviceWeekId.slice(5) : null;
   return (
     <>
-      <h3 className="mt-1 text-xl font-semibold">Order from {p.vendor} · ${p.total.toFixed(2)}</h3>
+      <h3 className="mt-1 text-xl font-semibold">Order from <VendorLink name={p.vendor} order={p.id} /> · ${p.total.toFixed(2)}</h3>
       {week && <div className="mt-1 text-sm text-muted-foreground">For service week {weekRange(week, addDays(week, 6))}</div>}
       <div className="mt-2 flex flex-wrap gap-2 text-xs">{p.neededDate && <Tag tone="warn">First needed {p.neededDate}</Tag>}{p.orderByDate && <Tag>Order by {p.orderByDate}</Tag>}{p.deliveryDate && <Tag>Expected delivery {p.deliveryDate}</Tag>}</div>
       {p.neededDate && p.deliveryDate && p.neededDate < p.deliveryDate && <div className="mt-3 text-sm font-medium text-destructive">Delivery is too late for the first shortage. Arrange available-stock alternatives or an emergency transfer.</div>}
@@ -377,7 +379,9 @@ function summarize(state: ReturnType<typeof useKitchen>["state"], p: Proposal, v
 }
 
 function PurchaseDetailsDialog({ p, decision, onClose }: { p?: PurchaseProposal | undefined; decision?: Decision; onClose: () => void }) {
-  const destination = p ? vendorDestination(p.vendor) : null;
+  const { state } = useKitchen();
+  const contact = p ? findVendor(state, p.vendor) : undefined;
+  const destination = contact?.website ? { url: contact.website } : p ? vendorDestination(p.vendor) : null;
   return <Dialog open onOpenChange={(open) => !open && onClose()}><DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
     <DialogHeader><DialogTitle>Order details</DialogTitle><DialogDescription>{decision ? `${decision.status === "approved" ? "Approved" : "Rejected"} ${new Date(decision.at).toLocaleString()}` : "Awaiting approval"}</DialogDescription></DialogHeader>
     {p ? <PurchaseBody p={p} /> : <div className="space-y-3 text-sm"><p className="font-semibold">{decision?.summary}</p>{decision?.serviceWeekId && <p>Service week · {weekRange(decision.serviceWeekId.slice(5), addDays(decision.serviceWeekId.slice(5), 6))}</p>}<p className="text-muted-foreground">Item quantities and delivery details were not saved with this older decision.</p></div>}

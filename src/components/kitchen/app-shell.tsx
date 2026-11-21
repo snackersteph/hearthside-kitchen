@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { UtensilsCrossed, CalendarDays, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge } from "lucide-react";
+import { UtensilsCrossed, CalendarDays, Users, Boxes, ClipboardCheck, BookOpen, RotateCcw, Gauge, Store } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 import { alternativeOverview, residentApprovalCount } from "./approval-rules";
 import { useKitchen, useWeeklyPurchasing } from "@/lib/kitchen/store";
@@ -15,6 +15,7 @@ const NAV = [
   { to: "/recipes", label: "Recipes", icon: BookOpen },
   { to: "/residents", label: "Residents", icon: Users },
   { to: "/inventory", label: "Inventory", icon: Boxes },
+  { to: "/vendors", label: "Vendors", icon: Store },
   { to: "/approvals", label: "Approval Center", icon: ClipboardCheck },
 ] as const;
 const MOBILE_NAV = [...NAV, { to: "/dashboard", label: "Dashboard", icon: Gauge }] as const;

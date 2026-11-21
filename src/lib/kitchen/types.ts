@@ -100,7 +100,21 @@ export interface AgentProfileEdit {
   config?: Record<string, string>;
 }
 
+export interface Vendor {
+  id: string;
+  name: string;
+  aliases: string[];
+  contactName: string;
+  email: string;
+  phone: string;
+  address: string;
+  website: string;
+  notes: string;
+}
+
 export interface KitchenState {
+  vendors?: Vendor[];
+  deletedVendorIds?: string[];
   /** Showcase emergency decisions only; never resident care instructions or serving overrides. */
   emergencyDemoApprovals?: Record<string, number>;
   inventoryReplenishmentVersion?: number;
