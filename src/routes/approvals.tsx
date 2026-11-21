@@ -9,7 +9,7 @@ import { conflictReasons, lineCost } from "@/lib/kitchen/engine";
 import { MEALS, type Decision, type Meal, type Proposal, type PurchaseProposal, type SubstitutionProposal } from "@/lib/kitchen/types";
 import { historicalPurchase, vendorDestination } from "@/lib/kitchen/order-display";
 import { VendorLink } from "@/components/kitchen/vendor-link";
-import { findVendor } from "@/lib/kitchen/vendors";
+import { findVendor } from "@/lib/kitchen/vendor-directory";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { AGENTS, AgentAvatar, MEAL_LABEL, Tag } from "@/components/kitchen/agents";
 import { Button } from "@/components/ui/button";

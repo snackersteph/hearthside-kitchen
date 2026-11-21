@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
-import { findVendor, vendorPurchases } from "@/lib/kitchen/vendors";
+import { findVendor, vendorPurchases } from "@/lib/kitchen/vendor-directory";
 import { vendorDestination } from "@/lib/kitchen/order-display";
 import { VendorLink } from "@/components/kitchen/vendor-link";
 import { PageHeader } from "@/components/kitchen/app-shell";

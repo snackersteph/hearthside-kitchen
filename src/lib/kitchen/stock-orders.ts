@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { KitchenState } from "./types";
 import { dateKey, dayAt } from "./schedule";
-import { vendorDirectory } from "./vendors";
+import { vendorDirectory } from "./vendor-directory";
 
 export const stockOrderSchema = z.object({
   ingredientId: z.string().trim().min(1).max(100),

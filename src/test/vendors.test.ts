@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { initialState } from "@/lib/kitchen/data";
 import { reducer } from "@/lib/kitchen/store";
-import { vendorDirectory, vendorMatches, vendorPurchases, validVendor } from "@/lib/kitchen/vendors";
+import { vendorDirectory, vendorMatches, vendorPurchases, validVendor } from "@/lib/kitchen/vendor-directory";
 import type { Vendor } from "@/lib/kitchen/types";
 
 const vendor: Vendor = { id: "test-vendor", name: "Test vendor", aliases: [], contactName: "Lee", email: "lee@example.org", phone: "123", website: "https://example.org/", address: "1 Market Street", notes: "Call before delivery" };

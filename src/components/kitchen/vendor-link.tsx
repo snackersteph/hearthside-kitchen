@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useKitchen } from "@/lib/kitchen/store";
-import { findVendor, vendorId } from "@/lib/kitchen/vendors";
+import { findVendor, vendorId } from "@/lib/kitchen/vendor-directory";
 
 export function VendorLink({ name, order, source = "approvals", view }: { name: string; order: string; source?: "approvals" | "inventory" | "vendors"; view?: "incoming" | "delivered" | undefined }) {
   const { state } = useKitchen();

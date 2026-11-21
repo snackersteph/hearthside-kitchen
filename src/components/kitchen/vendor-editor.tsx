@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { Vendor } from "@/lib/kitchen/types";
 import { useKitchen } from "@/lib/kitchen/store";
-import { validVendor, vendorDirectory, vendorMatches } from "@/lib/kitchen/vendors";
+import { validVendor, vendorDirectory, vendorMatches } from "@/lib/kitchen/vendor-directory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

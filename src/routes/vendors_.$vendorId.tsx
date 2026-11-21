@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Pencil, Trash2, Mail, Phone, ExternalLink, Eye } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
-import { vendorDirectory, vendorPurchases, vendorMatches } from "@/lib/kitchen/vendors";
+import { vendorDirectory, vendorPurchases, vendorMatches } from "@/lib/kitchen/vendor-directory";
 import { VendorEditor } from "@/components/kitchen/vendor-editor";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { Button } from "@/components/ui/button";
