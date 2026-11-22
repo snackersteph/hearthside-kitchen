@@ -5,7 +5,7 @@ import {
   sourceIngredient,
   vendorCompliance,
 } from "@/lib/kitchen/vendor-engine";
-import { vendorById } from "@/lib/kitchen/vendors";
+import { vendorById } from "@/lib/kitchen/vendor-compliance";
 
 const reference = new Date("2026-11-09T12:00:00");
 const ing = (id: string) => {

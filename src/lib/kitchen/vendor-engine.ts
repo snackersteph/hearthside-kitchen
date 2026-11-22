@@ -1,6 +1,6 @@
 import { dateKey, dayAt } from "./schedule";
 import type { Ingredient } from "./types";
-import { VENDORS, type CertificationKind, type Vendor } from "./vendors";
+import { VENDORS, type CertificationKind, type Vendor } from "./vendor-compliance";
 
 /**
  * Inventory Agent: vendor compliance + sourcing. Pure and deterministic, like
