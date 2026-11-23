@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ExternalLink, Eye, PackageCheck, Truck, MessageSquareWarning, RefreshCw, PackageX, MoreHorizontal, Trash2 } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { dateKey } from "@/lib/kitchen/schedule";
@@ -63,7 +64,7 @@ function OrderDetails({ order, mode, action, onClose }: { order: VendorOrder; mo
         return <tr key={line.ingredientId}><td className="py-3 pr-4 font-medium">{ingredient?.name ?? line.ingredientId}</td><td className="whitespace-nowrap py-3 pr-4 text-right">{line.qty} {ingredient?.unit}</td><td className="py-3 pr-4 text-muted-foreground">{dates.map(dateLabel).join(" · ")}</td><td className="py-3 text-right">${(line.qty * (ingredient?.unitCost ?? 0)).toFixed(2)}</td></tr>;
       })}</tbody></table></div>
       <p className="text-right text-sm font-semibold">Estimated total: ${total.toFixed(2)}</p>
-      <div className="border-t pt-4"><p className="mb-3 text-sm text-muted-foreground">{action === "Report issue" ? `Report damaged, missing, or incorrect ingredients to ${order.vendor}.` : action === "Request replacement" ? `Request replacement ingredients from ${order.vendor}.` : action === "Reject delivery" ? `Arrange delivery rejection or return with ${order.vendor}. Stock remains unchanged until delivery is confirmed.` : "Contact the vendor for order changes or delivery issues."}{destination.label === "Find vendor website" ? " A verified website has not been added for this vendor; this link opens a website search." : ""}</p><Button asChild variant="outline"><a href={destination.url} target="_blank" rel="noopener noreferrer"><ExternalLink />Contact vendor</a></Button></div>
+      <div className="border-t pt-4"><p className="mb-3 text-sm text-muted-foreground">{action === "Report issue" ? `Report damaged, missing, or incorrect ingredients to ${order.vendor}.` : action === "Request replacement" ? `Request replacement ingredients from ${order.vendor}.` : action === "Reject delivery" ? `Arrange delivery rejection or return with ${order.vendor}. Stock remains unchanged until delivery is confirmed.` : "Contact the vendor for order changes or delivery issues."}{!contact && destination.label === "Find vendor website" ? " A verified website has not been added for this vendor; this link opens a website search." : ""}</p>{contact ? <Button asChild variant="outline"><Link to="/vendors/$vendorId" params={{ vendorId: contact.id }} search={{ order: order.id, source: "inventory" as const, view: mode }}><ExternalLink />Contact vendor</Link></Button> : <Button asChild variant="outline"><a href={destination.url} target="_blank" rel="noopener noreferrer"><ExternalLink />Contact vendor</a></Button>}</div>
     </div>
     <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
   </DialogContent></Dialog>;

@@ -4,7 +4,7 @@
 - Service-week Review Purchasing opens the selected purchasing week and only pending requests, excluding decided orders and withdrawn drafts so historical purchasing cannot crowd its approval flow.
 - Showcase stock replenishment is a one-time versioned migration using eleven days of shared dietary-aware demand; only stored quantities increase, preserving incoming orders and later stock edits.
 - Group incoming orders by vendor for read-only display without changing source delivery dates or stock; forecasts still need the original delivery schedule.
-- Use verified vendor destinations when known and explicitly labeled website searches otherwise; never guess a supplier's identity.
+- Order dialogs link Contact vendor to that vendor's in-app page carrying the order and its origin so staff can return; verified website destinations are used only for vendors with no directory record, never a guessed supplier identity.
 
 # Resident alternative decisions
 - Bulk approvals revalidate selected current proposals and dispatch the normal shared approval actions; this preserves safety checks, decision history and incoming-stock semantics without a second persistence path.

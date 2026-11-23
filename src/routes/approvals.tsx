@@ -378,7 +378,7 @@ function summarize(state: ReturnType<typeof useKitchen>["state"], p: Proposal, v
     : `${verb} ${p.vendor} order ($${p.total.toFixed(2)})`;
 }
 
-function PurchaseDetailsDialog({ p, decision, onClose }: { p?: PurchaseProposal | undefined; decision?: Decision; onClose: () => void }) {
+export function PurchaseDetailsDialog({ p, decision, onClose }: { p?: PurchaseProposal | undefined; decision?: Decision; onClose: () => void }) {
   const { state } = useKitchen();
   const contact = p ? findVendor(state, p.vendor) : undefined;
   const destination = contact?.website ? { url: contact.website } : p ? vendorDestination(p.vendor) : null;
@@ -386,7 +386,7 @@ function PurchaseDetailsDialog({ p, decision, onClose }: { p?: PurchaseProposal 
     <DialogHeader><DialogTitle>Order details</DialogTitle><DialogDescription>{decision ? `${decision.status === "approved" ? "Approved" : "Rejected"} ${new Date(decision.at).toLocaleString()}` : "Awaiting approval"}</DialogDescription></DialogHeader>
     {p ? <PurchaseBody p={p} /> : <div className="space-y-3 text-sm"><p className="font-semibold">{decision?.summary}</p>{decision?.serviceWeekId && <p>Service week · {weekRange(decision.serviceWeekId.slice(5), addDays(decision.serviceWeekId.slice(5), 6))}</p>}<p className="text-muted-foreground">Item quantities and delivery details were not saved with this older decision.</p></div>}
     {decision?.note && <p className="text-sm">{decision.note}</p>}
-    <DialogFooter>{destination && <Button asChild variant="outline"><a href={destination.url} target="_blank" rel="noopener noreferrer"><ExternalLink />Contact vendor</a></Button>}<Button variant="outline" onClick={onClose}><ArrowLeft />Back to {decision ? "approval history" : "orders"}</Button></DialogFooter>
+    <DialogFooter>{contact && p ? <Button asChild variant="outline"><Link to="/vendors/$vendorId" params={{ vendorId: contact.id }} search={{ order: p.id, source: "approvals" as const }}><ExternalLink />Contact vendor</Link></Button> : destination && <Button asChild variant="outline"><a href={destination.url} target="_blank" rel="noopener noreferrer"><ExternalLink />Contact vendor</a></Button>}<Button variant="outline" onClick={onClose}><ArrowLeft />Back to {decision ? "approval history" : "orders"}</Button></DialogFooter>
   </DialogContent></Dialog>;
 }
 
