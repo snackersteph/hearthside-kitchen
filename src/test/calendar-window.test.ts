@@ -11,10 +11,10 @@ describe("calendar window", () => {
     const view = calendarWindow(reference);
     expect(view.weeks).toHaveLength(CALENDAR_WINDOW_WEEKS);
     expect(view.dates).toHaveLength(CALENDAR_WINDOW_WEEKS * 7);
-    expect(new Set(window.dates).size).toBe(CALENDAR_WINDOW_WEEKS * 7);
+    expect(new Set(view.dates).size).toBe(CALENDAR_WINDOW_WEEKS * 7);
     expect(dateKey(view.start)).toBe("2026-11-09");
     expect(startOfWeek(view.start, { weekStartsOn: 1 })).toEqual(view.start);
-    expect(dateKey(window.end)).toBe("2026-12-06");
+    expect(dateKey(view.end)).toBe("2026-12-06");
     expect(view.dates[0]).toBe("2026-11-09");
     expect(view.dates.at(-1)).toBe("2026-12-06");
     // Every row is a full Mon–Sun week with no days from neighbouring weeks.

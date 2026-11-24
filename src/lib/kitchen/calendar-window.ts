@@ -15,7 +15,9 @@ export function calendarWindow(reference: Date, shift = 0) {
   const monday = startOfWeek(reference, { weekStartsOn: 1 });
   const earliest = startOfWeek(rangeStart, { weekStartsOn: 1 });
   const latest = startOfWeek(subDays(rangeEnd, WINDOW_DAYS - 1), { weekStartsOn: 1 });
-  const start = addWeeks(monday, shift * CALENDAR_WINDOW_WEEKS);
+  const paged = addWeeks(monday, shift * CALENDAR_WINDOW_WEEKS);
+  // Clamp into the service range so a page never shows days outside it.
+  const start = paged < earliest ? earliest : paged > latest ? latest : paged;
   const end = addDays(start, WINDOW_DAYS - 1);
   const weeks = Array.from({ length: CALENDAR_WINDOW_WEEKS }, (_, week) =>
     Array.from({ length: 7 }, (_, day) => addDays(start, week * 7 + day)));
