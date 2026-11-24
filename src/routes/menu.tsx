@@ -46,7 +46,8 @@ function MenuPage() {
   );
 
   if (!reference || !calendar) return null;
-  const today = dateKey(reference);
+  const ref = reference;
+  const today = dateKey(ref);
   const { weeks, rangeStart, rangeEnd, canPrev, canNext, caption } = calendar;
   const daysPending = overview.filter((day) => day.pending.length > 0).length;
 
@@ -78,7 +79,8 @@ function MenuPage() {
   function WeekRow({ week }: { week: Date[] }) {
     const start = week[0];
     const end = week[week.length - 1];
-    const info = calendarWeekApproval(overview, dateKey(start), dateKey(end), reference);
+    if (!start || !end) return null;
+    const info = calendarWeekApproval(overview, dateKey(start), dateKey(end), ref);
     const weekCleared = dateKey(start) > today && week.every((day) => isMenuCleared(state, dateKey(day)));
     const label = weekCleared ? "Not started" : info.status === "pending" ? `${info.pending} to approve` : info.status === "unresolved" ? "Needs approval" : info.status === "approved" ? "Approved" : info.status === "past" ? "Completed" : "Approved";
     const range = weekRange(dateKey(start), dateKey(end));
@@ -127,7 +129,7 @@ function MenuPage() {
       <div className="grid w-full grid-cols-7 gap-1 border-b pb-3 text-xs font-medium text-muted-foreground">
         {WEEKDAYS.map((label) => <span key={label} className="text-center">{label}</span>)}
       </div>
-      {weeks.map((week) => <WeekRow key={dateKey(week[0])} week={week} />)}
+      {weeks.map((week) => <WeekRow key={dateKey(week[0]!)} week={week} />)}
     </section>
   </>;
 }

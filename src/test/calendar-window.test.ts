@@ -20,9 +20,13 @@ describe("calendar window", () => {
     // Every row is a full Mon–Sun week with no days from neighbouring weeks.
     for (const week of view.weeks) {
       expect(week).toHaveLength(7);
-      expect(week[0].getDay()).toBe(1);
-      expect(week[6].getDay()).toBe(0);
-      expect(dateKey(week[6])).toBe(dateKey(addDays(week[0], 6)));
+      const [monday] = week;
+      const sunday = week.at(-1);
+      expect(monday).toBeDefined();
+      expect(sunday).toBeDefined();
+      expect(monday!.getDay()).toBe(1);
+      expect(sunday!.getDay()).toBe(0);
+      expect(dateKey(sunday!)).toBe(dateKey(addDays(monday!, 6)));
     }
   });
 
