@@ -14,16 +14,21 @@ export const Route = createFileRoute("/residents_/$residentId_/observations")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
-  validateSearch: (search: Record<string, unknown>): { approval?: string } => typeof search["approval"] === "string" ? { approval: search["approval"] } : {},
+  validateSearch: (search: Record<string, unknown>): { approval?: string; from?: "observation-board" } => ({
+    ...(typeof search["approval"] === "string" ? { approval: search["approval"] } : {}),
+    ...(search["from"] === "observation-board" ? { from: "observation-board" as const } : {}),
+  }),
   component: ResidentObservationsPage,
 });
 
 function ResidentObservationsPage() {
   const { residentId } = Route.useParams();
-  const { approval } = Route.useSearch();
+  const { approval, from } = Route.useSearch();
   const { state } = useKitchen();
   const r = state.residents.find((resident) => resident.id === residentId);
-  const back = <Button asChild variant="ghost" className="mb-6"><Link to="/residents/$residentId" params={{ residentId }} search={approval ? { approval } : {}}><ArrowLeft />Back to profile</Link></Button>;
+  const back = from === "observation-board"
+    ? <Button asChild variant="ghost" className="mb-6"><Link to="/" hash="observation-board"><ArrowLeft />Back to observation board</Link></Button>
+    : <Button asChild variant="ghost" className="mb-6"><Link to="/residents/$residentId" params={{ residentId }} search={approval ? { approval } : {}}><ArrowLeft />Back to profile</Link></Button>;
   if (!r) return <>{back}<PageHeader eyebrow="Residents" title="Resident not found" /></>;
   return <>
     {back}
