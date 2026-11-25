@@ -81,7 +81,7 @@ function RecipesPage() {
         <section key={cat} aria-label={`${cat} recipes`}>
         <h2 className="mb-4"><button type="button" aria-expanded={!hidden.includes(cat)} onClick={() => setHidden((h) => h.includes(cat) ? h.filter((c) => c !== cat) : [...h, cat])} className="flex items-baseline gap-2 font-display text-2xl font-semibold capitalize hover:text-primary">
           <ChevronDown className={cn("h-5 w-5 self-center transition-transform", hidden.includes(cat) && "-rotate-90")} />{cat === "snack" ? "Snacks" : `${cat}s`}<span className="text-sm font-medium text-muted-foreground">{group.length}</span></button></h2>
-        {!hidden.includes(cat) && <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {!hidden.includes(cat) && <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {group.map((r) => (
             <button key={r.id} onClick={() => setOpen(r)} className={cn("flex flex-col overflow-hidden rounded-xl border p-0 text-left shadow-sm transition-shadow hover:shadow-md", `bg-meal-${r.meal}`)}>
               <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
