@@ -153,7 +153,7 @@ function CommandCenter() {
                   const resident = residentOf(o.residentId);
                   return (
                     <li key={o.id} className="flex flex-wrap items-center gap-4 px-4 py-3">
-                      <Link to="/residents/$residentId/observations" params={{ residentId: o.residentId }} search={{ from: "observation-board" }} aria-label={`View follow-up log for ${resident?.name ?? o.residentId}`} className="flex min-w-0 flex-1 items-center gap-4 rounded-md transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <Link to="/residents/$residentId/observations" params={{ residentId: o.residentId }} search={{ from: "observation-board", observation: o.id }} aria-label={`View follow-up log for ${resident?.name ?? o.residentId}`} className="flex min-w-0 flex-1 items-center gap-4 rounded-md transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                       {resident && <ResidentPhoto resident={resident} className="h-10 w-10" />}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
@@ -178,7 +178,7 @@ function CommandCenter() {
                 <summary className="cursor-pointer text-sm font-medium">Reviewed reactions ({reviewed.length})</summary>
                 <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                   {reviewed.map((o) => (
-                    <li key={o.id}><Link to="/residents/$residentId/observations" params={{ residentId: o.residentId }} search={{ from: "observation-board" }} className="block rounded-md hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{residentOf(o.residentId)?.name ?? o.residentId} — {o.reaction} ({MEAL_LABEL[o.meal]}, {o.serviceDate})</Link></li>
+                    <li key={o.id}><Link to="/residents/$residentId/observations" params={{ residentId: o.residentId }} search={{ from: "observation-board", observation: o.id }} className="block rounded-md hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{residentOf(o.residentId)?.name ?? o.residentId} — {o.reaction} ({MEAL_LABEL[o.meal]}, {o.serviceDate})</Link></li>
                   ))}
                 </ul>
               </details>

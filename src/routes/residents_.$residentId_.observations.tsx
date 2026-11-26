@@ -14,16 +14,17 @@ export const Route = createFileRoute("/residents_/$residentId_/observations")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
-  validateSearch: (search: Record<string, unknown>): { approval?: string; from?: "observation-board" } => ({
+  validateSearch: (search: Record<string, unknown>): { approval?: string; from?: "observation-board"; observation?: string } => ({
     ...(typeof search["approval"] === "string" ? { approval: search["approval"] } : {}),
     ...(search["from"] === "observation-board" ? { from: "observation-board" as const } : {}),
+    ...(typeof search["observation"] === "string" && search["observation"].trim() ? { observation: search["observation"] } : {}),
   }),
   component: ResidentObservationsPage,
 });
 
 function ResidentObservationsPage() {
   const { residentId } = Route.useParams();
-  const { approval, from } = Route.useSearch();
+  const { approval, from, observation } = Route.useSearch();
   const { state } = useKitchen();
   const r = state.residents.find((resident) => resident.id === residentId);
   const back = from === "observation-board"
@@ -32,7 +33,10 @@ function ResidentObservationsPage() {
   if (!r) return <>{back}<PageHeader eyebrow="Residents" title="Resident not found" /></>;
   return <>
     {back}
-    <div className="mb-8"><PageHeader eyebrow={`Resident ${r.id} · Room ${r.room}`} title={`Observation log · ${r.name}`} /></div>
-    <ResidentObservationLog residentId={r.id} />
+    <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+      <PageHeader eyebrow={`Resident ${r.id} · Room ${r.room}`} title={`${observation ? "Observation" : "Observation log"} · ${r.name}`} />
+      {observation && <Button asChild variant="outline"><Link to="/residents/$residentId/observations" params={{ residentId }} search={{ ...(approval ? { approval } : {}), ...(from ? { from } : {}) }}>View full observation history</Link></Button>}
+    </div>
+    <ResidentObservationLog key={observation ?? "full-log"} residentId={r.id} observationId={observation ?? null} />
   </>;
 }

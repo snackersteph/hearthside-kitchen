@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dishById, initialState } from "@/lib/kitchen/data";
-import { observationVersions, searchObservations } from "@/lib/kitchen/observations";
+import { observationVersions, residentObservations, searchObservations } from "@/lib/kitchen/observations";
 import { reducer } from "@/lib/kitchen/store";
 import type { Observation } from "@/lib/kitchen/types";
 
@@ -73,6 +73,19 @@ describe("resident observation history", () => {
 });
 
 describe("resident observation search", () => {
+  it("shows only the selected entry, including its own saved versions", () => {
+    const selected = observation({ history: [{ savedAt: 1, serviceDate: "2026-11-08", meal: "lunch", dishId: "l-lentil", reaction: "Earlier note", severity: "note", status: "open" }] });
+    const entries = [selected, observation({ id: "another-entry" }), observation({ id: "other-resident", residentId: "R002" })];
+    expect(residentObservations(entries, "R001", "obs-history")).toEqual([selected]);
+    expect(observationVersions(selected)).toHaveLength(2);
+    expect(residentObservations(entries, "R001", "other-resident")).toEqual([]);
+    expect(residentObservations(entries, "R001", "missing")).toEqual([]);
+  });
+
+  it("shows all and only the resident's entries when opening full history", () => {
+    const entries = [observation(), observation({ id: "another-entry" }), observation({ id: "other-resident", residentId: "R002" })];
+    expect(residentObservations(entries, "R001").map((entry) => entry.id)).toEqual(["obs-history", "another-entry"]);
+  });
   it("finds current entries by reaction, dish, formatted date and status", () => {
     const entries = [observation({ reaction: "Refused most of the tray" })];
     expect(searchObservations(entries, "refused")).toHaveLength(1);

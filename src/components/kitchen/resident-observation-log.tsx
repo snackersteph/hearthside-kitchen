@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Check, History as HistoryIcon, Pencil, Plus, Search } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { dishById } from "@/lib/kitchen/data";
-import { observationStatusLabel, observationVersions, searchObservations } from "@/lib/kitchen/observations";
+import { observationStatusLabel, observationVersions, residentObservations, searchObservations } from "@/lib/kitchen/observations";
 import type { Observation } from "@/lib/kitchen/types";
 import { MEAL_LABEL } from "./agents";
 import { ObservationDialog } from "./observation-dialog";
@@ -15,15 +15,13 @@ const formatDate = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateSt
 const formatTime = (timestamp: number) => new Date(timestamp).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 /** Per-resident observation log with shared create, edit, history and search controls. */
-export function ResidentObservationLog({ residentId }: { residentId: string }) {
+export function ResidentObservationLog({ residentId, observationId = null }: { residentId: string; observationId?: string | null }) {
   const { state, dispatch } = useKitchen();
   const [query, setQuery] = useState("");
   const [logging, setLogging] = useState(false);
   const [editing, setEditing] = useState<Observation | null>(null);
   const [historyId, setHistoryId] = useState<string | null>(null);
-  const allEntries = useMemo(() => (state.observations ?? [])
-    .filter((observation) => observation.residentId === residentId)
-    .sort((a, b) => b.notedAt - a.notedAt), [state.observations, residentId]);
+  const allEntries = useMemo(() => residentObservations(state.observations ?? [], residentId, observationId), [state.observations, residentId, observationId]);
   const entries = useMemo(() => searchObservations(allEntries, query), [allEntries, query]);
   const historyEntry = allEntries.find((observation) => observation.id === historyId) ?? null;
 
@@ -34,15 +32,15 @@ export function ResidentObservationLog({ residentId }: { residentId: string }) {
         <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
         <Input id="observation-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search date, meal, dish, reaction or status" className="pl-9" />
       </div>
-      <Button onClick={() => setLogging(true)}><Plus />Log observation</Button>
+      {!observationId && <Button onClick={() => setLogging(true)}><Plus />Log observation</Button>}
     </div>
     <p className="mb-3 text-sm text-muted-foreground" aria-live="polite">
       {query.trim() ? `${entries.length} of ${allEntries.length} observations` : `${allEntries.length} ${allEntries.length === 1 ? "observation" : "observations"}`}
     </p>
 
     {!allEntries.length ? <div className="border-y py-8 text-sm text-muted-foreground">
-      <p>No meal reactions observed yet.</p>
-      <Button variant="link" className="h-auto px-0" onClick={() => setLogging(true)}>Log the first observation</Button>
+      <p>{observationId ? "Observation not found for this resident." : "No meal reactions observed yet."}</p>
+      {!observationId && <Button variant="link" className="h-auto px-0" onClick={() => setLogging(true)}>Log the first observation</Button>}
     </div> : !entries.length ? <div className="border-y py-8 text-sm text-muted-foreground">
       <p>No observations match “{query.trim()}”.</p>
       <Button variant="link" className="h-auto px-0" onClick={() => setQuery("")}>Clear search</Button>

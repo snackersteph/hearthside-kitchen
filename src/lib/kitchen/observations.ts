@@ -3,6 +3,12 @@ import type { Observation, ObservationVersion } from "./types";
 
 type ObservationChanges = Partial<Pick<Observation, "serviceDate" | "meal" | "dishId" | "reaction" | "severity" | "status">>;
 
+/** An entry link never expands to unrelated entries or another resident's log. */
+export function residentObservations(observations: Observation[], residentId: string, observationId: string | null = null): Observation[] {
+  return observations.filter((entry) => entry.residentId === residentId && (observationId === null || entry.id === observationId))
+    .sort((a, b) => b.notedAt - a.notedAt);
+}
+
 /** Capture the version being replaced, including when that version was originally saved. */
 export function observationVersion(observation: Observation): ObservationVersion {
   return {
