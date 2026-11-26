@@ -24,6 +24,7 @@ import { migrateInventoryReplenishment } from "./inventory-replenishment";
 import { rebuild, replayAt } from "./shared-sync";
 import { supabase } from "@/integrations/supabase/client";
 import { approveEmergencyMenuDemo } from "./emergency-menu-demo";
+import { reviseObservation } from "./observations";
 
 type Action =
   | { type: "saveVendor"; vendor: Vendor }
@@ -53,6 +54,7 @@ type Action =
   | { type: "setScheduledMain"; date: string; meal: Meal; dishId: string }
   | { type: "updateResident"; resident: Resident }
   | { type: "logObservation"; observation: Observation }
+  | { type: "editObservation"; id: string; serviceDate: string; meal: Meal; dishId: string; reaction: string; severity: Observation["severity"] }
   | { type: "reviewObservation"; id: string }
   | { type: "markProfileUpdatesSeen" }
   | { type: "acknowledgeProfileUpdate"; id: string }
@@ -242,9 +244,17 @@ function applyAction(s: KitchenState, a: Action, reference: Date): KitchenState 
       if (!s.residents.some((r) => r.id === o.residentId) || dishById(o.dishId).meal !== o.meal || !o.reaction.trim()) return s;
       return { ...s, observations: [{ ...o, reaction: o.reaction.trim() }, ...(s.observations ?? [])] };
     }
+    case "editObservation": {
+      const previous = (s.observations ?? []).find((o) => o.id === a.id);
+      if (!previous || dishById(a.dishId).meal !== a.meal || !a.serviceDate || !a.reaction.trim()) return s;
+      const changes = { serviceDate: a.serviceDate, meal: a.meal, dishId: a.dishId, reaction: a.reaction.trim(), severity: a.severity };
+      if (previous.serviceDate === changes.serviceDate && previous.meal === changes.meal && previous.dishId === changes.dishId && previous.reaction === changes.reaction && previous.severity === changes.severity) return s;
+      return { ...s, observations: (s.observations ?? []).map((o) => o.id === a.id ? reviseObservation(o, changes, reference.getTime()) : o) };
+    }
     case "reviewObservation": {
-      if (!(s.observations ?? []).some((o) => o.id === a.id)) return s;
-      return { ...s, observations: (s.observations ?? []).map((o) => (o.id === a.id ? { ...o, status: "reviewed" } : o)) };
+      const previous = (s.observations ?? []).find((o) => o.id === a.id && o.status === "open");
+      if (!previous) return s;
+      return { ...s, observations: (s.observations ?? []).map((o) => o.id === a.id ? reviseObservation(o, { status: "reviewed" }, reference.getTime()) : o) };
     }
     case "markProfileUpdatesSeen": {
       if (!(s.profileUpdates ?? []).some((u) => u.review === "open")) return s;

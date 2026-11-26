@@ -79,6 +79,17 @@ export interface ProfileUpdate {
   acknowledgedAt?: number;
 }
 
+/** One saved version of an observation, retained when staff edit or review it. */
+export interface ObservationVersion {
+  savedAt: number;
+  serviceDate: string;
+  meal: Meal;
+  dishId: string;
+  reaction: string;
+  severity: "note" | "concern";
+  status: "open" | "reviewed";
+}
+
 /** A reaction observed after a resident ate a specific meal. */
 export interface Observation {
   demo?: boolean;
@@ -91,6 +102,8 @@ export interface Observation {
   severity: "note" | "concern";
   status: "open" | "reviewed";
   notedAt: number;
+  updatedAt?: number;
+  history?: ObservationVersion[];
 }
 
 /** Staff edits to an agent's own description and configuration values. */
