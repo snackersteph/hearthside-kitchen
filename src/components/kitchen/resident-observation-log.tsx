@@ -45,7 +45,7 @@ export function ResidentObservationLog({ residentId, observationId = null }: { r
 
   return <section aria-label="Observation log">
     {observationId ? selected ? <>
-      <article aria-label="Selected observation" className="border-y py-5">
+      <article aria-label="Selected observation" className="py-5">
         <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
           <div className="min-w-0"><p className="mb-1 text-sm text-muted-foreground">{formatDate(selected.serviceDate)} · {MEAL_LABEL[selected.meal]}</p><h2 className="text-xl font-semibold">{dishById(selected.dishId).name}</h2></div>
           {status(selected)}
