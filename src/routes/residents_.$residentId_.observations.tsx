@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, History } from "lucide-react";
 import { useKitchen } from "@/lib/kitchen/store";
 import { PageHeader } from "@/components/kitchen/app-shell";
 import { ResidentObservationLog } from "@/components/kitchen/resident-observation-log";
@@ -33,9 +33,9 @@ function ResidentObservationsPage() {
   if (!r) return <>{back}<PageHeader eyebrow="Residents" title="Resident not found" /></>;
   return <>
     {back}
-    <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+    <div className="mb-6 grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
       <PageHeader eyebrow={`Resident ${r.id} · Room ${r.room}`} title={`${observation ? "Observation" : "Observation log"} · ${r.name}`} />
-      {observation && <Button asChild variant="outline"><Link to="/residents/$residentId/observations" params={{ residentId }} search={{ ...(approval ? { approval } : {}), ...(from ? { from } : {}) }}>View full observation history</Link></Button>}
+      {observation && <Button asChild variant="outline" className="w-fit shrink-0"><Link to="/residents/$residentId/observations" params={{ residentId }} search={{ ...(approval ? { approval } : {}), ...(from ? { from } : {}) }}><History />Resident history</Link></Button>}
     </div>
     <ResidentObservationLog key={observation ?? "full-log"} residentId={r.id} observationId={observation ?? null} />
   </>;

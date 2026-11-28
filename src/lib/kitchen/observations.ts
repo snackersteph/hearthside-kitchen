@@ -9,6 +9,13 @@ export function residentObservations(observations: Observation[], residentId: st
     .sort((a, b) => b.notedAt - a.notedAt);
 }
 
+/** Expand only other entries on the selected resident's service date. */
+export function sameDayObservations(observations: Observation[], residentId: string, observationId: string): Observation[] {
+  const selected = residentObservations(observations, residentId, observationId)[0];
+  if (!selected) return [];
+  return residentObservations(observations, residentId).filter((entry) => entry.id !== selected.id && entry.serviceDate === selected.serviceDate);
+}
+
 /** Capture the version being replaced, including when that version was originally saved. */
 export function observationVersion(observation: Observation): ObservationVersion {
   return {
@@ -39,7 +46,7 @@ export function observationVersions(observation: Observation): ObservationVersio
 
 export function observationStatusLabel(observation: Pick<Observation, "severity" | "status">): string {
   if (observation.severity === "note") return observation.status === "reviewed" ? "Note · reviewed" : "Note only";
-  return observation.status === "open" ? "Needs attention" : "Reviewed";
+  return observation.status === "open" ? "Needs follow-up" : "Reviewed";
 }
 
 /** Search current entries by their human-readable details, not internal IDs alone. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dishById, initialState } from "@/lib/kitchen/data";
-import { observationVersions, residentObservations, searchObservations } from "@/lib/kitchen/observations";
+import { observationVersions, residentObservations, sameDayObservations, searchObservations } from "@/lib/kitchen/observations";
 import { reducer } from "@/lib/kitchen/store";
 import type { Observation } from "@/lib/kitchen/types";
 
@@ -50,7 +50,8 @@ describe("resident observation history", () => {
       severity: "concern",
       status: "open",
     })]);
-    expect(observationVersions(current!)).toHaveLength(2);
+    if (!current) throw new Error("Edited observation missing");
+    expect(observationVersions(current)).toHaveLength(2);
   });
 
   it("retains the open version when staff mark a concern reviewed", () => {
@@ -73,6 +74,12 @@ describe("resident observation history", () => {
 });
 
 describe("resident observation search", () => {
+  it("expands only other logs for the selected resident on the same day", () => {
+    const entries = [observation(), observation({ id: "same-day", meal: "dinner" }), observation({ id: "other-day", serviceDate: "2026-11-07" }), observation({ id: "other-resident", residentId: "R002" })];
+    expect(sameDayObservations(entries, "R001", "obs-history").map((entry) => entry.id)).toEqual(["same-day"]);
+    expect(sameDayObservations(entries, "R001", "other-resident")).toEqual([]);
+    expect(sameDayObservations(entries, "R001", "missing")).toEqual([]);
+  });
   it("shows only the selected entry, including its own saved versions", () => {
     const selected = observation({ history: [{ savedAt: 1, serviceDate: "2026-11-08", meal: "lunch", dishId: "l-lentil", reaction: "Earlier note", severity: "note", status: "open" }] });
     const entries = [selected, observation({ id: "another-entry" }), observation({ id: "other-resident", residentId: "R002" })];
@@ -89,9 +96,11 @@ describe("resident observation search", () => {
   it("finds current entries by reaction, dish, formatted date and status", () => {
     const entries = [observation({ reaction: "Refused most of the tray" })];
     expect(searchObservations(entries, "refused")).toHaveLength(1);
-    expect(searchObservations(entries, dishById(entries[0]!.dishId).name)).toHaveLength(1);
+    const entry = entries[0];
+    if (!entry) throw new Error("Search fixture missing");
+    expect(searchObservations(entries, dishById(entry.dishId).name)).toHaveLength(1);
     expect(searchObservations(entries, "Nov 8, 2026")).toHaveLength(1);
-    expect(searchObservations(entries, "needs attention")).toHaveLength(1);
+    expect(searchObservations(entries, "needs follow-up")).toHaveLength(1);
     expect(searchObservations(entries, "no matching observation")).toHaveLength(0);
     expect(searchObservations(entries, "   ")).toBe(entries);
   });
